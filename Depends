@@ -1,0 +1,4 @@
+ext_NRF52_hw_models: libUtilv1 \
+libRandv2 \
+libPhyComv1 \
+ext_2G4_libPhyComv1

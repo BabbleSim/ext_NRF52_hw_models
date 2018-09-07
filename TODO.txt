@@ -1,0 +1,27 @@
+Current limitations and pending things to do:
+(T): To do
+(N): Nice to have
+(L): Low priority
+(VL): Very low priority (not used in current controller SW)
+
+* Proper testing: All currently implemented models have only been tested lightly
+
+* RADIO:
+	* (L) Only BLE packet format supported (no LR)
+	* (L) Only default freq. map supported
+	* (VL) Only 1st logical address is supported
+	* (VL) More limitation listed in NRF_RADIO.c
+* ECB:
+* AAR:
+* AES-CCM:
+* FICR:
+	* Just empty registers by now
+	* (N) Would be nice to have a programmable BT-Addr from command line
+* RNG:
+	* (N) Delay is always the same and constant (with or without bias correction)
+* TIMER:
+	* (VL) Counter mode is not fully supported
+
+Not implemented, and no plans to implement:
+* WDT, QDEC, LPCOMP, COMP, PWM, PDM, ACL, NVMC, MWU, SPIM/S, I2S, FPU, USB, 
+  UART, QSPI, GPIO, CRYPTOCELL, UICR
