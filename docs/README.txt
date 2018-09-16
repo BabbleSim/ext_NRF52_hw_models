@@ -2,9 +2,10 @@ Models of some of the HW present in a NRF52xxx.
 Where relevant differences exist, these models try to align with a NRF52382.
 
 These models are accurate enough to allow the current Zephyr to run and
-its BLE stack to function.
+its BLE stack to function. For more details please see the notes on the source
+files for each peripheral model.
 
-These models are based only the public SOC specifications:
+These models are based only on the public SOC specifications:
 http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52%2Fdita%2Fnrf52%2Fchips%2Fnrf52832.html&cp=2_1
 
 They have been developed without any other knowledge and probably contain
@@ -39,4 +40,4 @@ nrf_<periperal>_timer_triggered() : Models which take time to perform their work
 signal_<event register name>() : Signal that <event> has just happened
 
 The tasks, registers and event names should match the register interface
-specified in the linked documetantion.
+specified in the linked documentation.
