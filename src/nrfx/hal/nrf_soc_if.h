@@ -70,7 +70,8 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #define NRF_TIMER3_BASE                   (&NRF_TIMER_regs[3])
 #undef NRF_TIMER4_BASE
 #define NRF_TIMER4_BASE                   (&NRF_TIMER_regs[4])
-#define NRF_POWER_BASE                    (NULL)
+extern NRF_POWER_Type NRF_POWER_regs;
+#define NRF_POWER_BASE                    (&NRF_POWER_regs)
 
 /**
  * Note that the model of the CPU & IRQ controller driver must provide
