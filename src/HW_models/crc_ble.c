@@ -21,10 +21,11 @@ static uint8_t rev_byte(uint8_t input){
  * Reverse the bits order in a 24 bit word
  */
 static uint32_t rev_24(uint32_t input){
-  uint8_t *i8 = (uint8_t *)&input;
-  return rev_byte(i8[0]) << 16
-        | rev_byte(i8[1]) << 8
-        | rev_byte(i8[2]);
+  uint32_t ret;
+  ret = rev_byte((input >> 0) & 0xff) << 16
+      | rev_byte((input >> 8) & 0xff) << 8
+      | rev_byte((input >> 16) & 0xff);
+  return ret;
 }
 
 /*
@@ -98,6 +99,8 @@ void append_crc_ble(uint8_t* buf, unsigned int len, uint32_t crc_init)
 
   /*Copy CRC itself at the end of the input buffer*/
   for (int i = 0; i < 3; i++) {
-    buf[len+i] = ((uint8_t*)&crc)[i];
+    buf[len + i] = (crc >> (i*8)) & 0xff;
   }
+  return;
 }
+
