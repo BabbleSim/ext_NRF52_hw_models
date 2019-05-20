@@ -918,7 +918,12 @@ static void handle_Rx_response(int ret){
     bs_time_t end_time = hwll_dev_time_from_phy(ongoing_rx_done.end_time);
     tm_update_last_phy_sync_time(end_time);
 
-    ongoing_rx_RADIO_status.CRC_End_Time = end_time + get_Rx_chain_delay();
+    if (ongoing_rx_done.status != P2G4_RXSTATUS_HEADER_ERROR) {
+        ongoing_rx_RADIO_status.CRC_End_Time = end_time + get_Rx_chain_delay();
+    } //Otherwise we do not really now how the Nordic RADIO behaves depending on
+    //where the biterrors are and so forth. So let's always behave like if the
+    //packet lenght was received correctly, and just report a CRC error at the
+    //end of the CRC
 
     if ( ( ongoing_rx_done.status == P2G4_RXSTATUS_OK ) &&
         ( ongoing_rx_done.packet_size > 5 ) ) {
