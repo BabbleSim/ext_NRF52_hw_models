@@ -1106,7 +1106,7 @@ static void do_device_address_match() {
 
     TxAdd = (NRF_RADIO_regs.DACNF >> (i + 8)) & 1;
 
-    if (TxAdd != rx_buf[0] >> 6) {
+    if (TxAdd != (rx_buf[0] >> 6) & 1) {
       continue;
     }
 
