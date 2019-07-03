@@ -36,3 +36,9 @@ void nrf_clock_task_trigger(nrf_clock_task_t task)
     bs_trace_error_line_time("Not supported task started in nrf_clock\n");
   }
 }
+
+bool nrf_clock_int_enable_check(nrf_clock_int_mask_t int_mask){
+  /* Note that unlike the real NRF HW, INTENCLR is always
+   * reset to 0 by the HW models */
+  return (bool)(NRF_CLOCK->INTENSET & int_mask);
+}
