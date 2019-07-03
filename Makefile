@@ -12,7 +12,8 @@ INCLUDES:=-I${libUtilv1_COMP_PATH}/src/ \
           -I${libPhyComv1_COMP_PATH}/src/ \
           -I${2G4_libPhyComv1_COMP_PATH}/src \
           -I${libRandv2_COMP_PATH}/src/ \
-          -Isrc/HW_models/
+          -Isrc/HW_models/ \
+          -Isrc/nrfx/
 
 LIB_NAME:=libNRF52_hw_models.32
 A_LIBS:=

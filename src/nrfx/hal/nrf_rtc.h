@@ -43,6 +43,7 @@
 #define BS_NRF_RTC_H__
 
 #include "nrf_soc_if.h"
+#include "drivers/nrfx_common.h"
 
 #ifndef __STATIC_INLINE
 #define __STATIC_INLINE static inline
