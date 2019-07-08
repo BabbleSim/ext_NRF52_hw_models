@@ -44,7 +44,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "hal/nrf_soc_if.h"
+#include "../hal/nrf_soc_if.h"
 
 #ifdef __cplusplus
 extern "C" {

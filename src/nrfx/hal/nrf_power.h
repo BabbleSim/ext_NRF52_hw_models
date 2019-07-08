@@ -1,1 +1,1 @@
-#include "drivers/nrfx_common.h"
+#include "../drivers/nrfx_common.h"
