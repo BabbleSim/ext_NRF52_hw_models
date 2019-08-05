@@ -43,7 +43,7 @@ void bst_ticker_set_period(bs_time_t tick_period){
  * Set the next time the FW test ticker will trigger at <absolute_time> us
  */
 void bst_ticker_set_next_tick_absolute(bs_time_t absolute_time){
-  Timer_event_fw_test_ticker_internal = tm_get_hw_time_from_abs_time(absolute_time);
+  Timer_event_fw_test_ticker_internal = tm_abs_time_to_hw_time(absolute_time);
   bst_ticker_find_next_time();
 }
 
