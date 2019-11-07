@@ -9,7 +9,7 @@
 #include "bs_tracing.h"
 #include "NRF_RNG.h"
 
-void nrf_rng_task_trigger(nrf_rng_task_t rng_task)
+void nrf_rng_task_trigger(NRF_RNG_Type * p_reg, nrf_rng_task_t rng_task)
 {
   *((volatile uint32_t *)((uint8_t *)NRF_RNG + rng_task)) = NRF_RNG_TASK_SET;
 
@@ -24,14 +24,14 @@ void nrf_rng_task_trigger(nrf_rng_task_t rng_task)
   }
 }
 
-void nrf_rng_int_enable(uint32_t rng_int_mask)
+void nrf_rng_int_enable(NRF_RNG_Type * p_reg, uint32_t mask)
 {
-  NRF_RNG_regs.INTENSET = rng_int_mask;
+  NRF_RNG_regs.INTENSET = mask;
   nrf_rng_regw_sideeffects_INTENSET();
 }
 
-void nrf_rng_int_disable(uint32_t rng_int_mask)
+void nrf_rng_int_disable(NRF_RNG_Type * p_reg, uint32_t mask)
 {
-  NRF_RNG_regs.INTENCLR = rng_int_mask;
+  NRF_RNG_regs.INTENCLR = mask;
   nrf_rng_regw_sideeffects_INTENCLEAR();
 }

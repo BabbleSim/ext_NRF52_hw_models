@@ -90,98 +90,109 @@ typedef enum
 /**
  * @brief Function for enabling interrupts.
  *
- * @param[in]  rng_int_mask              Mask of interrupts.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-void nrf_rng_int_enable(uint32_t rng_int_mask);
+void nrf_rng_int_enable(NRF_RNG_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling interrupts.
  *
- * @param[in]  rng_int_mask              Mask of interrupts.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-void nrf_rng_int_disable(uint32_t rng_int_mask);
+void nrf_rng_int_disable(NRF_RNG_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for getting the state of a specific interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in]  rng_int_mask              Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval     true                   If the interrupt is not enabled.
- * @retval     false                  If the interrupt is enabled.
+ * @return Mask of enabled interrupts.
  */
-static inline bool nrf_rng_int_get(nrf_rng_int_mask_t rng_int_mask);
+static inline uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask);
 
 /**
- * @brief Function for setting a specific task.
+ * @brief Function for triggering the specified task.
  *
- * @param[in]  rng_task              Task.
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] rng_task The specified Task.
  */
-void nrf_rng_task_trigger(nrf_rng_task_t rng_task);
+void nrf_rng_task_trigger(NRF_RNG_Type * p_reg, nrf_rng_task_t rng_task);
 
 /**
- * @brief Function for clearing a specific event.
+ * @brief Function for clearing the specified event.
  *
- * @param[in]  rng_event              Event.
+ * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
+ * @param[in] rng_event The specified event.
  */
-static inline void nrf_rng_event_clear(nrf_rng_event_t rng_event);
+static inline void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event);
 
 /**
- * @brief Function for getting the state of a specific event.
+ * @brief Function for retrieving the state of the specified event.
  *
- * @param[in]  rng_event              Event.
+ * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
+ * @param[in] rng_event The specified event.
  *
- * @retval     true               If the event is not set.
- * @retval     false              If the event is set.
+ * @retval true  The event is set.
+ * @retval false The event is not set.
  */
-static inline bool nrf_rng_event_get(nrf_rng_event_t rng_event);
+static inline bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event);
 
 /**
  * @brief Function for getting the previously generated random value.
  *
- * @return     Previously generated random value.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return Previously generated random value.
  */
-static inline uint8_t nrf_rng_random_value_get(void);
+static inline uint8_t nrf_rng_random_value_get(NRF_RNG_Type * p_reg);
 
 /**
  * @brief Function for enabling digital error correction.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-static inline void nrf_rng_error_correction_enable(void);
+static inline void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg);
 
 /**
  * @brief Function for disabling digital error correction.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-static inline void nrf_rng_error_correction_disable(void);
+static inline void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg);
 
 
 
 /* Bodies for inlined functions  */
 
-static inline bool nrf_rng_int_get(nrf_rng_int_mask_t rng_int_mask)
+static inline uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(NRF_RNG->INTENSET & rng_int_mask);
+    return NRF_RNG->INTENSET & mask;
 }
 
-static inline void nrf_rng_event_clear(nrf_rng_event_t rng_event)
+static inline void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event)
 {
     *((volatile uint32_t *)((uint8_t *)NRF_RNG + rng_event)) = NRF_RNG_EVENT_CLEAR;
 }
 
-static inline bool nrf_rng_event_get(nrf_rng_event_t rng_event)
+static inline bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event)
 {
     return (bool) * ((volatile uint32_t *)((uint8_t *)NRF_RNG + rng_event));
 }
 
-static inline uint8_t nrf_rng_random_value_get(void)
+static inline uint8_t nrf_rng_random_value_get(NRF_RNG_Type * p_reg)
 {
     return (uint8_t)(NRF_RNG->VALUE & RNG_VALUE_VALUE_Msk);
 }
 
-static inline void nrf_rng_error_correction_enable(void)
+static inline void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg)
 {
     NRF_RNG->CONFIG |= RNG_CONFIG_DERCEN_Msk;
 }
 
-static inline void nrf_rng_error_correction_disable(void)
+static inline void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg)
 {
     NRF_RNG->CONFIG &= ~RNG_CONFIG_DERCEN_Msk;
 }

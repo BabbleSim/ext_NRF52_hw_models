@@ -106,7 +106,7 @@ void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
  * @param[in] cc_channel Requested capture/compare channel.
  * @param[in] cc_value   Value to write to the capture/compare register.
  */
-void nrf_timer_cc_write(NRF_TIMER_Type * p_reg,
+void nrf_timer_cc_set(NRF_TIMER_Type * p_reg,
                                         nrf_timer_cc_channel_t cc_channel,
                                         uint32_t               cc_value);
 

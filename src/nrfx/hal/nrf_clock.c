@@ -9,19 +9,19 @@
 #include "bs_tracing.h"
 #include "NRF_CLOCK.h"
 
-void nrf_clock_int_enable(uint32_t int_mask)
+void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask)
 {
-  NRF_CLOCK->INTENSET = int_mask;
+  NRF_CLOCK->INTENSET = mask;
   nrf_clock_reqw_sideeffects_INTENSET();
 }
 
-void nrf_clock_int_disable(uint32_t int_mask)
+void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
 {
-  NRF_CLOCK->INTENCLR = int_mask;
+  NRF_CLOCK->INTENCLR = mask;
   nrf_clock_reqw_sideeffects_INTENCLR();
 }
 
-void nrf_clock_task_trigger(nrf_clock_task_t task)
+void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
 {
   if (task == NRF_CLOCK_TASK_HFCLKSTART) {
     NRF_CLOCK_regs.TASKS_HFCLKSTART = 1;
@@ -37,8 +37,9 @@ void nrf_clock_task_trigger(nrf_clock_task_t task)
   }
 }
 
-bool nrf_clock_int_enable_check(nrf_clock_int_mask_t int_mask){
+uint32_t nrf_clock_int_enable_check(NRF_CLOCK_Type const * p_reg, uint32_t mask)
+{
   /* Note that unlike the real NRF HW, INTENCLR is always
    * reset to 0 by the HW models */
-  return (bool)(NRF_CLOCK->INTENSET & int_mask);
+  return NRF_CLOCK->INTENSET & mask;
 }

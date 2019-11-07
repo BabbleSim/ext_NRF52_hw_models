@@ -117,16 +117,20 @@ typedef enum
 #endif
 } nrf_ppi_channel_group_t;
 
-void nrf_ppi_channels_enable(uint32_t mask);
-void nrf_ppi_channels_disable(uint32_t mask);
-void nrf_ppi_channel_endpoint_setup(nrf_ppi_channel_t channel,
+void nrf_ppi_channels_enable(NRF_PPI_Type * p_reg, uint32_t mask);
+void nrf_ppi_channels_disable(NRF_PPI_Type * p_reg, uint32_t mask);
+void nrf_ppi_channel_endpoint_setup(NRF_PPI_Type * p_reg,
+                                    nrf_ppi_channel_t channel,
                                     uint32_t          eep,
                                     uint32_t          tep);
-void nrf_ppi_event_endpoint_setup(nrf_ppi_channel_t channel,
+void nrf_ppi_event_endpoint_setup(NRF_PPI_Type * p_reg,
+                                  nrf_ppi_channel_t channel,
                                   uint32_t          eep);
-void nrf_ppi_task_endpoint_setup(nrf_ppi_channel_t channel,
+void nrf_ppi_task_endpoint_setup(NRF_PPI_Type * p_reg,
+                                 nrf_ppi_channel_t channel,
                                  uint32_t          tep);
-void nrf_ppi_group_disable(nrf_ppi_channel_group_t group);
+void nrf_ppi_group_disable(NRF_PPI_Type * p_reg,
+                           nrf_ppi_channel_group_t group);
 
 #ifdef __cplusplus
 }
