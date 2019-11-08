@@ -109,32 +109,36 @@ typedef enum
 } nrf_radio_int_mask_t;
 
 /**
- * @brief Function for enabling interrupts.
+ * @brief Function for activating a specific RADIO task.
  *
- * @param[in]  radio_int_mask              Mask of interrupts.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task to be activated.
  */
-void nrf_radio_int_enable(uint32_t radio_int_mask);
+void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task);
 
 /**
- * @brief Function for setting a specific task.
+ * @brief Function for enabling specified RADIO interrupts.
  *
- * @param[in]  radio_task              Task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-void nrf_radio_task_trigger(nrf_radio_task_t radio_task);
-
-/**
- * @brief Function for setting power mode of the radio peripheral.
- *
- * @param[in]  radio_power                  If radio should powered on.
- */
-void nrf_radio_power_set(bool radio_power);
+void nrf_radio_int_enable(NRF_RADIO_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for setting Bit counter compare.
  *
- * @param[in]  radio_bcc                    Bit counter compare [bits].
+ * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
+ * @param[in] radio_bcc Bit counter compare [bits].
  */
-void nrf_radio_bcc_set(uint32_t radio_bcc);
+void nrf_radio_bcc_set(NRF_RADIO_Type * p_reg, uint32_t radio_bcc);
+
+/**
+ * @brief Function for setting power mode of the radio peripheral.
+ *
+ * @param[in] p_reg       Pointer to the structure of registers of the peripheral.
+ * @param[in] radio_power If radio should be powered on.
+ */
+void nrf_radio_power_set(NRF_RADIO_Type * p_reg, bool radio_power);
 
 #ifdef __cplusplus
 }

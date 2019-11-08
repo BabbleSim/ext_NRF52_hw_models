@@ -9,51 +9,36 @@
 #include "bs_tracing.h"
 #include "NRF_RADIO.h"
 
-void nrf_radio_int_enable(uint32_t radio_int_mask)
+void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
 {
-  NRF_RADIO->INTENSET = radio_int_mask;
-  nrf_radio_regw_sideeffects_INTENSET();
-}
-
-/**
- * @brief Function for setting a specific task.
- *
- * @param[in]  radio_task              Task.
- */
-void nrf_radio_task_trigger(nrf_radio_task_t radio_task)
-{
-  if ( radio_task == NRF_RADIO_TASK_TXEN ) {
-    NRF_RADIO->TASKS_TXEN = 1;
+  if ( task == NRF_RADIO_TASK_TXEN ) {
+    p_reg->TASKS_TXEN = 1;
     nrf_radio_regw_sideeffects_TASKS_TXEN();
-  } else if ( radio_task == NRF_RADIO_TASK_RXEN ) {
-    NRF_RADIO->TASKS_RXEN = 1;
+  } else if ( task == NRF_RADIO_TASK_RXEN ) {
+    p_reg->TASKS_RXEN = 1;
     nrf_radio_regw_sideeffects_TASKS_RXEN();
-  } else if ( radio_task == NRF_RADIO_TASK_DISABLE ) {
-    NRF_RADIO->TASKS_DISABLE = 1;
+  } else if ( task == NRF_RADIO_TASK_DISABLE ) {
+    p_reg->TASKS_DISABLE = 1;
     nrf_radio_regw_sideeffects_TASKS_DISABLE();
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_radio\n");
   }
 }
 
-/**
- * @brief Function for setting power mode of the radio peripheral.
- *
- * @param[in]  radio_power                  If radio should powered on.
- */
-void nrf_radio_power_set(bool radio_power)
+void nrf_radio_int_enable(NRF_RADIO_Type * p_reg, uint32_t mask)
 {
-  NRF_RADIO->POWER = (uint32_t) radio_power;
-  nrf_radio_regw_sideeffects_POWER();
+  p_reg->INTENSET = mask;
+  nrf_radio_regw_sideeffects_INTENSET();
 }
 
-/**
- * @brief Function for setting Bit counter compare.
- *
- * @param[in]  radio_bcc                    Bit counter compare [bits].
- */
-void nrf_radio_bcc_set(uint32_t radio_bcc)
+void nrf_radio_bcc_set(NRF_RADIO_Type * p_reg, uint32_t radio_bcc)
 {
-  NRF_RADIO->BCC = radio_bcc;
+  p_reg->BCC = radio_bcc;
   nrf_radio_regw_sideeffects_BCC();
+}
+
+void nrf_radio_power_set(NRF_RADIO_Type * p_reg, bool radio_power)
+{
+  p_reg->POWER = (uint32_t) radio_power;
+  nrf_radio_regw_sideeffects_POWER();
 }

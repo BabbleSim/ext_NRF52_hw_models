@@ -185,63 +185,69 @@ typedef enum
 /**
  * @brief Function for enabling the specified interrupt.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-void nrf_clock_int_enable(uint32_t int_mask);
+void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling the specified interrupt.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-void nrf_clock_int_disable(uint32_t int_mask);
+void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving the state of the specified interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  The interrupt is enabled.
- * @retval false The interrupt is not enabled.
+ * @return Mask of enabled interrupts.
  */
-bool nrf_clock_int_enable_check(nrf_clock_int_mask_t int_mask);
-
+uint32_t nrf_clock_int_enable_check(NRF_CLOCK_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for setting the specified task.
  *
- * @param[in] task Task to be activated.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task to be activated.
  */
-void nrf_clock_task_trigger(nrf_clock_task_t task);
-
+void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task);
 
 /**
  * @brief Function for clearing the specified event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-static inline void nrf_clock_event_clear(nrf_clock_event_t event);
+static inline void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for retrieving the state of the specified event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to be checked.
  *
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-static inline bool nrf_clock_event_check(nrf_clock_event_t event);
+static inline bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for changing the low-frequency clock source.
  * @details This function cannot be called when the low-frequency clock is running.
  *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] source New low-frequency clock source.
  */
-static inline void nrf_clock_lf_src_set(nrf_clock_lfclk_t source);
+static inline void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source);
 
 /**
  * @brief Function for retrieving the selected source for the low-frequency clock.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
  * @retval NRF_CLOCK_LFCLK_RC    The internal 32 kHz RC oscillator
  *                               is the selected source for the low-frequency clock.
@@ -250,29 +256,29 @@ static inline void nrf_clock_lf_src_set(nrf_clock_lfclk_t source);
  * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesizer from
  *                               the HFCLK is the selected source for the low-frequency clock.
  */
-static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(void);
+static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg);
 
 
 /* Bodies for inlined functions  */
 
-static inline void nrf_clock_event_clear(nrf_clock_event_t event)
+static inline void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
 {
-    *((volatile uint32_t *)((uint8_t *)NRF_CLOCK + event)) = 0x0UL;
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 }
 
-static inline bool nrf_clock_event_check(nrf_clock_event_t event)
+static inline bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event)
 {
-    return (bool)*((volatile uint32_t *)((uint8_t *)NRF_CLOCK + event));
+    return (bool)*((volatile uint32_t *)((uint8_t *)p_reg + event));
 }
 
-static inline void nrf_clock_lf_src_set(nrf_clock_lfclk_t source)
+static inline void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source)
 {
-    NRF_CLOCK->LFCLKSRC = (uint32_t)(source);
+    p_reg->LFCLKSRC = (uint32_t)(source);
 }
 
-static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(void)
+static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_lfclk_t)(NRF_CLOCK->LFCLKSRC);
+    return (nrf_clock_lfclk_t)(p_reg->LFCLKSRC);
 }
 #ifdef __cplusplus
 }
