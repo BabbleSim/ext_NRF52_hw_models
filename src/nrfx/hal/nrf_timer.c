@@ -14,7 +14,7 @@ static int timer_number_from_ptr(NRF_TIMER_Type * p_reg){
   return i;
 }
 
-void nrf_timer_cc_write(NRF_TIMER_Type * p_reg,
+void nrf_timer_cc_set(NRF_TIMER_Type * p_reg,
     nrf_timer_cc_channel_t cc_channel,
     uint32_t               cc_value)
 {

@@ -70,6 +70,12 @@ typedef enum
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_TASK_CAPTURE5 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[5]), ///< Task for capturing the timer value on channel 5.
 #endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_TASK_CAPTURE6 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[6]), ///< Task for capturing the timer value on channel 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_TASK_CAPTURE7 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[7]), ///< Task for capturing the timer value on channel 7.
+#endif
     /*lint -restore*/
 } nrf_timer_task_t;
 
@@ -91,24 +97,24 @@ typedef enum
 } nrf_timer_cc_channel_t;
 
 /**
- * @brief Function for activating a specific timer task.
+ * @brief Function for activating the specified timer task.
  *
- * @param[in] p_reg   Pointer to the peripheral registers structure.
- * @param[in] task    Task to activate.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task to be activated.
  */
 void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
-                                            nrf_timer_task_t task);
+                            nrf_timer_task_t task);
 
 /**
- * @brief Function for writing the capture/compare register for a specified channel.
+ * @brief Function for setting the capture/compare register for the specified channel.
  *
- * @param[in] p_reg      Pointer to the peripheral registers structure.
- * @param[in] cc_channel Requested capture/compare channel.
+ * @param[in] p_reg      Pointer to the structure of registers of the peripheral.
+ * @param[in] cc_channel The specified capture/compare channel.
  * @param[in] cc_value   Value to write to the capture/compare register.
  */
-void nrf_timer_cc_write(NRF_TIMER_Type * p_reg,
-                                        nrf_timer_cc_channel_t cc_channel,
-                                        uint32_t               cc_value);
+void nrf_timer_cc_set(NRF_TIMER_Type *       p_reg,
+                      nrf_timer_cc_channel_t cc_channel,
+                      uint32_t               cc_value);
 
 
 #ifdef __cplusplus
