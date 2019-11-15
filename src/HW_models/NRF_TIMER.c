@@ -359,6 +359,7 @@ void nrf_timer_timer_triggered() {
         event_cc = TIMER3_EVENTS_COMPARE_0;
         break;
       case 4:
+      default: /* Just to silence a -Werror=maybe-uninitialized warning */
         event_cc = TIMER4_EVENTS_COMPARE_0;
         break;
       }
