@@ -23,6 +23,11 @@ There is two main differences in this HAL compared to the real one:
   function `nrf_rng_regw_sideeffects_TASK_START()` needs to be called.
   This replacement HAL functions take care of that.
 
+Note that this HAL version should be, wherever possible, a copy of the
+official nRFx HAL, with only minor differences due to what is described above.
+And normally most differences between the official version and this one will be
+simply due to this not having been updated yet.
+
 Note that, so far, this replacement HAL only provides a small subset of the
 whole nRFx API: Mostly the functions and types used by the current Zephyr
 BLE controller and necessary drivers, and only for the peripherals which are
