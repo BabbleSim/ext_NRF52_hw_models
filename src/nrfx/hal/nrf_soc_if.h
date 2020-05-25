@@ -36,6 +36,9 @@ extern NRF_AAR_Type NRF_AAR_regs;
 extern NRF_RNG_Type NRF_RNG_regs;
 #undef NRF_RNG_BASE
 #define NRF_RNG_BASE                      (&NRF_RNG_regs)
+extern NRF_TEMP_Type NRF_TEMP_regs;
+#undef NRF_TEMP_BASE
+#define NRF_TEMP_BASE                     (&NRF_TEMP_regs)
 extern NRF_RTC_Type NRF_RTC_regs[];
 #undef NRF_RTC0_BASE
 #define NRF_RTC0_BASE                     (&NRF_RTC_regs[0])
