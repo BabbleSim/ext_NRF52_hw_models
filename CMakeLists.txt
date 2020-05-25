@@ -20,6 +20,7 @@ if(CONFIG_BOARD_NRF52_BSIM)
   zephyr_include_directories(
     src/
     src/nrfx/hal/
+    src/nrfx/mdk
     src/nrfx/
     src/HW_models/
   )
