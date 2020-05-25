@@ -85,6 +85,12 @@ extern void __SEV(void);
 extern void NVIC_SetPendingIRQ(IRQn_Type IRQn);
 extern void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
 
+/**
+ * Add empty implementations for some functions that don't need to be simulated.
+ */
+static inline void __DMB() {}
+static inline void __NOP() {}
+
 #define NRFX_ASSERT(...)
 
 #ifdef __cplusplus
