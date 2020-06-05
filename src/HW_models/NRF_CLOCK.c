@@ -99,6 +99,13 @@ void nrf_clock_reqw_sideeffects_TASKS_LFCLKSTART(){
   }
 }
 
+void nrf_clock_reqw_sideeffects_TASKS_LFCLKSTOP() {
+  // There is no effect of turning the clock off that is actually modeled
+  if ( NRF_CLOCK_regs.TASKS_LFCLKSTOP ){
+    NRF_CLOCK_regs.LFCLKRUN = 0;
+  }
+}
+
 void nrf_clock_reqw_sideeffects_TASKS_HFCLKSTART(){
   if ( NRF_CLOCK_regs.TASKS_HFCLKSTART ){
     NRF_CLOCK_regs.TASKS_HFCLKSTART = 0;

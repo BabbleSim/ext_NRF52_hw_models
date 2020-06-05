@@ -39,7 +39,15 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
   } else if (task == NRF_CLOCK_TASK_LFCLKSTART) {
     NRF_CLOCK_regs.TASKS_LFCLKSTART = 1;
     nrf_clock_reqw_sideeffects_TASKS_LFCLKSTART();
+  } else if (task == NRF_CLOCK_TASK_LFCLKSTOP) {
+    NRF_CLOCK_regs.TASKS_LFCLKSTOP = 1;
+    nrf_clock_reqw_sideeffects_TASKS_LFCLKSTOP();
   } else {
-    bs_trace_error_line_time("Not supported task started in nrf_clock\n");
+    bs_trace_warning_line_time("Not supported task started in nrf_clock, %d\n", task);
   }
+}
+
+void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval)
+{
+  /*We don't want to model clock calibration as per now*/
 }

@@ -265,6 +265,18 @@ NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_e
 NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event);
 
 /**
+ * @brief Function for retrieving the trigger status of the task START for given domain.
+ *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
+ * @param[in] domain Clock domain.
+ *
+ * @retval false The task START for the given domain has not been triggered.
+ * @retval true  The task START for the given domain has been triggered.
+ */
+NRF_STATIC_INLINE bool nrf_clock_start_task_check(NRF_CLOCK_Type const * p_reg,
+                                                  nrf_clock_domain_t     domain);
+
+/**
  * @brief Function for changing the low-frequency clock source.
  * @details This function cannot be called when the low-frequency clock is running.
  *
@@ -287,6 +299,45 @@ NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lf
  */
 NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg);
 
+/**
+ * @brief Function for retrieving the clock source for the LFCLK clock when
+ *        the task LKCLKSTART is triggered.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @retval NRF_CLOCK_LFCLK_RC    The internal 32 kHz RC oscillator
+ *                               is running and generating the LFCLK clock.
+ * @retval NRF_CLOCK_LFCLK_Xtal  An external 32 kHz crystal oscillator
+ *                               is running and generating the LFCLK clock.
+ * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesized from
+ *                               the HFCLK is running and generating the LFCLK clock.
+ */
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(NRF_CLOCK_Type const * p_reg);
+
+/**
+ * @brief Function for retrieving the selected source of the high-frequency clock.
+ *
+ * For SoCs not featuring the HFCLKSRC register, this is always also the active source
+ * of the high-frequency clock.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @retval NRF_CLOCK_HFCLK_LOW_ACCURACY  The internal RC oscillator is the selected
+ *                                       source of the high-frequency clock.
+ * @retval NRF_CLOCK_HFCLK_HIGH_ACCURACY An external crystal oscillator is the selected
+ *                                       source of the high-frequency clock.
+ */
+NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * p_reg);
+
+/**
+ * @brief Function for changing the calibration timer interval.
+ *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
+ * @param[in] interval New calibration timer interval in 0.25 s resolution
+ *                     (range: 0.25 seconds to 31.75 seconds).
+ */
+void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval);
+
 
 /* Bodies for inlined functions  */
 
@@ -298,6 +349,23 @@ NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_e
 NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event)
 {
     return (bool)*((volatile uint32_t *)((uint8_t *)p_reg + event));
+}
+
+NRF_STATIC_INLINE bool nrf_clock_start_task_check(NRF_CLOCK_Type const * p_reg,
+                                                  nrf_clock_domain_t     domain)
+{
+    switch (domain)
+    {
+        case NRF_CLOCK_DOMAIN_LFCLK:
+            return ((p_reg->LFCLKRUN & CLOCK_LFCLKRUN_STATUS_Msk)
+                    >> CLOCK_LFCLKRUN_STATUS_Pos);
+        case NRF_CLOCK_DOMAIN_HFCLK:
+            return ((p_reg->HFCLKRUN & CLOCK_HFCLKRUN_STATUS_Msk)
+                    >> CLOCK_HFCLKRUN_STATUS_Pos);
+        default:
+            NRFX_ASSERT(0);
+            return false;
+    }
 }
 
 NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source)
@@ -367,6 +435,19 @@ NRF_STATIC_INLINE bool nrf_clock_is_running(NRF_CLOCK_Type const * p_reg,
             return false;
     }
     return false;
+}
+
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(NRF_CLOCK_Type const * p_reg)
+{
+  /*simple approximation LFCLKSRC = LFCLKSRCCOPY*/
+  return (nrf_clock_lfclk_t)((p_reg->LFCLKSRC & CLOCK_LFCLKSRC_SRC_Msk)
+                                >> CLOCK_LFCLKSRC_SRC_Pos);
+}
+
+NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * p_reg)
+{
+  return (nrf_clock_hfclk_t)((p_reg->HFCLKSTAT & CLOCK_HFCLKSTAT_SRC_Msk)
+                                >> CLOCK_HFCLKSTAT_SRC_Pos);
 }
 
 #ifdef __cplusplus
