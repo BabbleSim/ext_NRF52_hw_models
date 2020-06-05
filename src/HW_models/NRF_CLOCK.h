@@ -22,6 +22,7 @@ void nrf_clock_TASKS_HFCLKSTART();
 void nrf_clock_reqw_sideeffects_INTENSET();
 void nrf_clock_reqw_sideeffects_INTENCLR();
 void nrf_clock_reqw_sideeffects_TASKS_LFCLKSTART();
+void nrf_clock_reqw_sideeffects_TASKS_LFCLKSTOP();
 void nrf_clock_reqw_sideeffects_TASKS_HFCLKSTART();
 void nrf_clock_reqw_sideeffects_TASKS_HFCLKSTOP();
 
