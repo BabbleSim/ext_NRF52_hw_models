@@ -108,7 +108,7 @@ void nrf_rng_int_disable(NRF_RNG_Type * p_reg, uint32_t mask);
  *
  * @return Mask of enabled interrupts.
  */
-static inline uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask);
+NRF_STATIC_INLINE uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for triggering the specified task.
@@ -124,7 +124,7 @@ void nrf_rng_task_trigger(NRF_RNG_Type * p_reg, nrf_rng_task_t rng_task);
  * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
  * @param[in] rng_event The specified event.
  */
-static inline void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event);
+NRF_STATIC_INLINE void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event);
 
 /**
  * @brief Function for retrieving the state of the specified event.
@@ -135,7 +135,7 @@ static inline void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng
  * @retval true  The event is set.
  * @retval false The event is not set.
  */
-static inline bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event);
+NRF_STATIC_INLINE bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event);
 
 /**
  * @brief Function for getting the previously generated random value.
@@ -144,52 +144,52 @@ static inline bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event
  *
  * @return Previously generated random value.
  */
-static inline uint8_t nrf_rng_random_value_get(NRF_RNG_Type const * p_reg);
+NRF_STATIC_INLINE uint8_t nrf_rng_random_value_get(NRF_RNG_Type const * p_reg);
 
 /**
  * @brief Function for enabling digital error correction.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-static inline void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg);
+NRF_STATIC_INLINE void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg);
 
 /**
  * @brief Function for disabling digital error correction.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-static inline void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg);
+NRF_STATIC_INLINE void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg);
 
 
 
 /* Bodies for inlined functions  */
 
-static inline uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask)
+NRF_STATIC_INLINE uint32_t nrf_rng_int_enable_check(NRF_RNG_Type const * p_reg, uint32_t mask)
 {
     return p_reg->INTENSET & mask;
 }
 
-static inline void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event)
+NRF_STATIC_INLINE void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)rng_event)) = 0x0UL;
 }
 
-static inline bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event)
+NRF_STATIC_INLINE bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event)
 {
     return (bool) * ((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)rng_event));
 }
 
-static inline uint8_t nrf_rng_random_value_get(NRF_RNG_Type const * p_reg)
+NRF_STATIC_INLINE uint8_t nrf_rng_random_value_get(NRF_RNG_Type const * p_reg)
 {
     return (uint8_t)(p_reg->VALUE & RNG_VALUE_VALUE_Msk);
 }
 
-static inline void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg)
+NRF_STATIC_INLINE void nrf_rng_error_correction_enable(NRF_RNG_Type * p_reg)
 {
     p_reg->CONFIG |= RNG_CONFIG_DERCEN_Msk;
 }
 
-static inline void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg)
+NRF_STATIC_INLINE void nrf_rng_error_correction_disable(NRF_RNG_Type * p_reg)
 {
     p_reg->CONFIG &= ~RNG_CONFIG_DERCEN_Msk;
 }
