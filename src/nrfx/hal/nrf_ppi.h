@@ -129,6 +129,9 @@ void nrf_ppi_event_endpoint_setup(NRF_PPI_Type *    p_reg,
 void nrf_ppi_task_endpoint_setup(NRF_PPI_Type *    p_reg,
                                  nrf_ppi_channel_t channel,
                                  uint32_t          tep);
+void nrf_ppi_fork_endpoint_setup(NRF_PPI_Type *    p_reg,
+                                 nrf_ppi_channel_t channel,
+                                 uint32_t          fork_tep);
 void nrf_ppi_group_disable(NRF_PPI_Type * p_reg, nrf_ppi_channel_group_t group);
 
 #ifdef __cplusplus

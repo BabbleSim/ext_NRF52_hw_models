@@ -48,6 +48,14 @@ void nrf_ppi_task_endpoint_setup(NRF_PPI_Type *    p_reg,
   nrf_ppi_regw_sideeffects_TEP(channel);
 }
 
+void nrf_ppi_fork_endpoint_setup(NRF_PPI_Type *    p_reg,
+                                 nrf_ppi_channel_t channel,
+                                 uint32_t          fork_tep)
+{
+  p_reg->FORK[(uint32_t) channel].TEP = fork_tep;
+  nrf_ppi_regw_sideeffects_FORK_TEP(channel);
+}
+
 void nrf_ppi_group_disable(NRF_PPI_Type * p_reg, nrf_ppi_channel_group_t group)
 {
   p_reg->TASKS_CHG[(uint32_t) group].DIS = 1;
