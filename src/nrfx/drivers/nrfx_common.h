@@ -50,6 +50,22 @@
 extern "C" {
 #endif
 
+#ifndef NRFX_STATIC_INLINE
+#ifdef NRFX_DECLARE_ONLY
+#define NRFX_STATIC_INLINE
+#else
+#define NRFX_STATIC_INLINE static inline
+#endif
+#endif // NRFX_STATIC_INLINE
+
+#ifndef NRF_STATIC_INLINE
+#ifdef NRF_DECLARE_ONLY
+#define NRF_STATIC_INLINE
+#else
+#define NRF_STATIC_INLINE static inline
+#endif
+#endif // NRF_STATIC_INLINE
+
 /**
  * @defgroup nrfx_common Common module
  * @{
@@ -173,12 +189,12 @@ unsigned int nrfx_peripheral_from_base_address(void const * p_reg);
  */
 #define NRFX_IRQ_NUMBER_GET(base_addr)  NRFX_PERIPHERAL_ID_GET(base_addr)
 
-static inline bool nrfx_is_word_aligned(void const * p_object)
+NRF_STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object)
 {
     return ((((uint32_t)p_object) & 0x3u) == 0u);
 }
 
-static inline IRQn_Type nrfx_get_irq_number(void const * p_reg)
+NRF_STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg)
 {
     return (IRQn_Type)NRFX_IRQ_NUMBER_GET(p_reg);
 }

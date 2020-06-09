@@ -251,7 +251,7 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task);
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-static inline void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event);
+NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for retrieving the state of the specified event.
@@ -262,7 +262,7 @@ static inline void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-static inline bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event);
+NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for changing the low-frequency clock source.
@@ -271,7 +271,7 @@ static inline bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] source New low-frequency clock source.
  */
-static inline void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source);
+NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source);
 
 /**
  * @brief Function for retrieving the selected source for the low-frequency clock.
@@ -285,32 +285,32 @@ static inline void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_
  * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesizer from
  *                               the HFCLK is the selected source for the low-frequency clock.
  */
-static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg);
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg);
 
 
 /* Bodies for inlined functions  */
 
-static inline void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
+NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 }
 
-static inline bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event)
+NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event)
 {
     return (bool)*((volatile uint32_t *)((uint8_t *)p_reg + event));
 }
 
-static inline void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source)
+NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source)
 {
     p_reg->LFCLKSRC = (uint32_t)(source);
 }
 
-static inline nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg)
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg)
 {
     return (nrf_clock_lfclk_t)(p_reg->LFCLKSRC);
 }
 
-static inline bool nrf_clock_is_running(NRF_CLOCK_Type const * p_reg,
+NRF_STATIC_INLINE bool nrf_clock_is_running(NRF_CLOCK_Type const * p_reg,
                                         nrf_clock_domain_t     domain,
                                         void *                 p_clk_src)
 {
