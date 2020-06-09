@@ -216,6 +216,7 @@ void nrf_ppi_event(ppi_event_types_t event);
 void nrf_ppi_regw_sideeffects();
 void nrf_ppi_regw_sideeffects_TEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_EEP(int ch_nbr);
+void nrf_ppi_regw_sideeffects_FORK_TEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_TASKS_CHG_DIS(int i);
 void nrf_ppi_regw_sideeffects_CHENSET();
 void nrf_ppi_regw_sideeffects_CHENCLR();
