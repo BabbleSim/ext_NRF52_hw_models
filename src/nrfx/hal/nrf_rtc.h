@@ -221,6 +221,15 @@ void nrf_rtc_event_enable(NRF_RTC_Type * p_reg, uint32_t mask);
  */
 void nrf_rtc_event_disable(NRF_RTC_Type * p_reg, uint32_t event);
 
+/**
+ * @brief Function for getting the COMPARE event associated with the specified compare channel.
+ *
+ * @param[in] index Compare channel index.
+ *
+ * @return Requested COMPARE event.
+ */
+NRF_STATIC_INLINE nrf_rtc_event_t nrf_rtc_compare_event_get(uint8_t index);
+
 /*****************************/
 /* Inlined functions bodies: */
 /*****************************/
@@ -260,6 +269,11 @@ NRF_STATIC_INLINE uint32_t nrf_rtc_task_address_get(NRF_RTC_Type const * p_reg,
                                                     nrf_rtc_task_t       task)
 {
     return (uint32_t)p_reg + task;
+}
+
+NRF_STATIC_INLINE nrf_rtc_event_t nrf_rtc_compare_event_get(uint8_t index)
+{
+    return (nrf_rtc_event_t)NRFX_OFFSETOF(NRF_RTC_Type, EVENTS_COMPARE[index]);
 }
 
 #ifdef __cplusplus
