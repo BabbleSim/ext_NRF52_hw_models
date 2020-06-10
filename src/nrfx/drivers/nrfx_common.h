@@ -159,6 +159,16 @@ extern "C" {
  */
 #define NRFX_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+/**
+ * @brief Macro for getting the offset (in bytes) from the beginning of a structure
+ *        of the specified type to its specified member.
+ *
+ * @param[in] type   Structure type.
+ * @param[in] member Structure member whose offset is searched for.
+ *
+ * @return Member offset in bytes.
+ */
+#define NRFX_OFFSETOF(type, member)  ((size_t)&(((type *)0)->member))
 
 unsigned int nrfx_peripheral_from_base_address(void const * p_reg);
 
