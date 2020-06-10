@@ -81,6 +81,8 @@ void nrf_timer_regw_sideeffects_TASKS_STOP(int t);
 void nrf_timer_regw_sideeffects_TASKS_START(int t);
 void nrf_timer_regw_sideeffects_TASKS_CLEAR(int t);
 void nrf_timer_regw_sideeffects_TASKS_CAPTURE(int t, int cc_n);
+void nrf_timer_regw_sideeffects_INTENSET(int t);
+void nrf_timer_regw_sideeffects_INTENCLR(int t);
 void nrf_timer_regw_sideeffects_CC(int t, int cc_n);
 
 #ifdef __cplusplus
