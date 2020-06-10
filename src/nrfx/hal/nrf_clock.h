@@ -277,6 +277,23 @@ NRF_STATIC_INLINE bool nrf_clock_start_task_check(NRF_CLOCK_Type const * p_reg,
                                                   nrf_clock_domain_t     domain);
 
 /**
+ * @brief Function for retrieving the state of the clock.
+ *
+ * @param[in]  p_reg     Pointer to the structure of registers of the peripheral.
+ * @param[in]  domain    Clock domain.
+ * @param[out] p_clk_src Pointer to clock source that is running. Set to NULL if not needed.
+ *                       Ignored for HFCLKAUDIO domain. Variable pointed by @p p_clk_src
+ *                       must be of either @ref nrf_clock_lfclk_t type for LFCLK
+ *                       or @ref nrf_clock_hfclk_t type for HFCLK and HFCLK192M.
+ *
+ * @retval false The clock is not running.
+ * @retval true  The clock is running.
+ */
+NRF_STATIC_INLINE bool nrf_clock_is_running(NRF_CLOCK_Type const * p_reg,
+                                            nrf_clock_domain_t     domain,
+                                            void *                 p_clk_src);
+
+/**
  * @brief Function for changing the low-frequency clock source.
  * @details This function cannot be called when the low-frequency clock is running.
  *
@@ -330,6 +347,20 @@ NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(NRF_CLOCK_Type cons
 NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * p_reg);
 
 /**
+ * @brief Function for retrieving the state of the HFCLK clock.
+ *
+ * @note This function is deprecated. Use @ref nrf_clock_is_running instead.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] clk_src Clock source to be checked.
+ *
+ * @retval false The HFCLK clock is not running.
+ * @retval true  The HFCLK clock is running.
+ */
+NRF_STATIC_INLINE bool nrf_clock_hf_is_running(NRF_CLOCK_Type const * p_reg,
+                                               nrf_clock_hfclk_t      clk_src);
+
+/**
  * @brief Function for changing the calibration timer interval.
  *
  * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
@@ -379,8 +410,8 @@ NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * 
 }
 
 NRF_STATIC_INLINE bool nrf_clock_is_running(NRF_CLOCK_Type const * p_reg,
-                                        nrf_clock_domain_t     domain,
-                                        void *                 p_clk_src)
+                                            nrf_clock_domain_t     domain,
+                                            void *                 p_clk_src)
 {
     switch (domain)
     {
@@ -448,6 +479,14 @@ NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * 
 {
   return (nrf_clock_hfclk_t)((p_reg->HFCLKSTAT & CLOCK_HFCLKSTAT_SRC_Msk)
                                 >> CLOCK_HFCLKSTAT_SRC_Pos);
+}
+
+NRF_STATIC_INLINE bool nrf_clock_hf_is_running(NRF_CLOCK_Type const * p_reg,
+                                               nrf_clock_hfclk_t      clk_src)
+{
+    nrf_clock_hfclk_t active_clk_src;
+    bool ret = nrf_clock_is_running(p_reg, NRF_CLOCK_DOMAIN_HFCLK, &active_clk_src);
+    return (ret && (active_clk_src == clk_src));
 }
 
 #ifdef __cplusplus
