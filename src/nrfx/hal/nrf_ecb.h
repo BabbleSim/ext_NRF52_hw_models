@@ -96,6 +96,25 @@ typedef enum
 void nrf_ecb_task_trigger(NRF_ECB_Type * p_reg, nrf_ecb_task_t task);
 
 /**
+ * @brief Function for clearing the specified ECB event.
+ *
+ * @param[in] p_reg Pointer to the peripheral register structure.
+ * @param[in] event Event to clear.
+ */
+NRF_STATIC_INLINE void nrf_ecb_event_clear(NRF_ECB_Type * p_reg, nrf_ecb_event_t event);
+
+/**
+ * @brief Function for retrieving the state of the ECB event.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] event Event to be checked.
+ *
+ * @retval true  The event has been generated.
+ * @retval false The event has not been generated.
+ */
+NRF_STATIC_INLINE bool nrf_ecb_event_check(NRF_ECB_Type const * p_reg, nrf_ecb_event_t event);
+
+/**
  * @brief Function for enabling specified interrupts.
  *
  * @param[in] p_reg Pointer to the peripheral register structure.
@@ -111,7 +130,53 @@ void nrf_ecb_int_enable(NRF_ECB_Type * p_reg, uint32_t mask);
  */
 void nrf_ecb_int_disable(NRF_ECB_Type * p_reg, uint32_t mask);
 
+/**
+ * @brief Function for setting the pointer to the ECB data buffer.
+ *
+ * @note The buffer has to be placed in the Data RAM region.
+ *       For description of the data structure in this buffer, see the Product Specification.
+ *
+ * @param[in] p_reg    Pointer to the peripheral register structure.
+ * @param[in] p_buffer Pointer to the ECB data buffer.
+ */
+NRF_STATIC_INLINE void nrf_ecb_data_pointer_set(NRF_ECB_Type * p_reg, void const * p_buffer);
 
+/**
+ * @brief Function for getting the pointer to the ECB data buffer.
+ *
+ * @param[in] p_reg Pointer to the peripheral register structure.
+ *
+ * @return Pointer to the ECB data buffer.
+ */
+NRF_STATIC_INLINE void * nrf_ecb_data_pointer_get(NRF_ECB_Type const * p_reg);
+
+/*****************************/
+/* Inlined functions bodies: */
+/*****************************/
+
+NRF_STATIC_INLINE void nrf_ecb_event_clear(NRF_ECB_Type * p_reg, nrf_ecb_event_t event)
+{
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
+#if __CORTEX_M == 0x04
+    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
+    (void)dummy;
+#endif
+}
+
+NRF_STATIC_INLINE bool nrf_ecb_event_check(NRF_ECB_Type const * p_reg, nrf_ecb_event_t event)
+{
+    return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
+}
+
+NRF_STATIC_INLINE void nrf_ecb_data_pointer_set(NRF_ECB_Type * p_reg, void const * p_buffer)
+{
+    p_reg->ECBDATAPTR = (uint32_t)p_buffer;
+}
+
+NRF_STATIC_INLINE void * nrf_ecb_data_pointer_get(NRF_ECB_Type const * p_reg)
+{
+    return (void *)(p_reg->ECBDATAPTR);
+}
 
 #ifdef __cplusplus
 }
