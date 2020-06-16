@@ -262,6 +262,13 @@ void nrf_ccm_regw_sideeffects_TASKS_KSGEN(){
   }
 }
 
+void nrf_ccm_regw_sideeffects_TASKS_STOP(){
+  if (NRF_CCM_regs.TASKS_STOP) {
+    NRF_CCM_regs.TASKS_STOP = 0;
+    nrf_ccm_TASK_STOP();
+    bs_trace_warning_line_time("CCM: TASK_STOP functionality is not implemented\n");
+  }
+}
 
 void nrf_ccm_radio_received_packet(bool crc_error) {
   if (!decryption_ongoing) {

@@ -14,6 +14,9 @@ void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg, nrf_ccm_task_t task)
   if ( task == NRF_CCM_TASK_KSGEN ) {
     NRF_CCM->TASKS_KSGEN = 1;
     nrf_ccm_regw_sideeffects_TASKS_KSGEN();
+  } else if ( task == NRF_CCM_TASK_STOP ) {
+    NRF_CCM->TASKS_STOP = 1;
+    nrf_ccm_regw_sideeffects_TASKS_STOP();
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_ccm\n");
   }
