@@ -138,6 +138,14 @@ NRF_STATIC_INLINE void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t
 NRF_STATIC_INLINE bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event);
 
 /**
+ * @brief Function for clearing shortcuts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of shortcuts.
+ */
+NRF_STATIC_INLINE void nrf_rng_shorts_disable(NRF_RNG_Type * p_reg, uint32_t mask);
+
+/**
  * @brief Function for getting the previously generated random value.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
@@ -177,6 +185,11 @@ NRF_STATIC_INLINE void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t
 NRF_STATIC_INLINE bool nrf_rng_event_check(NRF_RNG_Type const * p_reg, nrf_rng_event_t rng_event)
 {
     return (bool) * ((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)rng_event));
+}
+
+NRF_STATIC_INLINE void nrf_rng_shorts_disable(NRF_RNG_Type * p_reg, uint32_t mask)
+{
+     p_reg->SHORTS &= ~mask;
 }
 
 NRF_STATIC_INLINE uint8_t nrf_rng_random_value_get(NRF_RNG_Type const * p_reg)
