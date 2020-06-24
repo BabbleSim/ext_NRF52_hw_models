@@ -20,6 +20,12 @@ void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
   } else if ( task == NRF_RADIO_TASK_DISABLE ) {
     p_reg->TASKS_DISABLE = 1;
     nrf_radio_regw_sideeffects_TASKS_DISABLE();
+  } else if ( task == NRF_RADIO_TASK_RSSISTOP ) {
+    p_reg->TASKS_RSSISTOP = 1;
+    nrf_radio_regw_sideeffects_TASKS_RSSISTOP();
+  } else if ( task == NRF_RADIO_TASK_RSSISTART ) {
+    p_reg->TASKS_RSSISTART = 1;
+    nrf_radio_regw_sideeffects_TASKS_RSSISTART();
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_radio\n");
   }
@@ -29,6 +35,12 @@ void nrf_radio_int_enable(NRF_RADIO_Type * p_reg, uint32_t mask)
 {
   p_reg->INTENSET = mask;
   nrf_radio_regw_sideeffects_INTENSET();
+}
+
+void nrf_radio_int_disable(NRF_RADIO_Type * p_reg, uint32_t mask)
+{
+  p_reg->INTENCLR = mask;
+  nrf_radio_regw_sideeffects_INTENCLR();
 }
 
 void nrf_radio_bcc_set(NRF_RADIO_Type * p_reg, uint32_t radio_bcc)

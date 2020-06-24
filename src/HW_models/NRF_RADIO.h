@@ -34,9 +34,12 @@ void nrf_radio_bitcounter_timer_triggered();
 void nrf_radio_regw_sideeffects_BCC();
 void nrf_radio_regw_sideeffects_POWER();
 void nrf_radio_regw_sideeffects_TASKS_DISABLE();
+void nrf_radio_regw_sideeffects_TASKS_RSSISTART();
+void nrf_radio_regw_sideeffects_TASKS_RSSISTOP();
 void nrf_radio_regw_sideeffects_TASKS_RXEN();
 void nrf_radio_regw_sideeffects_TASKS_TXEN();
 void nrf_radio_regw_sideeffects_INTENSET();
+void nrf_radio_regw_sideeffects_INTENCLR();
 
 #ifdef __cplusplus
 }
