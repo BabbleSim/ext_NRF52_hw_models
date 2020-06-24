@@ -368,6 +368,21 @@ void nrf_radio_regw_sideeffects_TASKS_DISABLE(){
   }
 }
 
+void nrf_radio_regw_sideeffects_TASKS_RSSISTART() {
+  //We don't need to model this as per now
+  if ( NRF_RADIO_regs.TASKS_RSSISTART ){
+    NRF_RADIO_regs.TASKS_RSSISTART = 0;
+    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTART register is not supported by the model\n");
+  }
+}
+
+void nrf_radio_regw_sideeffects_TASKS_RSSISTOP() {
+  //We don't need to model this as per now
+  if ( NRF_RADIO_regs.TASKS_RSSISTOP ){
+    NRF_RADIO_regs.TASKS_RSSISTOP = 0;
+    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTOP register is not supported by the model\n");
+  }
+}
 
 void nrf_radio_regw_sideeffects_INTENSET(){
   if ( NRF_RADIO_regs.INTENSET ){
