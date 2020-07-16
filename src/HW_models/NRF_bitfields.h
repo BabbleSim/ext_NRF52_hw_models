@@ -1,6 +1,8 @@
 /*
  * Copy paste of the whole nrf52_bitfields.h
- * (from the nrfx mdk) to be used by the HW models:
+ * (from the nrfx mdk) to be used by the HW models
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 /*
 
