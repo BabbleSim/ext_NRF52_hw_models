@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2020 Oticon A/S
+ * Copyright (c) 2020 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Note that the function prototypes are taken from the NRFx HAL
+ */
 #include "nrf_aar.h"
 #include "bs_tracing.h"
 #include "NRF_AAR.h"
