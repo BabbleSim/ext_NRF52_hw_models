@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2019 Oticon A/S
 
 # CMake file to compile this BabbleSim component as a west module in Zephyr
 
