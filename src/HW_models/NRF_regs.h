@@ -1,8 +1,17 @@
-/*
+/**
  * Hacked version of nrf52.h (from the nrfx mdk)
  * without the base addresses, the includes and a few defines
  * to be used by the HW models
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Note that there is a few changes compared to the original
+ * Where relevant, these changes are:
+ * Copyright (c) 2017 Oticon A/S
+ *
+ * The original file header with copyright and license can be found below
  */
+
 #include "NRF_bitfields.h"
 
 /****************************************************************************************************//**
