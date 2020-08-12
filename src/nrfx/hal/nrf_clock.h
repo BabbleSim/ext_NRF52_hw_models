@@ -372,6 +372,18 @@ void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval);
 
 /* Bodies for inlined functions  */
 
+NRF_STATIC_INLINE uint32_t nrf_clock_task_address_get(NRF_CLOCK_Type const * p_reg,
+                                                      nrf_clock_task_t       task)
+{
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)task);
+}
+
+NRF_STATIC_INLINE uint32_t nrf_clock_event_address_get(NRF_CLOCK_Type const * p_reg,
+                                                       nrf_clock_event_t      event)
+{
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)event);
+}
+
 NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
