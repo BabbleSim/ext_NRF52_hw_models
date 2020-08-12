@@ -95,7 +95,9 @@ extern void __SEV(void);
 extern void NVIC_SetPendingIRQ(IRQn_Type IRQn);
 extern void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
 
+#ifndef NRFX_ASSERT
 #define NRFX_ASSERT(...)
+#endif
 
 #ifdef __cplusplus
 }
