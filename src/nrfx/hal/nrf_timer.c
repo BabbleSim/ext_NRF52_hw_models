@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_timer.h"
+#include "hal/nrf_timer.h"
 #include "bs_tracing.h"
 #include "NRF_TIMER.h"
 

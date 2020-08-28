@@ -1,11 +1,26 @@
 **Models of some of the HW present in a NRF52xxx.**<br>
 Where relevant differences exist, these models try to align with a NRF52382.
 
-This repo contains both models of the NRF52 HW as well as a replacement nRFx
-HAL.<br>
-This replacement HAL is a modified version of the real nRFx to be used with
-these models.
-With it, the Zephyr SW should work without needing further changes.
+This repo contains both models of the NRF52 HW as well as some replacement nrfx
+HAL functions. When used in combination with the real nrfx, these should enable code
+meant for the nrfx to run without needing further changes.
+This includes Zephyr SW.
+
+When compiling this component using the provided Makefile (not with Zephyr's build system),
+the environment variable `NRFX_BASE` must be set to the path where a nrfx has been cloned. 
+The nrfx must be at least version 2.3.0.
+So for example, if the nrfx has been cloned as:
+
+```
+cd /some_path/nrfx/
+git clone git@github.com:NordicSemiconductor/nrfx.git .
+```
+`NRFX_BASE` must be set as:
+
+```
+export NRFX_BASE=/some_path/nrfx/
+```
+
 See the [nrfx/hal/README.md](../src/nrfx/hal/README.md) for more details.
 
 This models can be used directly with

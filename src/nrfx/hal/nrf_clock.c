@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_clock.h"
+#include "hal/nrf_clock.h"
 #include "bs_tracing.h"
 #include "NRF_CLOCK.h"
 
@@ -45,9 +45,4 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
   } else {
     bs_trace_warning_line_time("Not supported task started in nrf_clock, %d\n", task);
   }
-}
-
-void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval)
-{
-  /*We don't want to model clock calibration as per now*/
 }

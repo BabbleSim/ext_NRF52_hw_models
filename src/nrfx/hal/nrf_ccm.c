@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_ccm.h"
+#include "hal/nrf_ccm.h"
 #include "bs_tracing.h"
 #include "NRF_AES_CCM.h"
 

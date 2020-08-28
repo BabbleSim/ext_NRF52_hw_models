@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_ppi.h"
+#include "hal/nrf_ppi.h"
 #include "NRF_PPI.h"
 #include "bs_tracing.h"
 

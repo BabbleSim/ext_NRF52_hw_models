@@ -6,10 +6,9 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_aar.h"
+#include "hal/nrf_aar.h"
 #include "bs_tracing.h"
 #include "NRF_AAR.h"
-
 
 void nrf_aar_int_enable(NRF_AAR_Type * p_reg, uint32_t mask)
 {

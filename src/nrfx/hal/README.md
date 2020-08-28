@@ -1,7 +1,8 @@
 ## nRFx HAL
 
-The HAL provided with this models is a modified version of the
-[real nRFx HAL](https://github.com/NordicSemiconductor/nrfx/)
+The HAL source files provided with these models implement
+some modifications to the HAL interface [real nRFx HAL](https://github.com/NordicSemiconductor/nrfx/)
+needed due to the HW models peculiarities.
 Its main purpose is to allow unmodified Zephyr code to run directly
 using this repository HW models.
 
@@ -22,6 +23,10 @@ There is two main differences in this HAL compared to the real one:
   that memory location content. To trigger the actual sideeffect the
   function `nrf_rng_regw_sideeffects_TASK_START()` needs to be called.
   This replacement HAL functions take care of that.
+
+The original implementation of the HAL APIs from the real nrfx is included in `nrf_hal_originals.c`.
+All these functions are labelled as weak, so they can be replaced as needed with new definition in `src/nrfx/hal/`
+This removes the need for duplicating code.
 
 Note that this HAL version should be, wherever possible, a copy of the
 official nRFx HAL, with only minor differences due to what is described above.

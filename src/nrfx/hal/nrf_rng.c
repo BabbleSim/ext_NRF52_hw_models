@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_rng.h"
+#include "hal/nrf_rng.h"
 #include "bs_tracing.h"
 #include "NRF_RNG.h"
 
