@@ -6,7 +6,7 @@
 #ifndef _NRF_HW_MODEL_AES_CCM_H
 #define _NRF_HW_MODEL_AES_CCM_H
 
-#include "NRF_regs.h"
+#include "nrfx.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus

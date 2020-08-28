@@ -86,7 +86,7 @@ thread into the HW models thread.
 
 ### The SW registers IF
 
-Each perihperal model which has HW registers accessible by SW, presents
+Each peripheral model which has HW registers accessible by SW, presents
 a structure which matches those registers' layout.
 This structure will be allocated somewhere in the process memory, but certainly
 not in the same address as in the real HW.

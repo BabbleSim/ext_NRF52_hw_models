@@ -1,14 +1,15 @@
 /*
  * Copyright (c) 2019 Oticon A/S
+ * Copyright (c) 2020 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
  */
 
+#include "nrfx.h"
 #include "bs_tracing.h"
-#include "nrfx_common.h"
 
-unsigned int nrfx_peripheral_from_base_address(void const * p_reg){
+IRQn_Type nrfx_get_irq_number(void const * p_reg){
   /*
    * Peripheral numbers match interrupt numbers
    * See https://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52832.ps.v1.1/memory.html?cp=3_1_0_7_2#memorymap

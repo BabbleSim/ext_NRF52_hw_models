@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_radio.h"
+#include "hal/nrf_radio.h"
 #include "bs_tracing.h"
 #include "NRF_RADIO.h"
 

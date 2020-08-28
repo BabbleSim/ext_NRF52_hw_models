@@ -5,7 +5,7 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
-#include "nrf_ecb.h"
+#include "hal/nrf_ecb.h"
 #include "bs_tracing.h"
 #include "NRF_AES_ECB.h"
 

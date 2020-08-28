@@ -6,7 +6,7 @@
 #ifndef _NRF_HW_MODEL_NVMC_H
 #define _NRF_HW_MODEL_NVMC_H
 
-#include "NRF_regs.h"
+#include "nrfx.h"
 
 #ifdef __cplusplus
 extern "C"{
