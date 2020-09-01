@@ -85,6 +85,14 @@ NRF_STATIC_INLINE void nrf_aar_event_clear(NRF_AAR_Type *  p_reg,
                                            nrf_aar_event_t event);
 
 /**
+ * @brief Function for enabling the specified interrupts.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
+ */
+void nrf_aar_int_enable(NRF_AAR_Type * p_reg, uint32_t mask);
+
+/**
  * @brief Function for disabling the specified interrupts.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
