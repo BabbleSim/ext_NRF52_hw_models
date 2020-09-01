@@ -10,6 +10,13 @@
 #include "bs_tracing.h"
 #include "NRF_AAR.h"
 
+
+void nrf_aar_int_enable(NRF_AAR_Type * p_reg, uint32_t mask)
+{
+  p_reg->INTENSET = mask;
+  nrf_aar_regw_sideeffects_INTENSET();
+}
+
 void nrf_aar_int_disable(NRF_AAR_Type * p_reg, uint32_t mask)
 {
   p_reg->INTENCLR = mask;

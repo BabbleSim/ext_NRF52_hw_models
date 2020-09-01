@@ -19,6 +19,7 @@ void nrf_aar_clean_up();
 
 void nrf_aar_TASK_START();
 void nrf_aar_TASK_STOP() ;
+void nrf_aar_regw_sideeffects_INTENSET();
 void nrf_aar_regw_sideeffects_INTENCLR();
 void nrf_aar_regw_sideeffects_TASKS_START();
 void nrf_aar_regw_sideeffects_TASKS_STOP();
