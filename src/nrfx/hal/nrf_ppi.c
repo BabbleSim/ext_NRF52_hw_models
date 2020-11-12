@@ -9,6 +9,18 @@
 #include "NRF_PPI.h"
 #include "bs_tracing.h"
 
+void nrf_ppi_channel_enable(NRF_PPI_Type * p_reg, nrf_ppi_channel_t channel)
+{
+  p_reg->CHENSET = (1 << channel);
+  nrf_ppi_regw_sideeffects_CHENSET();
+}
+
+void nrf_ppi_channel_disable(NRF_PPI_Type * p_reg, nrf_ppi_channel_t channel)
+{
+  p_reg->CHENCLR = (1 << channel);
+  nrf_ppi_regw_sideeffects_CHENCLR();
+}
+
 void nrf_ppi_channels_enable(NRF_PPI_Type * p_reg, uint32_t mask)
 {
   p_reg->CHENSET = mask;
