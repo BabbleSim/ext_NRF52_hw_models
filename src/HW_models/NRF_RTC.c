@@ -24,7 +24,6 @@
 /* To simplify, so far it is only modeled what the current BLE controller uses
  *
  * NOT modelled:
- *  * TICK events
  *  * the delay in tasks or in the synchronization of configuration into the LF clock domain
  *  * TRIGOVRFLW task or OVRFLW  event
  *
@@ -46,6 +45,8 @@ static uint32_t RTC_INTEN[N_RTC] = {0};
 
 bs_time_t Timer_RTC = TIME_NEVER;
 static bs_time_t cc_timers[N_RTC][N_CC] = {{TIME_NEVER}}; //when each CC will match (in microseconds)
+static bs_time_t timers_tick[N_RTC]     = {TIME_NEVER}; //when each tick event will match (in microseconds)
+
 
 static bs_time_t RTC_counter_startT[N_RTC] = {TIME_NEVER}; //Time when the counter was "started" (really the time that would correspond to COUNTER = 0)
 static uint32_t counter[N_RTC] = {0}; //Internal counter value when the counter was stopped
@@ -125,12 +126,67 @@ static void time_of_1_counter_wrap(int rtc, bs_time_t *us, uint16_t *frac) {
   *us = counter_to_time((uint64_t)RTC_COUNTER_MASK + 1, rtc, frac);
 }
 
+/**
+ * Return the time in microseconds when a given counter value (<rtc_counter>)
+ * will be reached next time for the RTC number (<rtc>).
+ * Note that if this counter value has just been reached, it will return the next match.
+ * That is, one full period later.
+ * @note To obtain a time delta, use @ref counter_to_time instead
+ */
+static bs_time_t get_time_of_next_counter_match(int rtc, uint32_t rtc_counter) {
+  uint16_t frac;
+  bs_time_t next_match_time = RTC_counter_startT[rtc]
+                              + counter_to_time(rtc_counter, rtc, &frac);
+
+  bs_time_t now = tm_get_hw_time();
+
+  if (next_match_time <= now) {
+    bs_time_t t_us;
+    uint16_t t_frac;
+
+    time_of_1_counter_wrap(rtc, &t_us, &t_frac);
+
+    do {
+      next_match_time += t_us;
+      frac += t_frac;
+      if (frac >= 0x200){
+        frac -= 0x200;
+        next_match_time +=1;
+      }
+    } while (next_match_time <= now);
+  }
+
+  return next_match_time;
+}
+
+/**
+ * Updates the time where the next tick event will be triggered
+ */
+static void update_next_match_events_tick(int rtc) {
+  /* When the tick event is enabled, a tick is generated at every increment
+   * of the timer. Here we calculate the time where the next tick occurs.
+   * To be able to know what the next counter value is, we first ensure
+   * that the current counter value is up to date.
+   */
+  nrf_rtc_update_COUNTER(rtc);
+  bs_time_t next_match_time = get_time_of_next_counter_match(rtc, (NRF_RTC_regs[rtc].COUNTER + 1) & RTC_COUNTER_MASK);
+  timers_tick[rtc] = next_match_time;
+  if (next_match_time < Timer_RTC) {
+    Timer_RTC = next_match_time;
+  }
+}
+
 static void update_master_timer() {
   Timer_RTC = TIME_NEVER;
   for (int rtc = 0; rtc < N_RTC ; rtc++) {
     if (RTC_Running[rtc] == false) {
       continue;
     }
+
+    if (NRF_RTC_regs[rtc].EVTEN & RTC_EVTENSET_TICK_Msk) {
+      update_next_match_events_tick(rtc);
+    }
+
     for (int cc = 0 ; cc < N_CC ; cc++) {
       if (cc_timers[rtc][cc] < Timer_RTC) {
         Timer_RTC = cc_timers[rtc][cc];
@@ -146,29 +202,7 @@ static void update_master_timer() {
  */
 static void update_cc_timer(int rtc, int cc) {
   if (RTC_Running[rtc] == true) {
-    uint16_t next_match_frac;
-    bs_time_t next_match_us = RTC_counter_startT[rtc]
-                              + counter_to_time(NRF_RTC_regs[rtc].CC[cc], rtc, &next_match_frac);
-
-    bs_time_t now = tm_get_hw_time();
-
-    if (next_match_us <= now) {
-      bs_time_t t_us;
-      uint16_t t_frac;
-
-      time_of_1_counter_wrap(rtc, &t_us, &t_frac);
-
-      do {
-        next_match_us += t_us;
-        next_match_frac += t_frac;
-        if (next_match_frac >= 0x200){
-          next_match_frac -= 0x200;
-          next_match_us +=1;
-        }
-      } while (next_match_us <= now);
-
-    }
-    cc_timers[rtc][cc] = next_match_us;
+    cc_timers[rtc][cc] = get_time_of_next_counter_match(rtc, NRF_RTC_regs[rtc].CC[cc]);
   } else {
     cc_timers[rtc][cc] = TIME_NEVER;
   }
@@ -186,24 +220,41 @@ void nrf_rtc_timer_triggered() {
       continue;
     }
     ppi_event_types_t event = RTC0_EVENTS_COMPARE_0;
+    ppi_event_types_t event_tick = RTC0_EVENTS_TICK;
     unsigned int irq_t         = NRF5_IRQ_RTC0_IRQn;
     switch (rtc){
     case 0:
       event = RTC0_EVENTS_COMPARE_0;
+      event_tick = RTC0_EVENTS_TICK;
       irq_t = NRF5_IRQ_RTC0_IRQn;
       break;
     case 1:
       event = RTC1_EVENTS_COMPARE_0;
+      event_tick = RTC1_EVENTS_TICK;
       irq_t = NRF5_IRQ_RTC1_IRQn;
       break;
     case 2:
       event = RTC2_EVENTS_COMPARE_0;
+      event_tick = RTC2_EVENTS_TICK;
       irq_t = NRF5_IRQ_RTC1_IRQn;
       bs_trace_error_line_time("There is no IRQ mapped for RTC2\n");
       break;
     }
 
     NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
+
+    if ( timers_tick[rtc] == Timer_RTC) {
+      bs_trace_raw_time(8, "RTC%i: Event tick\n", rtc);
+      RTC_regs->EVENTS_TICK = 1;
+
+      if ( RTC_regs->EVTEN & RTC_EVTENSET_TICK_Msk ){
+        nrf_ppi_event(event_tick);
+      }
+
+      if ( RTC_INTEN[rtc] & RTC_INTENSET_TICK_Msk ){
+        hw_irq_ctrl_set_irq(irq_t);
+      }
+    }
 
     uint32_t mask = RTC_EVTEN_COMPARE0_Msk;
 
@@ -232,9 +283,6 @@ void nrf_rtc_timer_triggered() {
  * Check if an EVTEN or INTEN has the tick event set
  */
 static void check_not_supported_func(uint32_t i) {
-  if (i &  RTC_EVTEN_TICK_Msk) {
-    bs_trace_warning_line_time("RTC: The TICK functionality is not modelled\n");
-  }
   if (i &  RTC_EVTEN_OVRFLW_Msk) {
     bs_trace_warning_line_time("RTC: The OVERFLOW functionality is not modelled\n");
   }
@@ -279,6 +327,7 @@ void nrf_rtc_TASKS_STOP(int rtc) {
   counter[rtc] &= RTC_COUNTER_MASK;
   for (int cc = 0 ; cc < N_CC ; cc++){
     cc_timers[rtc][cc] = TIME_NEVER;
+    timers_tick[rtc] = TIME_NEVER;
   }
   update_master_timer();
 }
@@ -336,6 +385,12 @@ void nrf_rtc_regw_sideeffect_INTENSET(int i) {
     RTC_regs->INTENSET = RTC_INTEN[i];
     check_not_supported_func(RTC_INTEN[i]);
   }
+
+  if (RTC_regs->INTENSET & RTC_INTENSET_TICK_Msk){
+    bs_trace_raw_time(8, "RTC: Simulations are slower when the tick event is enabled\n");
+    update_next_match_events_tick(i);
+    nrf_hw_find_next_timer_to_trigger();
+  }
 }
 
 void nrf_rtc_regw_sideeffect_INTENCLR(int i) {
@@ -353,6 +408,12 @@ void nrf_rtc_regw_sideeffect_EVTENSET(int i) {
     RTC_regs->EVTEN |= RTC_regs->EVTENSET;
     RTC_regs->EVTENSET = RTC_regs->EVTEN;
     check_not_supported_func(RTC_regs->EVTEN);
+  }
+
+  if (RTC_regs->EVTENSET & RTC_EVTENSET_TICK_Msk){
+    bs_trace_raw_time(8, "RTC: Simulations are slower when the tick event is enabled\n");
+    update_next_match_events_tick(i);
+    nrf_hw_find_next_timer_to_trigger();
   }
 }
 
