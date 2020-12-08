@@ -7,7 +7,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "NRF_RTC.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "NRF_CLOCK.h"
 #include "NRF_HW_model_top.h"
 #include "irq_ctrl.h"
@@ -200,6 +204,7 @@ static unsigned int get_irq_t(int rtc)
     return irq_t;
 }
 
+#if defined(PPI_PRESENT)
 static ppi_event_types_t get_event(int rtc)
 {
     ppi_event_types_t event = RTC0_EVENTS_COMPARE_0;
@@ -217,19 +222,27 @@ static ppi_event_types_t get_event(int rtc)
 
     return event;
 }
+#endif /*PPI_PRESENT*/
 
 void nrf_rtc_timer_triggered() {
   for ( int rtc = 0; rtc < N_RTC-1/*the 3rd rtc does not have an int*/ ; rtc++ ){
     if ( RTC_Running[rtc] == false ) {
       continue;
     }
+
+#if defined(PPI_PRESENT)
     ppi_event_types_t event = get_event(rtc);
+#endif
 
     NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
 
     uint32_t mask = RTC_EVTEN_COMPARE0_Msk;
 
+#if defined(PPI_PRESENT)
     for ( int cc = 0 ; cc < N_CC ; cc++, event++, mask <<=1) {
+#else
+    for ( int cc = 0 ; cc < N_CC ; cc++, mask <<=1) {
+#endif
       if ( cc_timers[rtc][cc] == Timer_RTC ){ //This CC is matching now
         update_cc_timer(rtc, cc); //Next time it will match
 
@@ -238,7 +251,12 @@ void nrf_rtc_timer_triggered() {
         if ( ( RTC_regs->EVTEN | RTC_INTEN[rtc] ) & mask ) {
           RTC_regs->EVENTS_COMPARE[cc] = 1;
           if ( RTC_regs->EVTEN & mask ){
+#if defined(PPI_PRESENT)
             nrf_ppi_event(event);
+#elif defined(DPPI_PRESENT)
+            uint8_t channel  = NRF_RTC_regs[rtc].PUBLISH_COMPARE[cc] & RTC_PUBLISH_COMPARE_CHIDX_Msk;
+            nrf_dppi_publish(channel);
+#endif
           }
           if ( RTC_INTEN[rtc] & mask ){
             hw_irq_ctrl_set_irq(get_irq_t(rtc));
