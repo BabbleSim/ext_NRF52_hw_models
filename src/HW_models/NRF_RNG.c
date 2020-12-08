@@ -8,7 +8,11 @@
 #include <stdbool.h>
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "irq_ctrl.h"
 #include "irq_sources.h"
 #include "bs_rand_main.h"
@@ -145,7 +149,17 @@ void nrf_rng_timer_triggered(){
   nrf_hw_find_next_timer_to_trigger();
 
   NRF_RNG_regs.EVENTS_VALRDY = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(RNG_EVENTS_VALRDY);
+#else
+  if (NRF_RNG_regs.PUBLISH_VALRDY & RNG_PUBLISH_VALRDY_EN_Msk)
+  {
+    uint8_t channel  = NRF_RNG_regs.PUBLISH_VALRDY & RNG_PUBLISH_VALRDY_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
+
   if ( RNG_INTEN ){
     hw_irq_ctrl_set_irq(NRF5_IRQ_RNG_IRQn);
     //Note: there is no real need to delay the interrupt a delta
