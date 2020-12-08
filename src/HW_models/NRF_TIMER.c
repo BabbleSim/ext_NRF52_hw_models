@@ -8,7 +8,11 @@
 #include "time_machine_if.h"
 #include "NRF_TIMER.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "irq_ctrl.h"
 #include "irq_sources.h"
 #include "bs_tracing.h"
@@ -344,6 +348,7 @@ void nrf_timer_timer_triggered() {
 
       NRF_TIMER_regs[t].EVENTS_COMPARE[cc] = 1;
 
+#if !defined(DPPI_PRESENT)
       ppi_event_types_t event_cc;
       switch (t) {
       case 0:
@@ -365,6 +370,13 @@ void nrf_timer_timer_triggered() {
       }
 
       nrf_ppi_event(event_cc + cc);
+#else
+      if (NRF_TIMER_regs[t].PUBLISH_COMPARE[cc] & TIMER_PUBLISH_COMPARE_EN_Msk)
+      {
+        uint8_t channel  = NRF_TIMER_regs[t].PUBLISH_COMPARE[cc] & TIMER_PUBLISH_COMPARE_CHIDX_Msk;
+        nrf_dppi_publish(channel);
+      }
+#endif
 
       if ( TIMER_INTEN[t] & (TIMER_INTENSET_COMPARE0_Msk << cc) ){
         int irq = NRF5_IRQ_TIMER0_IRQn;
@@ -391,4 +403,3 @@ void nrf_timer_timer_triggered() {
   }//for t(imer)
   update_master_timer();
 }
-
