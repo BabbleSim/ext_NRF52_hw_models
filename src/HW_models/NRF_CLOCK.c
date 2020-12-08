@@ -8,7 +8,11 @@
 #include <stdint.h>
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "NRF_RTC.h"
 #include "irq_ctrl.h"
 #include "irq_sources.h"
@@ -141,7 +145,17 @@ void nrf_clock_LFTimer_triggered(){
                           | (NRF_CLOCK_regs.LFCLKSRCCOPY << CLOCK_LFCLKSTAT_SRC_Pos);
 
     NRF_CLOCK_regs.EVENTS_LFCLKSTARTED = 1;
+
+#if defined(PPI_PRESENT)
     nrf_ppi_event(CLOCK_EVENTS_LFCLKSTARTED);
+#elif defined(DPPI_PRESENT)
+    if (NRF_CLOCK_regs.PUBLISH_LFCLKSTARTED & CLOCK_PUBLISH_LFCLKSTARTED_EN_Msk)
+      {
+        uint8_t channel  = NRF_CLOCK_regs.PUBLISH_LFCLKSTARTED & CLOCK_PUBLISH_LFCLKSTARTED_CHIDX_Msk;
+        nrf_dppi_publish(channel);
+      }
+#endif
+
     if ( CLOCK_INTEN & CLOCK_INTENSET_LFCLKSTARTED_Msk ){
       hw_irq_ctrl_set_irq(NRF5_IRQ_POWER_CLOCK_IRQn);
     }
@@ -157,11 +171,26 @@ void nrf_clock_HFTimer_triggered(){
   if ( HF_Clock_state == Starting ){
     HF_Clock_state = Started;
 
+#if !defined(NRF53_SERIES)
     NRF_CLOCK_regs.HFCLKSTAT = CLOCK_HFCLKSTAT_STATE_Msk
                                | ( CLOCK_HFCLKSTAT_SRC_Xtal << CLOCK_HFCLKSTAT_SRC_Pos);
+#else
+    NRF_CLOCK_regs.HFCLKSTAT = CLOCK_HFCLKSTAT_STATE_Msk
+                               | ( CLOCK_HFCLKSTAT_SRC_HFXO << CLOCK_HFCLKSTAT_SRC_Pos);
+#endif
 
     NRF_CLOCK_regs.EVENTS_HFCLKSTARTED = 1;
+
+#if defined(PPI_PRESENT)
     nrf_ppi_event(CLOCK_EVENTS_HFCLKSTARTED);
+#elif defined(DPPI_PRESENT)
+    if (NRF_CLOCK_regs.PUBLISH_HFCLKSTARTED & CLOCK_PUBLISH_HFCLKSTARTED_EN_Msk)
+      {
+        uint8_t channel  = NRF_CLOCK_regs.PUBLISH_HFCLKSTARTED & CLOCK_PUBLISH_HFCLKSTARTED_CHIDX_Msk;
+        nrf_dppi_publish(channel);
+      }
+#endif
+
     if ( CLOCK_INTEN & CLOCK_INTENSET_HFCLKSTARTED_Msk ){
       hw_irq_ctrl_set_irq(NRF5_IRQ_POWER_CLOCK_IRQn);
     }

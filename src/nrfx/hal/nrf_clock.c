@@ -8,6 +8,9 @@
 #include "hal/nrf_clock.h"
 #include "bs_tracing.h"
 #include "NRF_CLOCK.h"
+#if defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 
 void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask)
 {
@@ -46,3 +49,62 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
     bs_trace_warning_line_time("Not supported task started in nrf_clock, %d\n", task);
   }
 }
+
+
+#if defined(DPPI_PRESENT)
+void nrf_clock_subscriber_add(nrf_clock_task_t task, uint8_t channel)
+{
+  switch(task) {
+    case NRF_CLOCK_TASK_HFCLKSTART:
+      nrf_dppi_subscriber_add(channel, nrf_clock_TASKS_HFCLKSTART);
+      break;
+    case NRF_CLOCK_TASK_HFCLKSTOP:
+      nrf_dppi_subscriber_add(channel, nrf_clock_TASKS_HFCLKSTOP);
+      break;
+    case NRF_CLOCK_TASK_LFCLKSTART:
+      nrf_dppi_subscriber_add(channel, nrf_clock_TASKS_LFCLKSTART);
+      break;
+    default:
+      bs_trace_warning_line_time(
+        "NRF_CLOCK: The task %p for chnbr %i does not match any modelled task in NRF_DPPI.c => it will be ignored\n",
+        task, channel);
+      break;
+  }
+}
+
+void nrf_clock_subscriber_remove(nrf_clock_task_t task)
+{
+  switch(task) {
+    case NRF_CLOCK_TASK_HFCLKSTART:
+      nrf_dppi_subscriber_remove(nrf_clock_TASKS_HFCLKSTART);
+      break;
+    case NRF_CLOCK_TASK_HFCLKSTOP:
+      nrf_dppi_subscriber_remove(nrf_clock_TASKS_HFCLKSTOP);
+      break;
+    case NRF_CLOCK_TASK_LFCLKSTART:
+      nrf_dppi_subscriber_remove(nrf_clock_TASKS_LFCLKSTART);
+      break;
+    default:
+      bs_trace_warning_line_time(
+        "NRF_CLOCK: The task %p does not match any modelled task in NRF_DPPI.c => it will be ignored\n",
+        task);
+      break;
+  }
+}
+
+void nrf_clock_subscribe_set(NRF_CLOCK_Type * p_reg,
+                             nrf_clock_task_t task,
+                             uint8_t          channel)
+{
+  *((volatile uint32_t *) ((uint8_t *)p_reg+ (uint32_t)task + 0x80uL)) =
+          ((uint32_t)channel | CLOCK_SUBSCRIBE_HFCLKSTART_EN_Msk);
+  nrf_clock_subscriber_add(task, channel);
+}
+
+void nrf_clock_subscribe_clear(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
+{
+  *((volatile uint32_t *) ((uint8_t *)p_reg + (uint32_t)task + 0x80uL)) = 0;
+  nrf_clock_subscriber_remove(task);
+}
+
+#endif // defined(DPPI_PRESENT)
