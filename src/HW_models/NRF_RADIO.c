@@ -14,7 +14,11 @@
 #include "time_machine_if.h"
 #include "NRF_RADIO.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "NRF_AES_CCM.h"
 #include "irq_ctrl.h"
 #include "irq_sources.h"
@@ -414,7 +418,16 @@ void nrf_radio_regw_sideeffects_POWER(){
 
 static void signal_READY(){
   NRF_RADIO_regs.EVENTS_READY = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_READY);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_READY & RADIO_PUBLISH_READY_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_READY & RADIO_PUBLISH_READY_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_READY_START_Msk ) {
     nrf_radio_tasks_start();
@@ -455,7 +468,16 @@ static void signal_RXREADY(){
 
 static void signal_RSSIEND(){
   NRF_RADIO_regs.EVENTS_RSSIEND = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_RSSIEND);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_RSSIEND & RADIO_PUBLISH_RSSIEND_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_RSSIEND & RADIO_PUBLISH_RSSIEND_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( RADIO_INTEN & RADIO_INTENSET_RSSIEND_Msk ){
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -464,7 +486,16 @@ static void signal_RSSIEND(){
 
 static void signal_ADDRESS(){
   NRF_RADIO_regs.EVENTS_ADDRESS = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_ADDRESS);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_ADDRESS & RADIO_PUBLISH_ADDRESS_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_ADDRESS & RADIO_PUBLISH_ADDRESS_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_ADDRESS_RSSISTART_Msk ) {
     nrf_radio_tasks_rssistart();
@@ -480,7 +511,16 @@ static void signal_ADDRESS(){
 
 static void signal_PAYLOAD(){
   NRF_RADIO_regs.EVENTS_PAYLOAD = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_PAYLOAD);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_PAYLOAD & RADIO_PUBLISH_PAYLOAD_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_PAYLOAD & RADIO_PUBLISH_PAYLOAD_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( RADIO_INTEN & RADIO_INTENSET_PAYLOAD_Msk ){
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -489,7 +529,16 @@ static void signal_PAYLOAD(){
 
 static void signal_CRCOK(){
   NRF_RADIO_regs.EVENTS_CRCOK = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_CRCOK);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_CRCOK & RADIO_PUBLISH_CRCOK_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_CRCOK & RADIO_PUBLISH_CRCOK_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( RADIO_INTEN & RADIO_INTENSET_CRCOK_Msk ) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -498,7 +547,16 @@ static void signal_CRCOK(){
 
 static void signal_CRCERROR(){
   NRF_RADIO_regs.EVENTS_CRCERROR = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_CRCERROR);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_CRCERROR & RADIO_PUBLISH_CRCERROR_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_CRCERROR & RADIO_PUBLISH_CRCERROR_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( RADIO_INTEN & RADIO_INTENSET_CRCERROR_Msk ) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -509,7 +567,16 @@ static void signal_END(){
   nrf_radio_stop_bit_counter();
 
   NRF_RADIO_regs.EVENTS_END = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_END);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_END & RADIO_PUBLISH_END_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_END & RADIO_PUBLISH_END_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk ) {
     nrf_radio_tasks_disable();
@@ -527,7 +594,16 @@ static void signal_DISABLED(){
   nrf_radio_stop_bit_counter();
 
   NRF_RADIO_regs.EVENTS_DISABLED = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_DISABLED);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_DISABLED & RADIO_PUBLISH_DISABLED_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_DISABLED & RADIO_PUBLISH_DISABLED_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   //These 2 are fake shortcuts meant to start a HW timer for the TIFS
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) {
@@ -904,7 +980,7 @@ static void handle_Rx_response(int ret){
 
     ongoing_rx_RADIO_status.ADDRESS_End_Time = address_time + get_Rx_chain_delay();
     uint length = rx_buf[1];
-    uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+    uint max_length = (NRF_RADIO_regs.PCNF1 & RADIO_PCNF1_MAXLEN_Msk) >>  RADIO_PCNF1_MAXLEN_Pos ;
     if (length > max_length){
       length  = max_length;
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
@@ -1092,7 +1168,16 @@ static void Rx_Addr_received(){
 
 static void signal_DEVMATCH() {
   NRF_RADIO_regs.EVENTS_DEVMATCH = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_DEVMATCH);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_DEVMATCH & RADIO_PUBLISH_DEVMATCH_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_DEVMATCH & RADIO_PUBLISH_DEVMATCH_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (RADIO_INTEN & RADIO_INTENSET_DEVMATCH_Msk) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -1101,7 +1186,16 @@ static void signal_DEVMATCH() {
 
 static void signal_DEVMISS() {
   NRF_RADIO_regs.EVENTS_DEVMISS = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_DEVMISS);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_DEVMISS & RADIO_PUBLISH_DEVMISS_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_DEVMISS & RADIO_PUBLISH_DEVMISS_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (RADIO_INTEN & RADIO_INTENSET_DEVMISS_Msk) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
@@ -1151,7 +1245,16 @@ static void do_device_address_match() {
 
 static void signal_BCMATCH() {
   NRF_RADIO_regs.EVENTS_BCMATCH = 1;
+
+#if defined(PPI_PRESENT)
   nrf_ppi_event(RADIO_EVENTS_BCMATCH);
+#elif defined(DPPI_PRESENT)
+  if (NRF_RADIO_regs.PUBLISH_BCMATCH & RADIO_PUBLISH_BCMATCH_EN_Msk)
+  {
+    uint8_t channel  = NRF_RADIO_regs.PUBLISH_BCMATCH & RADIO_PUBLISH_BCMATCH_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (RADIO_INTEN & RADIO_INTENSET_BCMATCH_Msk) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
