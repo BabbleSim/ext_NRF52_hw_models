@@ -12,7 +12,11 @@
 #include <stdbool.h>
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "irq_ctrl.h"
 #include "irq_sources.h"
 #include "bs_tracing.h"
@@ -40,7 +44,16 @@ static int nrf_aar_resolve(int *good_irk);
 
 static void signal_EVENTS_END(){
   NRF_AAR_regs.EVENTS_END = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(AAR_EVENTS_END);
+#else
+  if (NRF_AAR_regs.PUBLISH_END & AAR_PUBLISH_END_EN_Msk)
+  {
+    uint8_t channel  = NRF_AAR_regs.PUBLISH_END & AAR_PUBLISH_END_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (AAR_INTEN & AAR_INTENSET_END_Msk){
     hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
@@ -49,7 +62,16 @@ static void signal_EVENTS_END(){
 
 static void signal_EVENTS_RESOLVED(){
   NRF_AAR_regs.EVENTS_RESOLVED = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(AAR_EVENTS_RESOLVED);
+#else
+  if (NRF_AAR_regs.PUBLISH_RESOLVED & AAR_PUBLISH_RESOLVED_EN_Msk)
+  {
+    uint8_t channel  = NRF_AAR_regs.PUBLISH_RESOLVED & AAR_PUBLISH_RESOLVED_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (AAR_INTEN & AAR_INTENCLR_RESOLVED_Msk){
     hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
@@ -58,7 +80,16 @@ static void signal_EVENTS_RESOLVED(){
 
 static void signal_EVENTS_NOTRESOLVED(){
   NRF_AAR_regs.EVENTS_NOTRESOLVED = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(AAR_EVENTS_NOTRESOLVED);
+#else
+  if (NRF_AAR_regs.PUBLISH_NOTRESOLVED & AAR_PUBLISH_NOTRESOLVED_EN_Msk)
+  {
+    uint8_t channel  = NRF_AAR_regs.PUBLISH_NOTRESOLVED & AAR_PUBLISH_NOTRESOLVED_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (AAR_INTEN & AAR_INTENCLR_NOTRESOLVED_Msk){
     hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
