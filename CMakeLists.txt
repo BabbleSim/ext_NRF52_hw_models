@@ -3,7 +3,7 @@
 
 # CMake file to compile this BabbleSim component as a west module in Zephyr
 
-if(CONFIG_BOARD_NRF52_BSIM)
+if(CONFIG_SOC_COMPATIBLE_BSIM)
 
   if (NOT DEFINED ENV{BSIM_COMPONENTS_PATH})
     message(FATAL_ERROR "This Zephyr module requires the BabbleSim simulator.\
@@ -34,6 +34,15 @@ if(CONFIG_BOARD_NRF52_BSIM)
   zephyr_library_compile_definitions(NO_POSIX_CHEATS)
 
   file(GLOB_RECURSE HW_MODEL_SRCS . src/*.c)
+  if (CONFIG_BOARD_NRF52_BSIM)
+    list(REMOVE_ITEM HW_MODEL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/HW_models/NRF_DPPI.c)
+    list(REMOVE_ITEM HW_MODEL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/hal/nrf_dppi.c)
+  elseif(CONFIG_BOARD_NRF53_CPUNET_BSIM)
+    list(REMOVE_ITEM HW_MODEL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/HW_models/NRF_PPI.c)
+    list(REMOVE_ITEM HW_MODEL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/hal/nrf_ppi.c)
+  else()
+    message(FATAL_ERROR "Unknown board")
+  endif()
   zephyr_library_sources(${HW_MODEL_SRCS})
 
   zephyr_library_include_directories(

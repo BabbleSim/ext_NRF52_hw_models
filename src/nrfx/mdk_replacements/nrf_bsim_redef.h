@@ -19,6 +19,7 @@ extern "C" {
 /*
  * Redefine the base addresses.
  */
+
 extern NRF_AAR_Type NRF_AAR_regs;
 #undef NRF_AAR_BASE
 #define NRF_AAR_BASE                      (&NRF_AAR_regs)
@@ -48,9 +49,13 @@ extern NRF_CLOCK_Type NRF_CLOCK_regs;
 extern NRF_FICR_Type NRF_FICR_regs;
 #undef NRF_FICR_BASE
 #define NRF_FICR_BASE                     (&NRF_FICR_regs)
+
+#if defined(NRF52_SERIES)
 extern NRF_PPI_Type NRF_PPI_regs;
 #undef NRF_PPI_BASE
 #define NRF_PPI_BASE                      (&NRF_PPI_regs)
+#endif
+
 extern NRF_TIMER_Type NRF_TIMER_regs[];
 #undef NRF_TIMER0_BASE
 #define NRF_TIMER0_BASE                   (&NRF_TIMER_regs[0])
@@ -74,6 +79,88 @@ extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 extern NRF_NVMC_Type NRF_NVMC_regs;
 #undef NRF_NVMC_BASE
 #define NRF_NVMC_BASE                     (&NRF_NVMC_regs)
+
+#if defined(NRF53_SERIES)
+extern NRF_DPPIC_Type NRF_DPPI_regs;
+#undef NRF_DPPIC_BASE
+#define NRF_DPPIC_BASE                     (&NRF_DPPI_regs)
+extern NRF_EGU_Type NRF_EGU_regs;
+#undef NRF_EGU0_BASE
+#define NRF_EGU0_BASE                      (&NRF_EGU_regs)
+extern NRF_GPIO_Type NRF_P1_regs;
+#undef NRF_P1_BASE
+#define NRF_P1_BASE                        (&NRF_P1_regs)
+#endif //NRF53_SERIES
+
+
+#undef NRF_FICR
+#undef NRF_UICR
+#undef NRF_BPROT
+#undef NRF_POWER
+#undef NRF_CLOCK
+#undef NRF_RADIO
+#undef NRF_UARTE0
+#undef NRF_UART0
+#undef NRF_SPIM0
+#undef NRF_SPIS0
+#undef NRF_TWIM0
+#undef NRF_TWIS0
+#undef NRF_SPI0
+#undef NRF_TWI0
+#undef NRF_SPIM1
+#undef NRF_SPIS1
+#undef NRF_TWIM1
+#undef NRF_TWIS1
+#undef NRF_SPI1
+#undef NRF_TWI1
+#undef NRF_NFCT
+#undef NRF_GPIOTE
+#undef NRF_SAADC
+#undef NRF_TIMER0
+#undef NRF_TIMER1
+#undef NRF_TIMER2
+#undef NRF_RTC0
+#undef NRF_TEMP
+#undef NRF_RNG
+#undef NRF_ECB
+#undef NRF_CCM
+#undef NRF_AAR
+#undef NRF_WDT
+#undef NRF_RTC1
+#undef NRF_QDEC
+#undef NRF_COMP
+#undef NRF_LPCOMP
+#undef NRF_SWI0
+#undef NRF_EGU0
+#undef NRF_SWI1
+#undef NRF_EGU1
+#undef NRF_SWI2
+#undef NRF_EGU2
+#undef NRF_SWI3
+#undef NRF_EGU3
+#undef NRF_SWI4
+#undef NRF_EGU4
+#undef NRF_SWI5
+#undef NRF_EGU5
+#undef NRF_TIMER3
+#undef NRF_TIMER4
+#undef NRF_PWM0
+#undef NRF_PDM
+#undef NRF_NVMC
+#undef NRF_PPI
+#undef NRF_MWU
+#undef NRF_PWM1
+#undef NRF_PWM2
+#undef NRF_SPIM2
+#undef NRF_SPIS2
+#undef NRF_SPI2
+#undef NRF_RTC2
+#undef NRF_I2S
+#undef NRF_FPU
+#undef NRF_P0
+#undef NRF_DPPIC
+#undef NRF_P1
+
 
 /*
  * Redefine the peripheral pointers
@@ -143,6 +230,8 @@ extern NRF_NVMC_Type NRF_NVMC_regs;
 #define NRF_I2S                     ((NRF_I2S_Type*)           NRF_I2S_BASE)
 #define NRF_FPU                     ((NRF_FPU_Type*)           NRF_FPU_BASE)
 #define NRF_P0                      ((NRF_GPIO_Type*)          NRF_P0_BASE)
+#define NRF_P1                      ((NRF_GPIO_Type*)          NRF_P1_BASE)
+#define NRF_DPPIC                   ((NRF_DPPIC_Type*)         NRF_DPPIC_BASE)
 
 #ifdef __cplusplus
 }

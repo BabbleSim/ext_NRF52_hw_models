@@ -20,9 +20,16 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
     ((intptr_t)p < (intptr_t)NRF_##per##nbr##_BASE + sizeof(NRF_##per##_Type))
 
   if (IS_PERIPHERAL_REG(p_reg, POWER,)) {
+#if !defined(NRF53_SERIES)
     return POWER_CLOCK_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, CLOCK,)) {
     return POWER_CLOCK_IRQn;
+#endif
+#if defined(NRF53_SERIES)
+    return CLOCK_POWER_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, CLOCK,)) {
+    return CLOCK_POWER_IRQn;
+#endif
   } else if (IS_PERIPHERAL_REG(p_reg, RADIO,)) {
     return RADIO_IRQn;
   /*2-7*/
@@ -40,20 +47,35 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
   } else if (IS_PERIPHERAL_REG(p_reg, ECB,)) {
       return ECB_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, AAR,)) {
+#if !defined(NRF53_SERIES)
       return CCM_AAR_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, CCM,)) {
       return CCM_AAR_IRQn;
+#endif
+#if defined(NRF53_SERIES)
+      return AAR_CCM_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, CCM,)) {
+      return AAR_CCM_IRQn;
+#endif
   /*16*/
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 1)) {
       return RTC1_IRQn;
   /*18-25*/
+#if !defined(NRF53_SERIES)
   } else if (IS_PERIPHERAL_REG(p_reg, TIMER,3)) {
       return TIMER3_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, TIMER,4)) {
       return TIMER4_IRQn;
+#endif
   /*28-30*/
+#if defined(PPI_PRESENT)
   } else if (IS_PERIPHERAL_REG(p_reg, PPI,)) {
       return 0x1F;
+#endif
+#if defined(DPPI_PRESENT)
+  } else if (IS_PERIPHERAL_REG(p_reg, DPPIC,)) {
+      return 0x1F;
+#endif
   /*32-..*/
   } else {
     bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to this HW models\n");

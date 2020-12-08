@@ -18,11 +18,16 @@
 #include "NRF_CLOCK.h"
 #include "NRF_RADIO.h"
 #include "NRF_FICR.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#endif
 #include "NRF_TIMER.h"
 #include "irq_ctrl.h"
 #include "BLECrypt_if.h"
 #include "fake_timer.h"
+#if defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 
 void nrf_hw_models_free_all(){
   nrf_clock_clean_up();
@@ -33,7 +38,11 @@ void nrf_hw_models_free_all(){
   nrf_aar_clean_up();
   nrf_radio_clean_up();
   nrf_ficr_clean_up();
+#if defined(DPPI_PRESENT)
+  nrf_dppi_clean_up();
+#elif defined(PPI_PRESENT)
   nrf_ppi_clean_up();
+#endif
   nrf_timer_clean_up();
 }
 
@@ -60,7 +69,12 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_aar_init();
   nrf_radio_init();
   nrf_ficr_init();
+#if defined(DPPI_PRESENT)
+  nrf_dppi_init();
+#elif defined(PPI_PRESENT)
   nrf_ppi_init();
+#endif
+
   nrf_timer_init();
   nrf_hw_find_next_timer_to_trigger();
 }
