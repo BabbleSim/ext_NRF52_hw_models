@@ -34,7 +34,11 @@
 #include <stdbool.h>
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include "irq_ctrl.h"
 #include "irq_sources.h"
 #include "bs_tracing.h"
@@ -180,7 +184,16 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
 
 static void signal_EVENTS_ENDKSGEN() {
   NRF_CCM_regs.EVENTS_ENDKSGEN = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(CCM_EVENTS_ENDKSGEN);
+#else
+  if (NRF_CCM_regs.PUBLISH_ENDKSGEN & CCM_PUBLISH_ENDKSGEN_EN_Msk)
+  {
+    uint8_t channel  = NRF_CCM_regs.PUBLISH_ENDKSGEN & CCM_PUBLISH_ENDKSGEN_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (CCM_INTEN & CCM_INTENSET_ENDKSGEN_Msk) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
@@ -193,7 +206,16 @@ static void signal_EVENTS_ENDKSGEN() {
 
 static void signal_EVENTS_ENDCRYPT(){
   NRF_CCM_regs.EVENTS_ENDCRYPT = 1;
+
+#if !defined(DPPI_PRESENT)
   nrf_ppi_event(CCM_EVENTS_ENDCRYPT);
+#else
+  if (NRF_CCM_regs.PUBLISH_ENDCRYPT & CCM_PUBLISH_ENDCRYPT_EN_Msk)
+  {
+    uint8_t channel  = NRF_CCM_regs.PUBLISH_ENDCRYPT & CCM_PUBLISH_ENDCRYPT_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
   if (CCM_INTEN & CCM_INTENSET_ENDCRYPT_Msk) {
     hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
@@ -202,7 +224,16 @@ static void signal_EVENTS_ENDCRYPT(){
 
 /* static void signal_EVENTS_ERROR(){
 	NRF_CCM_regs.EVENTS_ERROR = 1;
-	NRF_PPI_Event(CCM_EVENTS_ERROR);
+
+#if !defined(DPPI_PRESENT)
+  nrf_ppi_event(CCM_EVENTS_ERROR);
+#else
+  if (NRF_CCM_regs.PUBLISH_ERROR & CCM_PUBLISH_ERROR_EN_Msk)
+  {
+    uint8_t channel  = NRF_CCM_regs.PUBLISH_ERROR & CCM_PUBLISH_ERROR_CHIDX_Msk;
+    nrf_dppi_publish(channel);
+  }
+#endif
 
 	if (CCM_INTEN & CCM_INTENSET_ERROR_Msk) {
 		hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
