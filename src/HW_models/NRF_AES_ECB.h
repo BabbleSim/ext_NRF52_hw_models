@@ -14,6 +14,8 @@ extern "C"{
 
 void nrf_aes_ecb_init();
 void nrf_aes_ecb_clean_up();
+void nrf_ecb_TASK_STOPECB();
+void nrf_ecb_TASK_STARTECB();
 void nrf_ecb_timer_triggered();
 void nrf_ecb_regw_sideeffects_INTENSET();
 void nrf_ecb_regw_sideeffects_INTENCLEAR();

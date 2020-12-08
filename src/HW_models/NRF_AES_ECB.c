@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "NRF_AES_ECB.h"
+#if defined(PPI_PRESENT)
 #include "NRF_PPI.h"
+#elif defined(DPPI_PRESENT)
+#include "NRF_DPPI.h"
+#endif
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -46,7 +50,15 @@ void nrf_aes_ecb_clean_up(){
 
 static void signal_ENDECB(){
 	NRF_ECB_regs.EVENTS_ENDECB = 1;
+#if defined(PPI_PRESENT)
 	nrf_ppi_event(ECB_EVENTS_ENDECB);
+#elif defined(DPPI_PRESENT)
+	if (NRF_ECB_regs.PUBLISH_ENDECB & ECB_PUBLISH_ENDECB_EN_Msk)
+      {
+        uint8_t channel  = NRF_ECB_regs.PUBLISH_ENDECB & ECB_PUBLISH_ENDECB_CHIDX_Msk;
+        nrf_dppi_publish(channel);
+      }
+#endif
 
 	if (ECB_INTEN & ECB_INTENSET_ENDECB_Msk){
 		hw_irq_ctrl_set_irq(NRF5_IRQ_ECB_IRQn);
@@ -55,7 +67,15 @@ static void signal_ENDECB(){
 
 static void signal_ERRORECB(){
 	NRF_ECB_regs.EVENTS_ERRORECB = 1;
+#if defined(PPI_PRESENT)
 	nrf_ppi_event(ECB_EVENTS_ERRORECB);
+#elif defined(DPPI_PRESENT)
+	if (NRF_ECB_regs.PUBLISH_ERRORECB & ECB_PUBLISH_ERRORECB_EN_Msk)
+      {
+        uint8_t channel  = NRF_ECB_regs.PUBLISH_ERRORECB & ECB_PUBLISH_ERRORECB_CHIDX_Msk;
+        nrf_dppi_publish(channel);
+      }
+#endif
 
 	if (ECB_INTEN & ECB_INTENSET_ERRORECB_Msk){
 		hw_irq_ctrl_set_irq(NRF5_IRQ_ECB_IRQn);
