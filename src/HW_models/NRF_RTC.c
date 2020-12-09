@@ -180,28 +180,50 @@ static void update_all_cc_timers(int rtc) {
   }
 }
 
+static unsigned int get_irq_t(int rtc)
+{
+    unsigned int irq_t = NRF5_IRQ_RTC0_IRQn;
+
+    switch (rtc){
+    case 0:
+      irq_t = NRF5_IRQ_RTC0_IRQn;
+      break;
+    case 1:
+      irq_t = NRF5_IRQ_RTC1_IRQn;
+      break;
+    case 2:
+      irq_t = NRF5_IRQ_RTC1_IRQn;
+      bs_trace_error_line_time("There is no IRQ mapped for RTC2\n");
+      break;
+    }
+
+    return irq_t;
+}
+
+static ppi_event_types_t get_event(int rtc)
+{
+    ppi_event_types_t event = RTC0_EVENTS_COMPARE_0;
+    switch (rtc){
+    case 0:
+      event = RTC0_EVENTS_COMPARE_0;
+      break;
+    case 1:
+      event = RTC1_EVENTS_COMPARE_0;
+      break;
+    case 2:
+      event = RTC2_EVENTS_COMPARE_0;
+      break;
+    }
+
+    return event;
+}
+
 void nrf_rtc_timer_triggered() {
   for ( int rtc = 0; rtc < N_RTC-1/*the 3rd rtc does not have an int*/ ; rtc++ ){
     if ( RTC_Running[rtc] == false ) {
       continue;
     }
-    ppi_event_types_t event = RTC0_EVENTS_COMPARE_0;
-    unsigned int irq_t         = NRF5_IRQ_RTC0_IRQn;
-    switch (rtc){
-    case 0:
-      event = RTC0_EVENTS_COMPARE_0;
-      irq_t = NRF5_IRQ_RTC0_IRQn;
-      break;
-    case 1:
-      event = RTC1_EVENTS_COMPARE_0;
-      irq_t = NRF5_IRQ_RTC1_IRQn;
-      break;
-    case 2:
-      event = RTC2_EVENTS_COMPARE_0;
-      irq_t = NRF5_IRQ_RTC1_IRQn;
-      bs_trace_error_line_time("There is no IRQ mapped for RTC2\n");
-      break;
-    }
+    ppi_event_types_t event = get_event(rtc);
 
     NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
 
@@ -219,7 +241,7 @@ void nrf_rtc_timer_triggered() {
             nrf_ppi_event(event);
           }
           if ( RTC_INTEN[rtc] & mask ){
-            hw_irq_ctrl_set_irq(irq_t);
+            hw_irq_ctrl_set_irq(get_irq_t(rtc));
           }
         }
       } //if cc_timers[rtc][cc] == Timer_RTC
@@ -332,8 +354,18 @@ void nrf_rtc_regw_sideeffect_TASKS_CLEAR(int i) {
 void nrf_rtc_regw_sideeffect_INTENSET(int i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
   if ( RTC_regs->INTENSET ){
+    uint32_t new_interrupts = RTC_regs->INTENSET & ~RTC_INTEN[i];
+    unsigned int irq_t = get_irq_t(i);
+    uint32_t mask = RTC_EVTEN_COMPARE0_Msk;
+
     RTC_INTEN[i] |= RTC_regs->INTENSET;
     RTC_regs->INTENSET = RTC_INTEN[i];
+    for ( int cc = 0 ; cc < N_CC ; cc++, mask <<=1) {
+      if (RTC_regs->EVENTS_COMPARE[cc] && (new_interrupts & mask)) {
+        hw_irq_ctrl_set_irq(irq_t);
+      }
+    }
+
     check_not_supported_func(RTC_INTEN[i]);
   }
 }
