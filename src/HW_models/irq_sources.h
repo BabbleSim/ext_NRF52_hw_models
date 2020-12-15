@@ -10,6 +10,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#if defined(CONFIG_SOC_COMPATIBLE_NRF53X_CPUNET)
+
+#define NRF5_IRQ_POWER_CLOCK_IRQn              5
+#define NRF5_IRQ_RADIO_IRQn                    8
+#define NRF5_IRQ_RNG_IRQn                      9
+#define NRF5_IRQ_GPIOTE_IRQn                   10
+#define NRF5_IRQ_WDT_IRQn                      11
+#define NRF5_IRQ_TIMER0_IRQn                   12
+#define NRF5_IRQ_ECB_IRQn                      13
+#define NRF5_IRQ_CCM_AAR_IRQn                  14
+#define NRF5_IRQ_TEMP_IRQn                     16
+#define NRF5_IRQ_RTC0_IRQn                     17
+#define NRF5_IRQ_UART0_IRQn                    19
+#define NRF5_IRQ_SPI0_TWI0_IRQn                19
+#define NRF5_IRQ_SPI1_TWI1_IRQn                19
+#define NRF5_IRQ_RTC1_IRQn                     22
+#define NRF5_IRQ_TIMER1_IRQn                   24
+#define NRF5_IRQ_TIMER2_IRQn                   25
+#define NRF5_IRQ_SWI0_IRQn                     26
+#define NRF5_IRQ_SWI1_IRQn                     27
+#define NRF5_IRQ_SWI2_IRQn                     28
+#define NRF5_IRQ_SWI3_IRQn                     29
+
+#else
+
 #ifndef _NRF5_SOC_COMMON_H_
 #define _NRF5_SOC_COMMON_H_
 
@@ -107,3 +132,5 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SWI5_IRQn               SWI5_EGU5_IRQn
 
 #endif /* NRF51_TO_NRF52_H */
+
+#endif /*NRF53*/
