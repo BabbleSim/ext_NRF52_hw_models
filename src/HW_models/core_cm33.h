@@ -11,39 +11,6 @@
 #ifndef CORE_CM33__
 #define CORE_CM33__
 
-#define __I
-#define __IO
-#define __O
-
-/**
- * The model of the CPU & IRQ controller driver must provide
- * these functions below. These HW models do not provide them
- */
-extern void __WFE(void);
-extern void __SEV(void);
-extern void NVIC_SetPendingIRQ(IRQn_Type IRQn);
-extern void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
-
-/* Implement the following ARM intrinsics as no-op:
- * - ARM Data Synchronization Barrier
- * - ARM Data Memory Synchronization Barrier
- * - ARM Instruction Synchronization Barrier
- * - ARM No Operation
- */
-#ifndef __DMB
-#define __DMB()
-#endif
-
-#ifndef __DSB
-#define __DSB()
-#endif
-
-#ifndef __ISB
-#define __ISB()
-#endif
-
-#ifndef __NOP
-#define __NOP()
-#endif
+#include "core_cmxx.h"
 
 #endif
