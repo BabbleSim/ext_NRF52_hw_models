@@ -23,8 +23,8 @@ INCLUDES:=-I${libUtilv1_COMP_PATH}/src/ \
           -I${NRFX_BASE} \
           -I${NRFX_BASE}/mdk
 
-
-LIB_NAME:=libNRF52_hw_models.32
+NRF_HW_MODELS_LIB_SUFFIX?=
+LIB_NAME:=libNRF52_hw_models.32${NRF_HW_MODELS_LIB_SUFFIX}
 A_LIBS:=
 A_LIBS32:=
 SO_LIBS:=
