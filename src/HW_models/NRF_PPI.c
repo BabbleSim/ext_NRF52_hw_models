@@ -204,6 +204,7 @@ typedef struct {
 static const ppi_event_table_t ppi_events_table[] = { //better keep same order as in ppi_event_types_t
     {RADIO_EVENTS_READY,   &NRF_RADIO_regs.EVENTS_READY},
     {RADIO_EVENTS_ADDRESS, &NRF_RADIO_regs.EVENTS_ADDRESS},
+    {RADIO_EVENTS_PAYLOAD, &NRF_RADIO_regs.EVENTS_PAYLOAD},
     {RADIO_EVENTS_END,     &NRF_RADIO_regs.EVENTS_END},
     {RADIO_EVENTS_DISABLED,&NRF_RADIO_regs.EVENTS_DISABLED},
 //    {RADIO_EVENTS_DEVMATCH,&NRF_RADIO_regs.EVENTS_DEVMATCH},
