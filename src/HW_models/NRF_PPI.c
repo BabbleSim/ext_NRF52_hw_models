@@ -98,7 +98,7 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[0],  nrf_timer0_TASK_CAPTURE_0},
     { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[1],  nrf_timer0_TASK_CAPTURE_1},
     { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[2],  nrf_timer0_TASK_CAPTURE_2},
-//    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[3],  nrf_timer0_TASK_CAPTURE_3},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[3],  nrf_timer0_TASK_CAPTURE_3},
 //    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[4],  nrf_timer0_TASK_CAPTURE_4},
 //    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[5],  nrf_timer0_TASK_CAPTURE_5},
 //    { (void*)&NRF_TIMER_regs[0].TASKS_CLEAR,       nrf_timer0_TASK_CLEAR},
@@ -217,7 +217,7 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     {TIMER0_EVENTS_COMPARE_0, &NRF_TIMER_regs[0].EVENTS_COMPARE[0]},
     {TIMER0_EVENTS_COMPARE_1, &NRF_TIMER_regs[0].EVENTS_COMPARE[1]},
     {TIMER0_EVENTS_COMPARE_2, &NRF_TIMER_regs[0].EVENTS_COMPARE[2]},
-//    {TIMER0_EVENTS_COMPARE_3, &NRF_TIMER_regs[0].EVENTS_COMPARE[3]},
+    {TIMER0_EVENTS_COMPARE_3, &NRF_TIMER_regs[0].EVENTS_COMPARE[3]},
 //    {TIMER0_EVENTS_COMPARE_4, &NRF_TIMER_regs[0].EVENTS_COMPARE[4]},
 //    {TIMER0_EVENTS_COMPARE_5, &NRF_TIMER_regs[0].EVENTS_COMPARE[5]},
 
