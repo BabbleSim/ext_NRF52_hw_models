@@ -76,7 +76,7 @@ typedef enum { //Note that, for performance, it is better to leave commented the
   TIMER0_EVENTS_COMPARE_0 ,
   TIMER0_EVENTS_COMPARE_1 ,
   TIMER0_EVENTS_COMPARE_2 ,
-//  TIMER0_EVENTS_COMPARE_3 ,
+  TIMER0_EVENTS_COMPARE_3 ,
 //  TIMER0_EVENTS_COMPARE_4 ,
 //  TIMER0_EVENTS_COMPARE_5 ,
 
