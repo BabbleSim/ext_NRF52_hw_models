@@ -648,11 +648,13 @@ void nrf_radio_timer_triggered(){
     }
   } else if ( radio_state == TXDISABLE ){
     radio_state = DISABLED;
+    NRF_RADIO_regs.STATE = DISABLED;
     Timer_RADIO = TIME_NEVER;
     signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
   } else if ( radio_state == RXDISABLE ){
     radio_state = DISABLED;
+    NRF_RADIO_regs.STATE = DISABLED;
     Timer_RADIO = TIME_NEVER;
     signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
