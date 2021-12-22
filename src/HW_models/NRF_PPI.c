@@ -154,12 +154,15 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //{ (void*)&(NRF_RTC_regs[0]).TASKS_CLEAR, nrf_rtc0_TASKS_CLEAR},
     //{ (void*)&(NRF_RTC_regs[0]).TASKS_START, nrf_rtc0_TASKS_START},
     //{ (void*)&(NRF_RTC_regs[0]).TASKS_STOP , nrf_rtc0_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[0]).TASKS_TRIGOVRFLW , nrf_rtc0_TASKS_TRIGOVRFLW},
     //{ (void*)&(NRF_RTC_regs[1]).TASKS_CLEAR, nrf_rtc1_TASKS_CLEAR},
     //{ (void*)&(NRF_RTC_regs[1]).TASKS_START, nrf_rtc1_TASKS_START},
     //{ (void*)&(NRF_RTC_regs[1]).TASKS_STOP , nrf_rtc1_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[1]).TASKS_TRIGOVRFLW , nrf_rtc1_TASKS_TRIGOVRFLW},
     //{ (void*)&(NRF_RTC_regs[2]).TASKS_CLEAR, nrf_rtc2_TASKS_CLEAR},
     //{ (void*)&(NRF_RTC_regs[2]).TASKS_START, nrf_rtc2_TASKS_START},
     //{ (void*)&(NRF_RTC_regs[2]).TASKS_STOP , nrf_rtc2_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[2]).TASKS_TRIGOVRFLW , nrf_rtc2_TASKS_TRIGOVRFLW},
 
     //RNG:
     { (void*)&NRF_RNG_regs.TASKS_START, nrf_rng_task_start},
@@ -232,6 +235,7 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     //    {TIMER2_EVENTS_COMPARE_4, &NRF_TIMER_regs[2].EVENTS_COMPARE[4]},
     //    {TIMER2_EVENTS_COMPARE_5, &NRF_TIMER_regs[2].EVENTS_COMPARE[5]},
 
+    {RTC0_EVENTS_OVRFLW, &NRF_RTC_regs[0].EVENTS_OVRFLW},
     //{RTC0_EVENTS_COMPARE_0, &NRF_RTC_regs[0].EVENTS_COMPARE[0]},
     {RTC0_EVENTS_COMPARE_1, &NRF_RTC_regs[0].EVENTS_COMPARE[1]},
     {RTC0_EVENTS_COMPARE_2, &NRF_RTC_regs[0].EVENTS_COMPARE[2]},

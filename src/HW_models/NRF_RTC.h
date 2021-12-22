@@ -21,6 +21,7 @@ void nrf_rtc_update_COUNTER(int rtc);
 void nrf_rtc_regw_sideeffect_TASKS_START(int i);
 void nrf_rtc_regw_sideeffect_TASKS_STOP(int i);
 void nrf_rtc_regw_sideeffect_TASKS_CLEAR(int i);
+void nrf_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(int i);
 void nrf_rtc_regw_sideeffect_INTENSET(int i);
 void nrf_rtc_regw_sideeffect_INTENCLR(int i);
 void nrf_rtc_regw_sideeffect_EVTENSET(int i);
