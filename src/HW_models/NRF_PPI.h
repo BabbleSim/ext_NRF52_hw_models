@@ -100,7 +100,7 @@ typedef enum { //Note that, for performance, it is better to leave commented the
   //11 0x4000B000 RTC0
   //RTC
   RTC0_EVENTS_TICK      ,
-//  RTC0_EVENTS_OVRFLW    ,
+  RTC0_EVENTS_OVRFLW    ,
   RTC0_EVENTS_COMPARE_0 ,
   RTC0_EVENTS_COMPARE_1 ,
   RTC0_EVENTS_COMPARE_2 ,
@@ -130,7 +130,7 @@ typedef enum { //Note that, for performance, it is better to leave commented the
 
   //17 0x40011000 RTC1
   RTC1_EVENTS_TICK      ,
-//  RTC1_EVENTS_OVRFLW    ,
+  RTC1_EVENTS_OVRFLW    ,
   RTC1_EVENTS_COMPARE_0 ,
   RTC1_EVENTS_COMPARE_1 ,
   RTC1_EVENTS_COMPARE_2 ,
@@ -185,7 +185,7 @@ typedef enum { //Note that, for performance, it is better to leave commented the
 //  35 0x40023000 SPI
 //  36 0x40024000 RTC
   RTC2_EVENTS_TICK      ,
-//  RTC2_EVENTS_OVRFLW    ,
+  RTC2_EVENTS_OVRFLW    ,
   RTC2_EVENTS_COMPARE_0 ,
   RTC2_EVENTS_COMPARE_1 ,
   RTC2_EVENTS_COMPARE_2 ,

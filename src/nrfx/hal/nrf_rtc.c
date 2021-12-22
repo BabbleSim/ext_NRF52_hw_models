@@ -55,6 +55,9 @@ void nrf_rtc_task_trigger(NRF_RTC_Type * p_reg, nrf_rtc_task_t task)
   } else if ( task == NRF_RTC_TASK_CLEAR ) {
     p_reg->TASKS_CLEAR = 1;
     nrf_rtc_regw_sideeffect_TASKS_CLEAR(i);
+  } else if ( task == NRF_RTC_TASK_TRIGGER_OVERFLOW ) {
+    p_reg->TASKS_TRIGOVRFLW = 1;
+    nrf_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(i);
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_rtc %i\n", i);
   }
