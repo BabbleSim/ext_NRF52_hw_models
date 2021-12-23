@@ -853,7 +853,9 @@ static void start_Tx(){
   ongoing_tx.phy_address = address;
   ongoing_tx.power_level = p2G4_power_from_d(TxPower); //Note that any possible Tx antenna or PA gain would need to be included here
 
-  p2G4_freq_from_d(freq_off, 1,&ongoing_tx.radio_params.center_freq);
+  p2G4_freq_t center_freq;
+  p2G4_freq_from_d(freq_off, 1, &center_freq);
+  ongoing_tx.radio_params.center_freq = center_freq;
   ongoing_tx.packet_size  = header_len + payload_len + crc_len; //Not including preamble or address
 
   bs_time_t tx_start_time = tm_get_abs_time() + radio_timings.TX_chain_delay;
@@ -1008,7 +1010,9 @@ static void start_Rx(){
   ongoing_rx_RADIO_status.CRC_OK = false;
   NRF_RADIO_regs.CRCSTATUS = 0;
 
-  p2G4_freq_from_d(freq_off, 1,&ongoing_rx.radio_params.center_freq);
+  p2G4_freq_t center_freq;
+  p2G4_freq_from_d(freq_off, 1, &center_freq);
+  ongoing_rx.radio_params.center_freq = center_freq;
 
   ongoing_rx.bps = bits_per_us*1000000;
   ongoing_rx.antenna_gain = 0;
