@@ -289,11 +289,13 @@ void nrf_radio_tasks_stop (){
   if ( radio_state == TX ){
     abort_if_needed();
     radio_state = TXIDLE;
+    NRF_RADIO_regs.STATE = TXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
   } else if ( radio_state == RX ){
     abort_if_needed();
     radio_state = RXIDLE;
+    NRF_RADIO_regs.STATE = RXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
   } else {
@@ -311,9 +313,11 @@ void nrf_radio_tasks_disable() {
   if ( radio_state == TX ){
     abort_if_needed();
     radio_state = TXIDLE; //Momentary (will be changedin the if below)
+    NRF_RADIO_regs.STATE = TXIDLE;
   } else if ( radio_state == RX ){
     abort_if_needed();
     radio_state = RXIDLE; //Momentary (will be changed in the if below)
+    NRF_RADIO_regs.STATE = RXIDLE;
   }
 
   if (TIFS_state != TIFS_DISABLE) {
@@ -325,11 +329,13 @@ void nrf_radio_tasks_disable() {
 
   if ( ( radio_state == TXRU ) || ( radio_state == TXIDLE ) ) {
     radio_state = TXDISABLE;
+    NRF_RADIO_regs.STATE = TXDISABLE;
     TIFS_state = TIFS_DISABLE;
     Timer_RADIO = tm_get_hw_time() + radio_timings.TX_RD_time;
     nrf_hw_find_next_timer_to_trigger();
   } else if ( ( radio_state == RXRU ) || ( radio_state == RXIDLE ) ) {
     radio_state = RXDISABLE;
+    NRF_RADIO_regs.STATE = RXDISABLE;
     TIFS_state = TIFS_DISABLE;
     Timer_RADIO = tm_get_hw_time() + radio_timings.RX_RD_time;
     nrf_hw_find_next_timer_to_trigger();
