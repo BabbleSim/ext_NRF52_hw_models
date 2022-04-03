@@ -7,12 +7,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "NRF_RTC.h"
 #include "NRF_PPI.h"
 #include "NRF_CLOCK.h"
 #include "NRF_HW_model_top.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "bs_tracing.h"
 #include "time_machine_if.h"
 
@@ -254,17 +252,17 @@ static void set_counter_to(uint64_t counter_val, int rtc)
 
 static unsigned int get_irq_t(int rtc)
 {
-    unsigned int irq_t = NRF5_IRQ_RTC0_IRQn;
+    unsigned int irq_t = RTC0_IRQn;
 
     switch (rtc){
     case 0:
-      irq_t = NRF5_IRQ_RTC0_IRQn;
+      irq_t = RTC0_IRQn;
       break;
     case 1:
-      irq_t = NRF5_IRQ_RTC1_IRQn;
+      irq_t = RTC1_IRQn;
       break;
     case 2:
-      irq_t = NRF5_IRQ_RTC1_IRQn;
+      irq_t = RTC2_IRQn;
       bs_trace_error_line_time("There is no IRQ mapped for RTC2\n");
       break;
     }

@@ -17,7 +17,6 @@
 #include "NRF_PPI.h"
 #include "NRF_AES_CCM.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "NRF_HWLowL.h"
 #include "crc_ble.h"
 
@@ -427,7 +426,7 @@ static void signal_READY(){
   }
 
   if ( RADIO_INTEN & RADIO_INTENSET_READY_Msk ){
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 /*
@@ -464,7 +463,7 @@ static void signal_RSSIEND(){
   nrf_ppi_event(RADIO_EVENTS_RSSIEND);
 
   if ( RADIO_INTEN & RADIO_INTENSET_RSSIEND_Msk ){
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -480,7 +479,7 @@ static void signal_ADDRESS(){
   }
 
   if ( RADIO_INTEN & RADIO_INTENSET_ADDRESS_Msk ){
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -489,7 +488,7 @@ static void signal_PAYLOAD(){
   nrf_ppi_event(RADIO_EVENTS_PAYLOAD);
 
   if ( RADIO_INTEN & RADIO_INTENSET_PAYLOAD_Msk ){
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -498,7 +497,7 @@ static void signal_CRCOK(){
   nrf_ppi_event(RADIO_EVENTS_CRCOK);
 
   if ( RADIO_INTEN & RADIO_INTENSET_CRCOK_Msk ) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -507,7 +506,7 @@ static void signal_CRCERROR(){
   nrf_ppi_event(RADIO_EVENTS_CRCERROR);
 
   if ( RADIO_INTEN & RADIO_INTENSET_CRCERROR_Msk ) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -525,7 +524,7 @@ static void signal_END(){
   }
 
   if ( RADIO_INTEN & RADIO_INTENSET_END_Msk ) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -562,7 +561,7 @@ static void signal_DISABLED(){
   }
 
   if ( RADIO_INTEN & RADIO_INTENSET_DISABLED_Msk ) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -1107,7 +1106,7 @@ static void signal_DEVMATCH() {
   nrf_ppi_event(RADIO_EVENTS_DEVMATCH);
 
   if (RADIO_INTEN & RADIO_INTENSET_DEVMATCH_Msk) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -1116,7 +1115,7 @@ static void signal_DEVMISS() {
   nrf_ppi_event(RADIO_EVENTS_DEVMISS);
 
   if (RADIO_INTEN & RADIO_INTENSET_DEVMISS_Msk) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -1166,7 +1165,7 @@ static void signal_BCMATCH() {
   nrf_ppi_event(RADIO_EVENTS_BCMATCH);
 
   if (RADIO_INTEN & RADIO_INTENSET_BCMATCH_Msk) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 

@@ -10,7 +10,6 @@
 #include "NRF_HW_model_top.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "bs_tracing.h"
 
 /*
@@ -367,16 +366,16 @@ void nrf_timer_timer_triggered() {
       nrf_ppi_event(event_cc + cc);
 
       if ( TIMER_INTEN[t] & (TIMER_INTENSET_COMPARE0_Msk << cc) ){
-        int irq = NRF5_IRQ_TIMER0_IRQn;
+        int irq = TIMER0_IRQn;
         switch (t){
         case 0:
-          irq = NRF5_IRQ_TIMER0_IRQn;
+          irq = TIMER0_IRQn;
           break;
         case 1:
-          irq = NRF5_IRQ_TIMER1_IRQn;
+          irq = TIMER1_IRQn;
           break;
         case 2:
-          irq = NRF5_IRQ_TIMER2_IRQn;
+          irq = TIMER2_IRQn;
           break;
         default:
           bs_trace_error_line_time("NRF HW TIMER%i CC[%i] interrupt "
