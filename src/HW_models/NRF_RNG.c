@@ -10,7 +10,6 @@
 #include "NRF_HW_model_top.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "bs_rand_main.h"
 
 /*
@@ -147,7 +146,7 @@ void nrf_rng_timer_triggered(){
   NRF_RNG_regs.EVENTS_VALRDY = 1;
   nrf_ppi_event(RNG_EVENTS_VALRDY);
   if ( RNG_INTEN ){
-    hw_irq_ctrl_set_irq(NRF5_IRQ_RNG_IRQn);
+    hw_irq_ctrl_set_irq(RNG_IRQn);
     //Note: there is no real need to delay the interrupt a delta
   }
 }

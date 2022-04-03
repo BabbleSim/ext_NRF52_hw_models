@@ -36,7 +36,6 @@
 #include "NRF_HW_model_top.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
 
@@ -183,7 +182,7 @@ static void signal_EVENTS_ENDKSGEN() {
   nrf_ppi_event(CCM_EVENTS_ENDKSGEN);
 
   if (CCM_INTEN & CCM_INTENSET_ENDKSGEN_Msk) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
+    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
   }
 
   if (NRF_CCM_regs.SHORTS & CCM_SHORTS_ENDKSGEN_CRYPT_Msk) {
@@ -196,7 +195,7 @@ static void signal_EVENTS_ENDCRYPT(){
   nrf_ppi_event(CCM_EVENTS_ENDCRYPT);
 
   if (CCM_INTEN & CCM_INTENSET_ENDCRYPT_Msk) {
-    hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
+    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
   }
 }
 

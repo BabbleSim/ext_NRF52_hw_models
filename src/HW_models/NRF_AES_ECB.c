@@ -11,7 +11,6 @@
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
 
@@ -49,7 +48,7 @@ static void signal_ENDECB(){
 	nrf_ppi_event(ECB_EVENTS_ENDECB);
 
 	if (ECB_INTEN & ECB_INTENSET_ENDECB_Msk){
-		hw_irq_ctrl_set_irq(NRF5_IRQ_ECB_IRQn);
+		hw_irq_ctrl_set_irq(ECB_IRQn);
 	}
 }
 
@@ -58,7 +57,7 @@ static void signal_ERRORECB(){
 	nrf_ppi_event(ECB_EVENTS_ERRORECB);
 
 	if (ECB_INTEN & ECB_INTENSET_ERRORECB_Msk){
-		hw_irq_ctrl_set_irq(NRF5_IRQ_ECB_IRQn);
+		hw_irq_ctrl_set_irq(ECB_IRQn);
 	}
 }
 

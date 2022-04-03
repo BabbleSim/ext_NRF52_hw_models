@@ -11,7 +11,6 @@
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
 #include "irq_ctrl.h"
-#include "irq_sources.h"
 
 /*
  * CLOCK — Clock control
@@ -143,7 +142,7 @@ void nrf_clock_LFTimer_triggered(){
     NRF_CLOCK_regs.EVENTS_LFCLKSTARTED = 1;
     nrf_ppi_event(CLOCK_EVENTS_LFCLKSTARTED);
     if ( CLOCK_INTEN & CLOCK_INTENSET_LFCLKSTARTED_Msk ){
-      hw_irq_ctrl_set_irq(NRF5_IRQ_POWER_CLOCK_IRQn);
+      hw_irq_ctrl_set_irq(POWER_CLOCK_IRQn);
     }
 
     nrf_rtc_notify_first_lf_tick();
@@ -163,7 +162,7 @@ void nrf_clock_HFTimer_triggered(){
     NRF_CLOCK_regs.EVENTS_HFCLKSTARTED = 1;
     nrf_ppi_event(CLOCK_EVENTS_HFCLKSTARTED);
     if ( CLOCK_INTEN & CLOCK_INTENSET_HFCLKSTARTED_Msk ){
-      hw_irq_ctrl_set_irq(NRF5_IRQ_POWER_CLOCK_IRQn);
+      hw_irq_ctrl_set_irq(POWER_CLOCK_IRQn);
     }
 
   } else if ( HF_Clock_state == Stopping ){
