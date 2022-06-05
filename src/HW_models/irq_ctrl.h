@@ -34,6 +34,7 @@ void hw_irq_ctrl_set_cur_prio(int new);
 uint8_t hw_irq_ctrl_get_prio(unsigned int irq);
 void hw_irq_ctrl_prio_set(unsigned int irq, unsigned int prio);
 uint32_t hw_irq_ctrl_change_lock(uint32_t new_lock);
+const char *hw_irq_ctrl_get_name(unsigned int irq);
 
 /*
  * This interrupt will awake the CPU if IRQs are not locked,
