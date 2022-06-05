@@ -272,3 +272,55 @@ void hw_irq_ctrl_timer_triggered(void)
   irq_raising_from_hw_now();
   nrf_hw_find_next_timer_to_trigger();
 }
+
+const char *hw_irq_ctrl_get_name(unsigned int irq)
+{
+	/* The names are taken from the IRQn_Type in the MDK header.
+	 * with the suffix '_IRQn' removed.
+	 */
+	static const char *irqnames_nrf52832[] = {
+		[0]  = "POWER_CLOCK",
+		[1]  = "RADIO",
+		[2]  = "UARTE0_UART0",
+		[3]  = "SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0",
+		[4]  = "SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1",
+		[5]  = "NFCT",
+		[6]  = "GPIOTE",
+		[7]  = "SAADC",
+		[8]  = "TIMER0",
+		[9]  = "TIMER1",
+		[10] = "TIMER2",
+		[11] = "RTC0",
+		[12] = "TEMP",
+		[13] = "RNG",
+		[14] = "ECB",
+		[15] = "CCM_AAR",
+		[16] = "WDT",
+		[17] = "RTC1",
+		[18] = "QDEC",
+		[19] = "COMP_LPCOMP",
+		[20] = "SWI0_EGU0",
+		[21] = "SWI1_EGU1",
+		[22] = "SWI2_EGU2",
+		[23] = "SWI3_EGU3",
+		[24] = "SWI4_EGU4",
+		[25] = "SWI5_EGU5",
+		[26] = "TIMER3",
+		[27] = "TIMER4",
+		[28] = "PWM0",
+		[29] = "PDM",
+		[30] = "MWU",
+		[31] = "PWM1",
+		[32] = "PWM2",
+		[33] = "SPIM2_SPIS2_SPI2",
+		[34] = "RTC2",
+		[35] = "I2S",
+		[36] = "FPU",
+	};
+
+	if (irq < sizeof(irqnames_nrf52832)/sizeof(irqnames_nrf52832[0])) {
+		return irqnames_nrf52832[irq];
+	} else {
+		return NULL;
+	}
+}
