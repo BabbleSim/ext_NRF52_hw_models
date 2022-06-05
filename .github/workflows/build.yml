@@ -1,0 +1,37 @@
+name: Build HW models
+
+on:
+  pull_request
+
+env:
+  BSIM_OUT_PATH: bsim
+  BSIM_BASE_PATH: bsim/components
+  BSIM_COMPONENTS_PATH: bsim/components
+  NRFX_BASE: nrfx
+
+jobs:
+  build-hw-models:
+    name: "Build HW models"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get install gcc-multilib binutils
+
+    - name: checkout_hw_models
+      uses: actions/checkout@v2
+
+    - name: Fetches the dependent repos
+      run: |
+        git clone -b v2.8.0 --single-branch https://github.com/NordicSemiconductor/nrfx
+        mkdir bsim
+        cd bsim
+        wget https://storage.googleapis.com/git-repo-downloads/repo
+        chmod a+x ./repo
+        python3 ./repo init -u https://github.com/BabbleSim/manifest.git -m everything.xml -b master
+        python3 ./repo sync
+
+    - name: Compile the HW models
+      run:
+        make compile
