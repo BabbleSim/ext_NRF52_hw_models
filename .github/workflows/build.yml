@@ -4,10 +4,11 @@ on:
   pull_request
 
 env:
-  BSIM_OUT_PATH: bsim
-  BSIM_BASE_PATH: bsim/components
-  BSIM_COMPONENTS_PATH: bsim/components
-  NRFX_BASE: nrfx
+  CHECKOUT_PATH: ${{ github.workspace }}/ext_NRF52_hw_models
+  NRFX_BASE: ${{ github.workspace }}/nrfx
+  BSIM_OUT_PATH: ${{ github.workspace }}/bsim
+  BSIM_COMPONENTS_PATH: ${{ github.workspace }}/bsim/components
+  BSIM_BASE_PATH: ${{ github.workspace }}/bsim/components
 
 jobs:
   build-hw-models:
@@ -19,19 +20,22 @@ jobs:
       run: |
         sudo apt-get install gcc-multilib binutils
 
-    - name: checkout_hw_models
+    - name: Get PR
       uses: actions/checkout@v2
+      with:
+        path: ${{env.CHECKOUT_PATH}}
 
-    - name: Fetches the dependent repos
+    - name: Fetch dependencies
       run: |
-        git clone -b v2.8.0 --single-branch https://github.com/NordicSemiconductor/nrfx
-        mkdir bsim
-        cd bsim
+        git clone -b v2.8.0 --depth=1 https://github.com/NordicSemiconductor/nrfx ${NRFX_BASE}
+        mkdir ${BSIM_OUT_PATH}
+        cd ${BSIM_OUT_PATH}
         wget https://storage.googleapis.com/git-repo-downloads/repo
         chmod a+x ./repo
-        python3 ./repo init -u https://github.com/BabbleSim/manifest.git -m everything.xml -b master
-        python3 ./repo sync
+        python3 ./repo init -u https://github.com/BabbleSim/manifest.git -m nrf_hw_models_ci.xml -b master --depth=1
+        python3 ./repo sync -c
 
-    - name: Compile the HW models
-      run:
+    - name: Compile HW models
+      run: |
+        cd ${CHECKOUT_PATH}
         make compile
