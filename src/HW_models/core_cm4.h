@@ -11,9 +11,15 @@
 #ifndef CORE_CM4__
 #define CORE_CM4__
 
+#include <stdint.h>
+
 #define __I
 #define __IO
 #define __O
+
+#define __IM
+#define __OM
+#define __IOM
 
 /**
  * The model of the CPU & IRQ controller driver must provide
@@ -46,4 +52,4 @@ extern void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
 #define __NOP()
 #endif
 
-#endif 
+#endif

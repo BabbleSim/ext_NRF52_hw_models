@@ -39,7 +39,8 @@ static bs_time_t CC_timers[N_TIMERS][N_CC] = {{TIME_NEVER}};
 /**
  * Initialize the TIMER model
  */
-void nrf_timer_init(){
+
+void nrf_timer_model_init(){
   memset(NRF_TIMER_regs, 0, sizeof(NRF_TIMER_regs));
   for (int t = 0; t < N_TIMERS ; t++ ){
     TIMER_INTEN[t] = 0;

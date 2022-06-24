@@ -61,7 +61,7 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_radio_init();
   nrf_ficr_init();
   nrf_ppi_init();
-  nrf_timer_init();
+  nrf_timer_model_init();
   nrf_hw_find_next_timer_to_trigger();
 }
 

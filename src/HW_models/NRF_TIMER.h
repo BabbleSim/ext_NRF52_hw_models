@@ -12,7 +12,8 @@
 extern "C"{
 #endif
 
-void nrf_timer_init();
+
+void nrf_timer_model_init();
 void nrf_timer_clean_up();
 void nrf_timer_timer_triggered();
 
