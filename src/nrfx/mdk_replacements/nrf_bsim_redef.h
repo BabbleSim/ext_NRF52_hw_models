@@ -74,7 +74,7 @@ extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 extern NRF_NVMC_Type NRF_NVMC_regs;
 #undef NRF_NVMC_BASE
 #define NRF_NVMC_BASE                     (&NRF_NVMC_regs)
-extern NRF_EGU_Type NRF_EGU_regs[6];
+extern NRF_EGU_Type NRF_EGU_regs[];
 #undef NRF_EGU0_BASE
 #define NRF_EGU0_BASE                     (&NRF_EGU_regs[0])
 #undef NRF_EGU1_BASE
