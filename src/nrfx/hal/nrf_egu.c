@@ -8,18 +8,18 @@
 #include "hal/nrf_egu.h"
 #include "bs_tracing.h"
 #include "NRF_EGU.h"
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <irq_ctrl.h>
 
 uint32_t nrf_egu_channel_count(NRF_EGU_Type const *p_reg)
 {
-	return sizeof(p_reg->EVENTS_TRIGGERED) / sizeof(p_reg->EVENTS_TRIGGERED[0]);
+	return (sizeof(p_reg->EVENTS_TRIGGERED) / sizeof(p_reg->EVENTS_TRIGGERED[0]));
 }
 
 void nrf_egu_task_trigger(NRF_EGU_Type *p_reg, nrf_egu_task_t egu_task)
 {
 	*((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_task)) = 0x1UL;
-	nrf_egu_regw_sideeffects_TASKS_TRIGGERED(p_reg);
+	nrf_egu_regw_sideeffects_TASKS_TRIGGER(p_reg, egu_task);
 }
 
 uint32_t nrf_egu_task_address_get(NRF_EGU_Type const *p_reg,
@@ -35,13 +35,13 @@ nrf_egu_task_t nrf_egu_trigger_task_get(uint8_t channel)
 
 bool nrf_egu_event_check(NRF_EGU_Type const *p_reg, nrf_egu_event_t egu_event)
 {
-	return *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event));
+	return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event);
 }
 
 void nrf_egu_event_clear(NRF_EGU_Type *p_reg, nrf_egu_event_t egu_event)
 {
-    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event)) = 0x0UL;
-	nrf_egu_regw_sideeffects_EVENTS_TRIGGERED_INTEN(p_reg);
+	*((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)egu_event)) = 0x0UL;
+	nrf_egu_regw_sideeffects_EVENTS_TRIGGERED(p_reg, egu_event);
 }
 
 uint32_t nrf_egu_event_address_get(NRF_EGU_Type const *p_reg,
@@ -52,13 +52,12 @@ uint32_t nrf_egu_event_address_get(NRF_EGU_Type const *p_reg,
 
 nrf_egu_event_t nrf_egu_triggered_event_get(uint8_t channel)
 {
-	return (nrf_egu_event_t)NRFX_OFFSETOF(NRF_EGU_Type, EVENTS_TRIGGERED[channel]);
+	return (nrf_egu_event_t)offsetof(NRF_EGU_Type, EVENTS_TRIGGERED[channel]);
 }
 
 void nrf_egu_int_enable(NRF_EGU_Type *p_reg, uint32_t mask)
 {
-
-    p_reg->INTENSET = mask;
+	p_reg->INTENSET = mask;
 	nrf_egu_regw_sideeffects_INTENSET(p_reg);
 }
 
@@ -69,7 +68,7 @@ uint32_t nrf_egu_int_enable_check(NRF_EGU_Type const *p_reg, uint32_t mask)
 
 void nrf_egu_int_disable(NRF_EGU_Type *p_reg, uint32_t mask)
 {
-    p_reg->INTENCLR = mask;
+	p_reg->INTENCLR = mask;
 	nrf_egu_regw_sideeffects_INTENSET(p_reg);
 }
 
