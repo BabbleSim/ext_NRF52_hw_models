@@ -12,9 +12,9 @@
 extern "C"{
 #endif
 
-void nrf_timer_init();
-void nrf_timer_clean_up();
-void nrf_timer_timer_triggered();
+void nrf_hw_model_timer_init();
+void nrf_hw_model_timer_clean_up();
+void nrf_hw_model_timer_timer_triggered();
 
 extern NRF_TIMER_Type NRF_TIMER_regs[];
 

@@ -39,7 +39,7 @@ static bs_time_t CC_timers[N_TIMERS][N_CC] = {{TIME_NEVER}};
 /**
  * Initialize the TIMER model
  */
-void nrf_timer_init(){
+void nrf_hw_model_timer_init(){
   memset(NRF_TIMER_regs, 0, sizeof(NRF_TIMER_regs));
   for (int t = 0; t < N_TIMERS ; t++ ){
     TIMER_INTEN[t] = 0;
@@ -56,7 +56,7 @@ void nrf_timer_init(){
 /**
  * Clean up the TIMER model before program exit
  */
-void nrf_timer_clean_up(){
+void nrf_hw_model_timer_clean_up(){
 
 }
 
@@ -322,7 +322,7 @@ void nrf_timer_regw_sideeffects_CC(int t, int cc_n){
   }
 }
 
-void nrf_timer_timer_triggered() {
+void nrf_hw_model_timer_timer_triggered() {
   for ( int t = 0 ; t < N_TIMERS ; t++) {
     if ( !(( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 )) ) {
       continue;
