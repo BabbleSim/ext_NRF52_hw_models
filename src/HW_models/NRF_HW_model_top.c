@@ -24,7 +24,75 @@
 #include "BLECrypt_if.h"
 #include "fake_timer.h"
 
-void nrf_hw_models_free_all(){
+#define IS_TIMER_VALID( _t_id ) do{ \
+                                  if( !Timers[_t_id] ){ \
+                                    bs_trace_error_line("Pointer to timer: %s is corrupted\n", Timers_string[_t_id]); \
+                                    return; \
+                                  } \
+                                } while(0);
+
+extern bs_time_t Timer_event_fw_test_ticker;
+extern bs_time_t Timer_irq_ctrl;
+extern bs_time_t Timer_RNG;
+extern bs_time_t Timer_CLOCK_LF;
+extern bs_time_t Timer_CLOCK_HF;
+extern bs_time_t Timer_RTC;
+extern bs_time_t Timer_TIMERs;
+extern bs_time_t Timer_RADIO;
+extern bs_time_t Timer_RADIO_abort_reeval; //This timer should have the lowest priority
+extern bs_time_t Timer_ECB;
+extern bs_time_t Timer_AAR;
+extern bs_time_t Timer_fake_timer;
+extern bs_time_t Timer_RADIO_bitcounter;
+
+static void bad_timer_triggered(void);
+
+/**
+ * The events are prioritize from top to bottom
+ * (priority == which executes if they have the same timing)
+ */
+#define NRF_HW_TIMERS_LIST \
+  /*        Timer name (enum)          pointer to timer              function to trigger                      */ \
+  HW_TIMER( fake_timer,                &Timer_fake_timer,            fake_timer_triggered()                     )\
+  HW_TIMER( fw_test_ticker,            &Timer_event_fw_test_ticker,  bst_ticker_triggered(timer_nrf_main_timer) )\
+  HW_TIMER( irq_ctrl_timer,            &Timer_irq_ctrl,              hw_irq_ctrl_timer_triggered()              )\
+  HW_TIMER( RNG_timer,                 &Timer_RNG,                   nrf_rng_timer_triggered()                  )\
+  HW_TIMER( ECB_timer,                 &Timer_ECB,                   nrf_ecb_timer_triggered()                  )\
+  HW_TIMER( AAR_timer,                 &Timer_AAR,                   nrf_aar_timer_triggered()                  )\
+  HW_TIMER( CLOCK_LF_timer,            &Timer_CLOCK_LF,              nrf_clock_LFTimer_triggered()              )\
+  HW_TIMER( CLOCK_HF_timer,            &Timer_CLOCK_HF,              nrf_clock_HFTimer_triggered()              )\
+  HW_TIMER( RTC_timer,                 &Timer_RTC,                   nrf_rtc_timer_triggered()                  )\
+  HW_TIMER( TIMER_timer,               &Timer_TIMERs,                nrf_hw_model_timer_timer_triggered()       )\
+  HW_TIMER( RADIO_timer,               &Timer_RADIO,                 nrf_radio_timer_triggered()                )\
+  HW_TIMER( RADIO_bitcounter,          &Timer_RADIO_bitcounter,      nrf_radio_bitcounter_timer_triggered()     )\
+  /*        This timer should always be the latest in this list (lowest priority)                             */ \
+  HW_TIMER( RADIO_abort_reeval_timer,  &Timer_RADIO_abort_reeval,    nrf_radio_timer_abort_reeval_triggered()   )\
+  HW_TIMER( NumberOfNRFHWTimers,       NULL,                         bad_timer_triggered()                      )\
+/* ------------------------------------------- */
+
+#define HW_TIMER( name, timer, func ) name,
+typedef enum {
+  NRF_HW_TIMERS_LIST
+} NRF_HW_next_timer_to_trigger_t;
+#undef HW_TIMER
+
+#define HW_TIMER( name, timer, func ) #name,
+static char *Timers_string[] = {
+  NRF_HW_TIMERS_LIST
+};
+#undef HW_TIMER
+
+/* Indexed with NRF_HW_next_timer_to_trigger_t */
+#define HW_TIMER( name, timer, func ) timer,
+static bs_time_t *Timers[] = {
+  NRF_HW_TIMERS_LIST
+};
+#undef HW_TIMER
+
+bs_time_t timer_nrf_main_timer = TIME_NEVER; //This timer is exposed to the top level time_machine which will call us when it is reached
+static NRF_HW_next_timer_to_trigger_t nrf_hw_next_timer_to_trigger = NumberOfNRFHWTimers;
+
+void nrf_hw_models_free_all() {
   nrf_clock_clean_up();
   nrf_rng_clean_up();
   nrf_rtc_clean_up();
@@ -48,7 +116,7 @@ void nrf_hw_pre_init() {
 /*
  * Initialize all HW models and set registers to defaults
  */
-void nrf_hw_initialize(nrf_hw_sub_args_t *args){
+void nrf_hw_initialize(nrf_hw_sub_args_t *args) {
 
   BLECrypt_if_enable_real_encryption(args->useRealAES);
   hw_irq_ctrl_init();
@@ -65,135 +133,47 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_hw_find_next_timer_to_trigger();
 }
 
-extern bs_time_t Timer_event_fw_test_ticker;
-extern bs_time_t Timer_irq_ctrl;
-extern bs_time_t Timer_RNG;
-extern bs_time_t Timer_CLOCK_LF;
-extern bs_time_t Timer_CLOCK_HF;
-extern bs_time_t Timer_RTC;
-extern bs_time_t Timer_TIMERs;
-extern bs_time_t Timer_RADIO;
-extern bs_time_t Timer_RADIO_abort_reeval; //This timer should have the lowest priority
-extern bs_time_t Timer_ECB;
-extern bs_time_t Timer_AAR;
-extern bs_time_t Timer_fake_timer;
-extern bs_time_t Timer_RADIO_bitcounter;
-
-//The events priorities are as in this enum from top to bottom
-// (priority == which executes if they have the same timing)
-typedef enum {
-  fake_timer,
-  fw_test_ticker,
-  irq_ctrl_timer,
-  RNG_timer,
-  ECB_timer,
-  AAR_timer,
-  CLOCK_LF_timer,
-  CLOCK_HF_timer,
-  RTC_timer,
-  TIMER_timer,
-  RADIO_timer,
-  RADIO_bitcounter,
-  RADIO_abort_reeval_timer,
-  NumberOfNRFHWTimers,
-  None
-} NRF_HW_next_timer_to_trigger_t;
-static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_timer_to_trigger_t
-    &Timer_fake_timer,
-    &Timer_event_fw_test_ticker,
-    &Timer_irq_ctrl,
-    &Timer_RNG,
-    &Timer_ECB,
-    &Timer_AAR,
-    &Timer_CLOCK_LF,
-    &Timer_CLOCK_HF,
-    &Timer_RTC,
-    &Timer_TIMERs,
-    &Timer_RADIO,
-    &Timer_RADIO_bitcounter,
-    &Timer_RADIO_abort_reeval //This timer should always be the latest in this list (lowest priority)
-};
-
-bs_time_t timer_nrf_main_timer = TIME_NEVER; //This timer is exposed to the top level time_machine which will call us when it is reached
-static NRF_HW_next_timer_to_trigger_t nrf_hw_next_timer_to_trigger = None;
-
 /**
  * Look into all timers and update  next_timer_to_trigger* accordingly
  * To be called each time a "timed process" updates its timer
  */
-void nrf_hw_find_next_timer_to_trigger(){
-  bs_time_t new_timer = *Timers[0];
+void nrf_hw_find_next_timer_to_trigger() {
+  bs_time_t new_timer;
   nrf_hw_next_timer_to_trigger = 0;
 
-  for (uint i = 1; i < NumberOfNRFHWTimers ; i++){
+  IS_TIMER_VALID(0);
+
+  new_timer = *Timers[0];
+  for (uint i = 1; i < NumberOfNRFHWTimers; i++) {
+    IS_TIMER_VALID(i);
     if ( new_timer > *Timers[i] ) {
       new_timer = *Timers[i];
       nrf_hw_next_timer_to_trigger = i;
     }
   }
-  if ( new_timer != timer_nrf_main_timer ){
+  if ( new_timer != timer_nrf_main_timer ) {
     timer_nrf_main_timer = new_timer;
     tm_find_next_timer_to_trigger();
   }
 }
 
 void nrf_hw_some_timer_reached() {
+  bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: %s\n",
+    Timers_string[nrf_hw_next_timer_to_trigger]);
 
   switch ( nrf_hw_next_timer_to_trigger ) {
-  case fake_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: fake timer\n");
-    fake_timer_triggered();
-    break;
-  case fw_test_ticker:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: FW test ticker\n");
-    bst_ticker_triggered(timer_nrf_main_timer);
-    break;
-  case irq_ctrl_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: IRQ ctrl timer\n");
-    hw_irq_ctrl_timer_triggered();
-    break;
-  case RNG_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RNG timer\n");
-    nrf_rng_timer_triggered();
-    break;
-  case ECB_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: ECB timer\n");
-    nrf_ecb_timer_triggered();
-    break;
-  case AAR_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: AAR timer\n");
-    nrf_aar_timer_triggered();
-    break;
-  case CLOCK_LF_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK LF timer\n");
-    nrf_clock_LFTimer_triggered();
-    break;
-  case CLOCK_HF_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK HF timer\n");
-    nrf_clock_HFTimer_triggered();
-    break;
-  case RTC_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RTC timer\n");
-    nrf_rtc_timer_triggered();
-    break;
-  case TIMER_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: TIMERx timer\n");
-    nrf_hw_model_timer_timer_triggered();
-    break;
-  case RADIO_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RADIO timer\n");
-    nrf_radio_timer_triggered();
-    break;
-  case RADIO_bitcounter:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RADIO bitcounter timer\n");
-    nrf_radio_bitcounter_timer_triggered();
-    break;
-  case RADIO_abort_reeval_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RADIO abort reeval timer\n");
-    nrf_radio_timer_abort_reeval_triggered();
-    break;
+    #define HW_TIMER( name, timer, func ) \
+      case name: \
+        func; \
+      break;
+      NRF_HW_TIMERS_LIST
+    #undef HW_TIMER
   default:
-    bs_trace_error_line("nrf_hw_next_timer_to_trigger corrupted\n");
+    bad_timer_triggered();
     break;
   }
+}
+
+static void bad_timer_triggered(void) {
+  bs_trace_error_line("nrf_hw_next_timer_to_trigger corrupted\n");
 }
