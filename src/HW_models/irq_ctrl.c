@@ -13,14 +13,16 @@
 
 #include <stdint.h>
 #include "bs_types.h"
+#include "bs_tracing.h"
 #include "irq_ctrl.h"
 #include "time_machine_if.h"
 #include "NRF_HW_model_top.h"
 
 bs_time_t Timer_irq_ctrl = TIME_NEVER;
 
-static uint64_t irq_status;  /*pending interrupts*/
-static uint64_t irq_premask; /*interrupts before the mask*/
+static uint64_t irq_lines; /*Level of interrupt lines from peripherals*/
+static uint64_t irq_status;  /*pended and not masked interrupts*/
+static uint64_t irq_premask; /*pended interrupts before the mask*/
 
 /*
  * Mask of which interrupts will actually cause the cpu to vector into its
@@ -123,6 +125,11 @@ uint32_t hw_irq_ctrl_get_current_lock(void)
 	return irqs_locked;
 }
 
+/*
+ * Change the overall interrupt controller "interrupt lock"
+ * The interrupt lock is a flag that provisionally disables all interrupts
+ * without affecting their status or their ability to be pended in the meanwhile
+ */
 uint32_t hw_irq_ctrl_change_lock(uint32_t new_lock)
 {
 	uint32_t previous_lock = irqs_locked;
@@ -164,18 +171,50 @@ int hw_irq_ctrl_is_irq_enabled(unsigned int irq)
 	return (irq_mask & ((uint64_t)1 << irq))?1:0;
 }
 
+/**
+ * Get the current interrupt enable mask
+ */
 uint64_t hw_irq_ctrl_get_irq_mask(void)
 {
 	return irq_mask;
 }
 
+/*
+ * Un-pend an interrupt from the interrupt controller.
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC)
+ */
 void hw_irq_ctrl_clear_irq(unsigned int irq)
 {
 	irq_status  &= ~((uint64_t)1<<irq);
 	irq_premask &= ~((uint64_t)1<<irq);
 }
 
+/*
+ * Reevaluate if an interrupt still has its interrupt line up,
+ * and if it does, re-pend immediately the interrupt
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC).
+ * To properly model an NVIC behavior call it only when the MCU is exiting
+ * the interrupt handler for this irq
+ */
+void hw_irq_ctrl_reeval_level_irq(unsigned int irq)
+{
+	uint64_t irq_bit = ((uint64_t)1<<irq);
+
+	if ((irq_lines & irq_bit) != 0) {
+		irq_premask |= irq_bit;
+
+		if (irq_mask & irq_bit) {
+			irq_status |= irq_bit;
+		}
+	}
+}
+
 /**
+ *
  * Enable an interrupt
  *
  * This function may only be called from SW threads
@@ -193,10 +232,10 @@ void hw_irq_ctrl_enable_irq(unsigned int irq)
 
 static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
 {
-  if ( irq < NRF_HW_NBR_IRQs ) {
+	if ( irq < NRF_HW_NBR_IRQs ) {
 		irq_premask |= ((uint64_t)1<<irq);
 
-		if (irq_mask & (1 << irq)) {
+		if (irq_mask & ((uint64_t)1<<irq)) {
 			irq_status |= ((uint64_t)1<<irq);
 		}
 	} else if (irq == PHONY_HARD_IRQ) {
@@ -205,10 +244,13 @@ static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
 }
 
 /**
- * Set/Raise an interrupt
+ * Set/Raise/Pend an interrupt
  *
  * This function is meant to be used by either the SW manual IRQ raising
  * or by HW which wants the IRQ to be raised in one delta cycle from now
+ *
+ * Note that this is equivalent to a HW peripheral sending a *pulse* interrupt
+ * to the interrupt controller
  */
 void hw_irq_ctrl_set_irq(unsigned int irq)
 {
@@ -226,6 +268,46 @@ void hw_irq_ctrl_set_irq(unsigned int irq)
 	}
 }
 
+/**
+ * Raise an interrupt line from a HW peripheral to the interrupt controller
+ *
+ * This function is meant to be used only from a HW model which wants
+ * to emulate level interrupts.
+ * An IRQ will be raised in one delta cycle from now
+ *
+ * Any call from the hardware models to this function must be eventually
+ * followed by a call to hw_irq_ctrl_lower_level_irq_line(), otherwise
+ * the interrupt controller will keep interrupting the CPU and causing it to
+ * re-enter the interrupt handler
+ */
+void hw_irq_ctrl_raise_level_irq_line(unsigned int irq)
+{
+	if ( irq >= NRF_HW_NBR_IRQs ) {
+		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
+	}
+
+	if ((irq_lines & ((uint64_t)1<<irq)) == 0) {
+		irq_lines |= ((uint64_t)1<<irq);
+		hw_irq_ctrl_set_irq(irq);
+	}
+}
+
+/**
+ * Lower an interrupt line from a HW peripheral to the interrupt controller
+ *
+ * This function is meant to be used only from a HW model which wants
+ * to emulate level interrupts.
+ */
+void hw_irq_ctrl_lower_level_irq_line(unsigned int irq)
+{
+	if ( irq >= NRF_HW_NBR_IRQs ) {
+		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
+	}
+
+	irq_lines &= ~((uint64_t)1<<irq);
+}
+
+
 static void irq_raising_from_hw_now(void)
 {
 	/*
@@ -240,11 +322,11 @@ static void irq_raising_from_hw_now(void)
 }
 
 /**
- * Set/Raise an interrupt inmediately.
+ * Set/Raise/Pend an interrupt immediately.
  * Like hw_irq_ctrl_set_irq() but awake immediately the CPU instead of in
  * 1 delta cycle
  *
- * Call only from HW threads
+ * Call only from HW threads; Should be used with care
  */
 void hw_irq_ctrl_raise_im(unsigned int irq)
 {
@@ -255,7 +337,7 @@ void hw_irq_ctrl_raise_im(unsigned int irq)
 /**
  * Like hw_irq_ctrl_raise_im() but for SW threads
  *
- * Call only from SW threads
+ * Call only from SW threads; Should be used with care
  */
 void hw_irq_ctrl_raise_im_from_sw(unsigned int irq)
 {
@@ -266,6 +348,9 @@ void hw_irq_ctrl_raise_im_from_sw(unsigned int irq)
 	}
 }
 
+/*
+ * Event timer handler for the IRQ controller HW model
+ */
 void hw_irq_ctrl_timer_triggered(void)
 {
   Timer_irq_ctrl = TIME_NEVER;
