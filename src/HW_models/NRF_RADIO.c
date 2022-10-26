@@ -915,6 +915,7 @@ static void handle_Rx_response(int ret){
     uint length = rx_buf[1];
     uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
     if (length > max_length){
+      bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
       length  = max_length;
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
     }
