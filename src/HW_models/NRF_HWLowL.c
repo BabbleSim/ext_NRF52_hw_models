@@ -79,6 +79,26 @@ void hwll_sync_time_with_phy(bs_time_t d_time) {
     hwll_disconnect_phy_and_exit();
   }
 }
+/**
+ * Wait until the Phy reaches a given *Phy* simulated time
+ *
+ * Note: This function should only be called in very special cases.
+ * Actual HW models are not expected to use it, instead they should rely
+ * on the time machine auto-synchronization mechanism.
+ */
+void hwll_wait_for_phy_simu_time(bs_time_t phy_time){
+  if (nosim)
+    return;
+
+  pb_wait_t wait;
+
+  wait.end = phy_time;
+
+  if ( p2G4_dev_req_wait_nc_b(&wait) != 0 ){
+    bs_trace_raw_manual_time(3, phy_time, "The phy disconnected us\n");
+    hwll_disconnect_phy_and_exit();
+  }
+}
 
 /**
  * Connect to the phy

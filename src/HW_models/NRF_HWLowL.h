@@ -26,6 +26,7 @@ bs_time_t hwll_phy_time_from_dev(bs_time_t d_t);
 bs_time_t hwll_dev_time_from_phy(bs_time_t phy_t);
 
 void hwll_sync_time_with_phy(bs_time_t d_t);
+void hwll_wait_for_phy_simu_time(bs_time_t phy_time);
 
 #ifdef __cplusplus
 }
