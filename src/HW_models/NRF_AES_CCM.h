@@ -26,6 +26,7 @@ void nrf_ccm_radio_received_packet(bool crc_error);
 void nrf_ccm_regw_sideeffects_INTENSET();
 void nrf_ccm_regw_sideeffects_INTENCLR();
 void nrf_ccm_regw_sideeffects_TASKS_KSGEN();
+void nrf_ccm_regw_sideeffects_TASKS_CRYPT();
 void nrf_ccm_regw_sideeffects_TASKS_STOP();
 
 #ifdef __cplusplus

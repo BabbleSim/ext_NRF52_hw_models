@@ -261,6 +261,13 @@ void nrf_ccm_regw_sideeffects_TASKS_KSGEN(){
   }
 }
 
+void nrf_ccm_regw_sideeffects_TASKS_CRYPT(){
+  if (NRF_CCM_regs.TASKS_CRYPT) {
+    NRF_CCM_regs.TASKS_CRYPT = 0;
+    nrf_ccm_TASK_CRYPT();
+  }
+}
+
 void nrf_ccm_regw_sideeffects_TASKS_STOP(){
   if (NRF_CCM_regs.TASKS_STOP) {
     NRF_CCM_regs.TASKS_STOP = 0;

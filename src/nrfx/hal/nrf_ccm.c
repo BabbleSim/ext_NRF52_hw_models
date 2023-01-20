@@ -14,6 +14,9 @@ void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg, nrf_ccm_task_t task)
   if ( task == NRF_CCM_TASK_KSGEN ) {
     p_reg->TASKS_KSGEN = 1;
     nrf_ccm_regw_sideeffects_TASKS_KSGEN();
+  } else if ( task == NRF_CCM_TASK_CRYPT ) {
+    p_reg->TASKS_CRYPT = 1;
+    nrf_ccm_regw_sideeffects_TASKS_CRYPT();
   } else if ( task == NRF_CCM_TASK_STOP ) {
     p_reg->TASKS_STOP = 1;
     nrf_ccm_regw_sideeffects_TASKS_STOP();
