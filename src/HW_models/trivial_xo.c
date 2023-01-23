@@ -8,13 +8,13 @@
 #include "bs_tracing.h"
 #include "bs_types.h"
 
-static double xo_drift = 0.0; //Cristal oscillator drift relative to the phy
+static double xo_drift = 0.0; //Crystal oscillator drift relative to the phy
 static double time_off = 0.0; //Time offset relative to the phy
 
 long double __attribute__((weak)) dev_time_from_phy(long double p_t){
   long double dev_time;
   dev_time = ((1.0 + xo_drift)*(long double)p_t) - time_off;
-  //Note: in x86 compiling with GCC for linux long double is 80bit (64bits
+  //Note: in x86 compiling with GCC for Linux long double is 80bit (64bits
   // mantissa), and therefore precision should be kept
   return dev_time;
 }
@@ -22,7 +22,7 @@ long double __attribute__((weak)) dev_time_from_phy(long double p_t){
 long double __attribute__((weak)) phy_time_from_dev(long double d_t){
   long double phy_time;
   phy_time =  ((long double)(d_t + time_off))/(1.0 + xo_drift);
-  //Note: in x86 compiling with GCC for linux long double is 80bit (64bits
+  //Note: in x86 compiling with GCC for Linux long double is 80bit (64bits
   // mantissa), and therefore precision should be kept
   return phy_time;
 }
