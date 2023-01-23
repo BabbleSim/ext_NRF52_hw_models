@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -22,7 +23,7 @@
 
 /**
  * RADIO — 2.4 GHz Radio
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/radio.html?cp=2_0_0_21#concept_lhd_ygj_4r
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=4_1_0_5_17
  *
  * Note: as of now, only 1&2Mbps BLE packet formats are supported, there is quite many notes around in the code
  * where changes would be required to support other formats
@@ -45,6 +46,17 @@
  *
  * Note11: During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
  *         On transmission we generate the correct CRC for correctness of the channel dump traces (and Ellisys traces)
+ *
+ * Note12: Nothing related to 802.15.4 (including energy detection (ED) and CCA) is implemented
+ *
+ * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
+ *
+ * Note14: No 52833 new radio state change events (EVENTS_FRAMESTART, EVENTS_EDEND, EVENTS_EDSTOPPED, EVENTS_CCAIDLE, EVENTS_CCABUSY, EVENTS_CCASTOPPED,
+ *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH, EVENTS_SYNC,EVENTS_PHYEND & EVENTS_CTEPRESENT) implemented
+ *
+ * Note15: PDUSTAT not yet implemented
+ *
+ * Note16: No antenna switching
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;

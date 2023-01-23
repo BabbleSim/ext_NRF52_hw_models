@@ -7,6 +7,7 @@
 
 /*
  * This is only a stub of the register interface with no functionality behind
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/nvmc.html?cp=4_1_0_3_2
  */
 
 NRF_NVMC_Type NRF_NVMC_regs = {0};

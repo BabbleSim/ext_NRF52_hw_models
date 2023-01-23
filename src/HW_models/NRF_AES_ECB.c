@@ -16,7 +16,7 @@
 
 /*
  * AES electronic codebook mode encryption
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/ecb.html?cp=2_0_0_26#concept_vnj_kgy_xr
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=4_1_0_5_5
  */
 
 bs_time_t Timer_ECB = TIME_NEVER; /* Time when the ECB will finish */

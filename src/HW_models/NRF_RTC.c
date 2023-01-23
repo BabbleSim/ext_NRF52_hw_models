@@ -17,7 +17,7 @@
 /*
  * RTC — Real-time counter
  *
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/rtc.html?cp=2_0_0_23#concept_rvn_vkj_sr
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rtc.html?cp=4_1_0_5_19
  */
 
 /* To simplify, so far it is only modeled what the current BLE controller uses

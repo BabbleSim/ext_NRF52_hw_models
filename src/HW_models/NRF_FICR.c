@@ -8,7 +8,7 @@
 
 /*
  * Factory information configuration registers
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/ficr.html?cp=2_0_0_11#concept_xb5_mpx_vr
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ficr.html?cp=4_1_0_3_3
  */
 
 //TOLOW: we start with all registers just as 0. It could be interesting to let people load them from command line

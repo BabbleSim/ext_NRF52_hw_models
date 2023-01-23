@@ -14,7 +14,7 @@
 
 /*
  * TIMER — Timer/counter
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/timer.html?cp=2_0_0_22#concept_xbd_hqp_sr
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/timer.html?cp=4_1_0_5_27
  */
 
 /**

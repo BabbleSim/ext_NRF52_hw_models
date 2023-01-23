@@ -6,7 +6,7 @@
 
 /*
  * CCM — AES CCM mode encryption
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/ccm.html?cp=2_0_0_27#topic
+ * https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf52833%2Fccm.html&cp=4_1_0_5_3
  *
  * Notes:
  *
@@ -27,6 +27,10 @@
  *    according to their length
  *
  * 3. TASKS_STOP is not really supported
+ *
+ * 4. TASK_RATEOVERRIDE and RATEOVERRIDE are not supported
+ *
+ * 5. HEADERMASK is not yet supported
  */
 
 #include "NRF_AES_CCM.h"

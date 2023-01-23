@@ -52,7 +52,7 @@ const char *hw_irq_ctrl_get_name(unsigned int irq);
  */
 #define PHONY_HARD_IRQ 0xFFFF
 
-#define NRF_HW_NBR_IRQs 32
+#define NRF_HW_NBR_IRQs 47
 
 #ifdef __cplusplus
 }

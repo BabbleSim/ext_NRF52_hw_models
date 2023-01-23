@@ -12,7 +12,7 @@
 IRQn_Type nrfx_get_irq_number(void const * p_reg){
   /*
    * Peripheral numbers match interrupt numbers
-   * See https://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52832.ps.v1.1/memory.html?cp=3_1_0_7_2#memorymap
+   * See https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52833.html
    */
 
 #define IS_PERIPHERAL_REG(p, per, nbr) \

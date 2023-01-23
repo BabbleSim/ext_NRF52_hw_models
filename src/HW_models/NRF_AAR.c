@@ -5,7 +5,7 @@
  */
 /**
  * AR — Accelerated address resolver
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/aar.html?cp=2_0_0_28#frontpage_aar
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/aar.html?cp=4_1_0_5_1
  */
 #include "NRF_AAR.h"
 #include <string.h>

@@ -35,7 +35,7 @@ WARNINGS:=-Wall -pedantic
 COVERAGE:=
 CFLAGS:=${ARCH} ${DEBUG} ${OPT} ${WARNINGS} -MMD -MP -std=c11 \
         ${INCLUDES} -fdata-sections -ffunction-sections \
-        -DNRF52832_XXAA
+        -DNRF52833_XXAA
 LDFLAGS:=${ARCH} ${COVERAGE}
 CPPFLAGS:=
 

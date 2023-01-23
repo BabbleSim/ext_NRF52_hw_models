@@ -363,7 +363,7 @@ const char *hw_irq_ctrl_get_name(unsigned int irq)
 	/* The names are taken from the IRQn_Type in the MDK header.
 	 * with the suffix '_IRQn' removed.
 	 */
-	static const char *irqnames_nrf52832[] = {
+	static const char *irqnames_nrf52833[] = {
 		[0]  = "POWER_CLOCK",
 		[1]  = "RADIO",
 		[2]  = "UARTE0_UART0",
@@ -401,10 +401,14 @@ const char *hw_irq_ctrl_get_name(unsigned int irq)
 		[34] = "RTC2",
 		[35] = "I2S",
 		[36] = "FPU",
+		[37] = "USBD",
+		[38] = "UARTE1",
+		[39] = "PWM3",
+		[40] = "SPIM3",
 	};
 
-	if (irq < sizeof(irqnames_nrf52832)/sizeof(irqnames_nrf52832[0])) {
-		return irqnames_nrf52832[irq];
+	if (irq < sizeof(irqnames_nrf52833)/sizeof(irqnames_nrf52833[0])) {
+		return irqnames_nrf52833[irq];
 	} else {
 		return NULL;
 	}

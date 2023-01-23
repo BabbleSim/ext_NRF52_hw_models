@@ -24,4 +24,4 @@ Current limitations and pending things to do:
 
 Not implemented, and no plans to implement:
 * WDT, QDEC, LPCOMP, COMP, PWM, PDM, ACL, NVMC, MWU, SPIM/S, I2S, FPU, USB, 
-  UART, QSPI, GPIO, CRYPTOCELL, UICR
+  UART, UARTE, QSPI, GPIO, CRYPTOCELL, UICR

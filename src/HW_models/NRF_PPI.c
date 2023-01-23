@@ -20,7 +20,7 @@
 
 /*
  * PPI — Programmable peripheral interconnect
- * http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52%2Fdita%2Fnrf52%2Fchips%2Fnrf52840_ps.html&cp=2_0_0
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=4_1_0_5_14
  *
  */
 

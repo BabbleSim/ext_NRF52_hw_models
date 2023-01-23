@@ -7,6 +7,7 @@
 
 /*
  * This is only a stub of the register interface with no functionality behind
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/power.html?cp=4_1_0_4_2
  */
 
 NRF_POWER_Type NRF_POWER_regs = {0};

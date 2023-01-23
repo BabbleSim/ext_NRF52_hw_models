@@ -14,7 +14,7 @@
 
 /*
  * RNG — Random number generator
- * http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52840.ps%2Frng.html&cp=2_0_0_24&anchor=concept_h35_c1l_cs
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=4_1_0_5_18
  *
  * Very rough model
  */

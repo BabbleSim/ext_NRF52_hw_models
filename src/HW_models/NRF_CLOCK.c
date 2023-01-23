@@ -14,7 +14,14 @@
 
 /*
  * CLOCK — Clock control
- * http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.nrf52840.ps/clock.html?cp=2_0_0_16#frontpage_clock
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/clock.html?cp=4_1_0_4_3
+ *
+ * Notes:
+ *
+ * 1. EVENTS_CTSTARTED/STOPPED not supported
+ *
+ * 2. The clocks are ready in 1 delta cycle (i.e. almost instantaneously),
+ *    HFXODEBOUNCE and LFXODEBOUNCE are ignored
  */
 
 //Note: We assume the 32.768 KHz clock does not drift relative to the 64MHz one
