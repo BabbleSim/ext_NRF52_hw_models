@@ -29,8 +29,6 @@
  * 3. TASKS_STOP is not really supported
  *
  * 4. TASK_RATEOVERRIDE and RATEOVERRIDE are not supported
- *
- * 5. HEADERMASK is not yet supported
  */
 
 #include "NRF_AES_CCM.h"
@@ -100,6 +98,7 @@ static void nrf_ccm_encrypt_tx() {
   uint8_t* outptr;
   int length;
   uint8_t ccm_nonce[NONCE_LEN];
+  uint8_t aad;
 
   cnfptr = (const uint8_t*)NRF_CCM_regs.CNFPTR;
   sk = cnfptr;
@@ -120,7 +119,9 @@ static void nrf_ccm_encrypt_tx() {
 
   nonce_calc(iv, tx_pkt_ctr, pkt_direction, ccm_nonce);
 
-  BLECrypt_if_encrypt_packet(inptr[0], // First byte of packet header
+  aad = inptr[0] & NRF_CCM_regs.HEADERMASK;
+
+  BLECrypt_if_encrypt_packet(aad, //Additional Authentication data
       (uint8_t*)&inptr[3],      // Packet payload to be encrypted
       &outptr[3],  //encrypted payload (and MIC if generate_mic==1)
       length,      //including MIC length if ( generate_mic == 1 ) ; [ just  the length in the output packet header ]
@@ -143,6 +144,7 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
   int length;
   uint8_t mic_error;
   uint8_t ccm_nonce[NONCE_LEN];
+  uint8_t aad;
 
   if (crc_error) {
     NRF_CCM_regs.MICSTATUS = 0;
@@ -169,7 +171,9 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
 
   nonce_calc(iv, rx_pkt_ctr, pkt_direction, ccm_nonce);
 
-  BLECrypt_if_decrypt_packet(inptr[0], // First byte of packet header
+  aad = inptr[0] & NRF_CCM_regs.HEADERMASK;
+
+  BLECrypt_if_decrypt_packet(aad, //Additional Authentication data
       (uint8_t*)&inptr[3], //as received from the air (including a MIC if has_mic)
       &outptr[3], //buffer for decrypted payload
       inptr[1],   //including MIC lenght if (has_mic == 1) ; [ just  the length in the packet header ]
