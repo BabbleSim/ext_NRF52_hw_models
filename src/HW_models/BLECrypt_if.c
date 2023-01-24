@@ -27,21 +27,21 @@ static void *LibCryptoHandle = NULL;
 //IF to the libCryptoBLE:
 typedef enum { SLAVE_TO_MASTER_DIRECTION, MASTER_TO_SLAVE_DIRECTION } blecrypt_packet_direction_t;
 
-typedef void (*blecrypt_packet_encrypt_f)(
+typedef void (*blecrypt_packet_encrypt_v2_f)(
     // Inputs
-    uint8_t packet_1st_header_byte,
-    uint8_t packet_payload_len,
+    uint8_t aad,
+    int packet_payload_len,
     const uint8_t *packet_payload,
     const uint8_t *sk,
-    const uint8_t *nonce,
+    const uint8_t *ccm_nonce,
     uint8_t *encrypted_packet_payload_and_mic);
 
-typedef int (*blecrypt_packet_decrypt_f)(
-    uint8_t packet_1st_header_byte,
-    uint8_t packet_payload_len,
+typedef int (*blecrypt_packet_decrypt_v2_f)(
+    uint8_t aad,
+    int packet_payload_len,
     const uint8_t *packet_payload_and_mic,
     const uint8_t *sk,
-    const uint8_t *nonce,
+    const uint8_t *ccm_nonce,
     int no_mic,
     uint8_t *decrypted_packet_payload);
 
@@ -52,8 +52,8 @@ typedef void (*blecrypt_aes_128_f)(
     // Outputs (the pointers themselves are inputs and must point to large enough areas)
     uint8_t *encrypted_data_be);      // Plaintext data (KEY_LEN bytes, big-endian)
 
-static blecrypt_packet_encrypt_f blecrypt_packet_encrypt;
-static blecrypt_packet_decrypt_f blecrypt_packet_decrypt;
+static blecrypt_packet_encrypt_v2_f blecrypt_packet_encrypt_v2;
+static blecrypt_packet_decrypt_v2_f blecrypt_packet_decrypt_v2;
 static blecrypt_aes_128_f        blecrypt_aes_128;
 
 void BLECrypt_if_enable_real_encryption(bool mode) {
@@ -73,11 +73,11 @@ void BLECrypt_if_enable_real_encryption(bool mode) {
       bs_trace_error_line("%s\n",error);
     }
 
-    *(void **) (&blecrypt_packet_encrypt) = dlsym(LibCryptoHandle, "blecrypt_packet_encrypt");
+    *(void **) (&blecrypt_packet_encrypt_v2) = dlsym(LibCryptoHandle, "blecrypt_packet_encrypt_v2");
     if ((error = dlerror()) != NULL) {
       bs_trace_error_line("%s\n",error);
     }
-    *(void **) (&blecrypt_packet_decrypt) = dlsym(LibCryptoHandle, "blecrypt_packet_decrypt");
+    *(void **) (&blecrypt_packet_decrypt_v2) = dlsym(LibCryptoHandle, "blecrypt_packet_decrypt_v2");
     if ((error = dlerror()) != NULL) {
       bs_trace_error_line("%s\n",error);
     }
@@ -100,7 +100,7 @@ void BLECrypt_if_free(){
   }
 }
 
-void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte of packet header
+void BLECrypt_if_encrypt_packet(uint8_t aad, // Additional Authentication Data: First byte of packet header after applying the bit mask
     const uint8_t* unecrypted_payload,      // Packet payload to be encrypted
     uint8_t* encrypted_payload,  //encrypted payload (and MIC if generate_mic==1)
     int length,        //including MIC length if ( generate_mic == 1 ) ; [ just the length in the packet header ]
@@ -114,8 +114,8 @@ void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte 
 
     if ( Real_encryption_enabled ) {
 
-      blecrypt_packet_encrypt(
-          packet_first_header_byte,
+      blecrypt_packet_encrypt_v2(
+          aad,
           packet_payload_len,
           unecrypted_payload,
           sk,
@@ -132,7 +132,7 @@ void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte 
        *   MIC = 4 lower bytes of KK
        * so the MIC would be broken and the data scrambled if the security initialization was not proper
        */
-      memcpy(encrypted_payload, unecrypted_payload, packet_payload_len /*payload excluding possible mic*/);
+      memcpy(encrypted_payload, unecrypted_payload, packet_payload_len /*payload excluding possible MIC*/);
       if ( generate_mic ) { //the MIC:
         encrypted_payload[length - 4 ] = 0;
         encrypted_payload[length - 3 ] = 'M';
@@ -143,7 +143,7 @@ void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte 
   }
 }
 
-void BLECrypt_if_decrypt_packet(uint8_t packet_1st_header_byte, // First byte of packet header (or just LLID and RFU (RFU=0 for BLE v4.x) - other bits are ignored)
+void BLECrypt_if_decrypt_packet(uint8_t aad, // Additional Authentication Data: First byte of packet header after applying the bit mask
     const uint8_t* encrypted_packet_payload,      //as received from the air (including a MIC if has_mic)
     uint8_t* decrypted_packet_payload,
     int length,       //including MIC lenght if (has_mic == 1) ; [ just  the length in the packet header ]
@@ -170,8 +170,8 @@ void BLECrypt_if_decrypt_packet(uint8_t packet_1st_header_byte, // First byte of
   uint8_t packet_payload_len = length - has_mic*4;
 
   if ( Real_encryption_enabled ) {
-    *mic_error = !blecrypt_packet_decrypt(
-        packet_1st_header_byte,
+    *mic_error = !blecrypt_packet_decrypt_v2(
+        aad,
         packet_payload_len,
         encrypted_packet_payload,
         sk,

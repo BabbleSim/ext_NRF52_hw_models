@@ -30,31 +30,30 @@ void BLECrypt_if_enable_real_encryption(bool mode);
 
 void BLECrypt_if_free();
 
-void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte of packet header
-    const uint8_t* unecrypted_payload,      // Packet payload to be encrypted
-    uint8_t* encrypted_payload,  //encrypted payload (and MIC if generate_mic==1)
-    int length,        //including MIC length if ( generate_mic == 1 ) ; [ just  the length in the packet header ]
-    bool generate_mic, //we have MIC, or not
-    const uint8_t* sk, // Session key (16 bytes, BIG-ENDIAN)
-    const uint8_t* nonce   // CCM Nonce (NONCE_LEN bytes, little-endian)
+void BLECrypt_if_encrypt_packet(uint8_t aad,
+    const uint8_t* unecrypted_payload,
+    uint8_t* encrypted_payload,
+    int length,
+    bool generate_mic,
+    const uint8_t* sk,
+    const uint8_t* nonce
 );
 
-void BLECrypt_if_decrypt_packet(uint8_t packet_1st_header_byte, // First byte of packet header (or just LLID and RFU (RFU=0 for BLE v4.x) - other bits are ignored)
-    const uint8_t* encrypted_packet_payload,      //as received from the air (including a MIC if has_mic)
+void BLECrypt_if_decrypt_packet(uint8_t aad,
+    const uint8_t* encrypted_packet_payload,
     uint8_t* decrypted_packet_payload,
-    int length,       //including MIC lenght if (has_mic == 1) ; [ just  the length in the packet header ]
+    int length,
     bool has_mic,
-    const uint8_t* sk,      // Session key (16 bytes, BIG-ENDIAN)
-    const uint8_t* nonce,   // CCM Nonce (NONCE_LEN bytes, little-endian)
-    uint8_t *mic_error       /*was there a mic error in the packet (only if has_mic==1)*/
+    const uint8_t* sk,
+    const uint8_t* nonce,
+    uint8_t *mic_error
 );
 
 void BLECrypt_if_aes_128(
-    // Inputs
-    const uint8_t *key_be,                          // Key (KEY_LEN bytes, big-endian)
-    const uint8_t *plaintext_data_be,               // Plaintext data (KEY_LEN bytes, big-endian)
-    // Outputs (the pointers themselves are inputs and must point to large enough areas)
-    uint8_t *encrypted_data_be);                    // Plaintext data (KEY_LEN bytes, big-endian)
+    const uint8_t *key_be,
+    const uint8_t *plaintext_data_be,
+    uint8_t *encrypted_data_be
+);
 
 #ifdef __cplusplus
 }
