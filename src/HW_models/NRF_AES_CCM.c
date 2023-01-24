@@ -49,6 +49,9 @@ static bool decryption_ongoing;
 
 void nrf_aes_ccm_init(){
   memset(&NRF_CCM_regs, 0, sizeof(NRF_CCM_regs));
+  NRF_CCM_regs.MODE = 0x01;
+  NRF_CCM_regs.HEADERMASK= 0xE3;
+  NRF_CCM_regs.MAXPACKETSIZE = 0xFB;
   CCM_INTEN = 0;
   decryption_ongoing = false;
 }
@@ -113,7 +116,7 @@ static void nrf_ccm_encrypt_tx() {
   outptr[0] = inptr[0];
   outptr[1] = length;
   pkt_direction = cnfptr[24] & 1;
-  /* Note that outptr[2] is reserverd for S1 in the HW (but unused) */
+  /* Note that outptr[2] is reserved for S1 in the HW (but unused) */
 
   nonce_calc(iv, tx_pkt_ctr, pkt_direction, ccm_nonce);
 
@@ -162,7 +165,7 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
   outptr[0] = inptr[0];
   outptr[1] = length;
   pkt_direction = cnfptr[24] & 1;
-  /* Note that outptr[2] is reserverd for S1 in the HW (but unused) */
+  /* Note that outptr[2] is reserved for S1 in the HW (but unused) */
 
   nonce_calc(iv, rx_pkt_ctr, pkt_direction, ccm_nonce);
 
