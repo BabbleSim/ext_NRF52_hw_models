@@ -53,7 +53,7 @@
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
  * Note14: No 52833 new radio state change events (EVENTS_FRAMESTART, EVENTS_EDEND, EVENTS_EDSTOPPED, EVENTS_CCAIDLE, EVENTS_CCABUSY, EVENTS_CCASTOPPED,
- *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH, EVENTS_SYNC,EVENTS_PHYEND & EVENTS_CTEPRESENT) implemented
+ *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH, EVENTS_SYNC, EVENTS_PHYEND & EVENTS_CTEPRESENT) implemented
  *
  * Note15: PDUSTAT not yet implemented
  *
@@ -90,7 +90,7 @@ bs_time_t Timer_TIFS = TIME_NEVER;
 static bs_time_t TX_ADDRESS_end_time, TX_PAYLOAD_end_time, TX_CRC_end_time;
 
 //Ongoing Rx/Tx structures:
-static p2G4_rx_t  ongoing_rx;
+static p2G4_rxv2_t  ongoing_rx;
 static struct {
   bs_time_t CRC_duration;
   bool CRC_OK;
@@ -100,9 +100,9 @@ static struct {
   bool packet_rejected;
   bool S1Offset;
 } ongoing_rx_RADIO_status;
-static p2G4_tx_t    ongoing_tx;
+static p2G4_txv2_t    ongoing_tx;
 static p2G4_tx_done_t ongoing_tx_done;
-static p2G4_rx_done_t ongoing_rx_done;
+static p2G4_rxv2_done_t ongoing_rx_done;
 static bs_time_t next_recheck_time; // when we asked the phy to recheck (in our own time) next time
 double bits_per_us; //Bits per us for the ongoing Tx or Rx (shared with the bit counter)
 
@@ -279,7 +279,7 @@ static void abort_if_needed(){
   }
   if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ){
     //we answer immediately to the phy rejecting the packet
-    p2G4_dev_rx_cont_after_addr_nc_b(false);
+    p2G4_dev_rxv2_cont_after_addr_nc_b(false);
     radio_sub_state = SUB_STATE_INVALID;
   }
 }
@@ -687,6 +687,7 @@ static void start_Tx(){
     ongoing_tx.radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
   }
+  ongoing_tx.coding_rate = 0;
 
   tx_buf[0] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0];
   tx_buf[1] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1];
@@ -708,8 +709,10 @@ static void start_Tx(){
   ongoing_tx.packet_size  = header_len + payload_len + crc_len; //Not including preamble or address
 
   bs_time_t tx_start_time = tm_get_abs_time() + radio_timings.TX_chain_delay;
-  ongoing_tx.start_time = hwll_phy_time_from_dev(tx_start_time);
-  ongoing_tx.end_time = ongoing_tx.start_time + (bs_time_t)(packet_bitlen / bits_per_us);
+  ongoing_tx.start_tx_time = hwll_phy_time_from_dev(tx_start_time);
+  ongoing_tx.start_packet_time = ongoing_tx.start_tx_time ;
+  ongoing_tx.end_tx_time = ongoing_tx.start_tx_time + (bs_time_t)(packet_bitlen / bits_per_us);
+  ongoing_tx.end_packet_time = ongoing_tx.end_tx_time;
 
   //Prepare abort times:
   next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
@@ -717,7 +720,7 @@ static void start_Tx(){
   ongoing_tx.abort.recheck_time = hwll_phy_time_from_dev(next_recheck_time);
 
   //Request the Tx from the phy:
-  int ret = p2G4_dev_req_tx_nc_b(&ongoing_tx, tx_buf,  &ongoing_tx_done);
+  int ret = p2G4_dev_req_txv2_nc_b(&ongoing_tx, tx_buf,  &ongoing_tx_done);
   handle_Tx_response(ret);
 
   TX_ADDRESS_end_time = tm_get_hw_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us);
@@ -749,7 +752,7 @@ static void handle_Rx_response(int ret){
     Timer_RADIO_abort_reeval = BS_MAX(next_recheck_time,tm_get_abs_time());
     nrf_hw_find_next_timer_to_trigger();
 
-  } else if ( ( ret == P2G4_MSG_RX_ADDRESSFOUND ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+  } else if ( ( ret == P2G4_MSG_RXV2_ADDRESSFOUND ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
     bs_time_t address_time = hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp); //this is the end of the sync word in air time
     tm_update_last_phy_sync_time(address_time);
 
@@ -781,7 +784,7 @@ static void handle_Rx_response(int ret){
     radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
     Timer_RADIO = ongoing_rx_RADIO_status.ADDRESS_End_Time ;
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( ( ret == P2G4_MSG_RX_END ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+  } else if ( ( ret == P2G4_MSG_RXV2_END ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
     bs_time_t end_time = hwll_dev_time_from_phy(ongoing_rx_done.end_time);
     tm_update_last_phy_sync_time(end_time);
 
@@ -818,12 +821,14 @@ static void Rx_abort_eval_respond(){
   abort->abort_time  = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
   abort->recheck_time = hwll_phy_time_from_dev(next_recheck_time);
 
-  int ret = p2G4_dev_provide_new_rx_abort_nc_b(abort);
+  int ret = p2G4_dev_provide_new_rxv2_abort_nc_b(abort);
 
   handle_Rx_response(ret);
 }
 
 static void start_Rx(){
+  #define RX_N_ADDR 8 /* How many addresses we can search in parallel */
+  p2G4_address_t rx_addresses[RX_N_ADDR];
   radio_state = RX;
   NRF_RADIO_regs.STATE = RX;
 
@@ -855,6 +860,7 @@ static void start_Rx(){
     ongoing_rx.radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
   }
+  ongoing_rx.coding_rate = 0;
 
   ongoing_rx_RADIO_status.CRC_duration = 3*8/bits_per_us;
   ongoing_rx_RADIO_status.CRC_OK = false;
@@ -864,18 +870,21 @@ static void start_Rx(){
   p2G4_freq_from_d(freq_off, 1, &center_freq);
   ongoing_rx.radio_params.center_freq = center_freq;
 
-  ongoing_rx.bps = bits_per_us*1000000;
+  ongoing_rx.error_calc_rate = bits_per_us*1000000;
   ongoing_rx.antenna_gain = 0;
 
   ongoing_rx.header_duration  = header_length*8/bits_per_us;
   ongoing_rx.header_threshold = 0; //(<=) we tolerate 0 bit errors in the header which will be found in the crc (we may want to tune this)
   ongoing_rx.sync_threshold   = 2; //(<) we tolerate less than 2 errors in the preamble and sync word together
+  ongoing_rx.acceptable_pre_truncation = 0; //we don't tolerate lossing any of the preamble (note the real modem seems to be able to lose some of it. This is just a starting point)
 
-  ongoing_rx.phy_address  = address;
+  rx_addresses[0] = address;
+  ongoing_rx.n_addr = 1;
 
   ongoing_rx.pream_and_addr_duration = (preamble_length + address_length)*8/bits_per_us;
 
   ongoing_rx.scan_duration = 0xFFFFFFFF; //the phy does not support infinite scans.. but this is 1 hour..
+  ongoing_rx.forced_packet_duration = UINT32_MAX; //we follow the transmitted packet (assuming no length errors by now)
 
   ongoing_rx_done.status = P2G4_RXSTATUS_NOSYNC;
 
@@ -884,11 +893,14 @@ static void start_Rx(){
 
   ongoing_rx.start_time  = hwll_phy_time_from_dev(tm_get_abs_time());
 
+  ongoing_rx.resp_type = 0;
+
   ongoing_rx.abort.abort_time = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
   ongoing_rx.abort.recheck_time = hwll_phy_time_from_dev(next_recheck_time);
 
   rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
-  int ret = p2G4_dev_req_rx_nc_b(&ongoing_rx,
+  int ret = p2G4_dev_req_rxv2_nc_b(&ongoing_rx,
+      rx_addresses,
       &ongoing_rx_done,
       &rx_pkt_buffer_ptr,
       _NRF_MAX_PACKET_SIZE);
@@ -930,7 +942,7 @@ static void Rx_Addr_received(){
     nrf_radio_device_address_match(rx_buf);
   }
 
-  int ret = p2G4_dev_rx_cont_after_addr_nc_b(accept_packet);
+  int ret = p2G4_dev_rxv2_cont_after_addr_nc_b(accept_packet);
 
   if ( accept_packet ){
     handle_Rx_response(ret);
