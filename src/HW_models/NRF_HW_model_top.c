@@ -20,6 +20,7 @@
 #include "NRF_FICR.h"
 #include "NRF_PPI.h"
 #include "NRF_TIMER.h"
+#include "NRF_EGU.h"
 #include "irq_ctrl.h"
 #include "BLECrypt_if.h"
 #include "fake_timer.h"
@@ -34,6 +35,7 @@ void nrf_hw_models_free_all(){
   nrf_radio_clean_up();
   nrf_ficr_clean_up();
   nrf_ppi_clean_up();
+  nrf_egu_clean_up();
   nrf_hw_model_timer_clean_up();
 }
 
@@ -61,6 +63,7 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_radio_init();
   nrf_ficr_init();
   nrf_ppi_init();
+  nrf_egu_init();
   nrf_hw_model_timer_init();
   nrf_hw_find_next_timer_to_trigger();
 }
