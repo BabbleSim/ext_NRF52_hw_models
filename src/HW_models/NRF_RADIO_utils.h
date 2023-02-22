@@ -9,6 +9,7 @@
 #define _NRF_RADIO_UTILS_H
 
 #include <stdint.h>
+#include "bs_pc_2G4_types.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -17,6 +18,8 @@ extern "C"{
 void nrfra_check_packet_conf(void);
 uint32_t nrfra_RSSI_value_to_modem_format(double rssi_value);
 int nrfra_is_HW_TIFS_enabled();
+void nrfra_prep_rx_request(p2G4_rxv2_t *ongoing_rx, p2G4_address_t *rx_addresses);
+void nrfra_prep_tx_request(p2G4_txv2_t *ongoing_tx, uint packet_size, bs_time_t packet_duration);
 
 #ifdef __cplusplus
 }

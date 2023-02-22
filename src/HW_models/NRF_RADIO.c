@@ -123,7 +123,7 @@ static radio_sub_state_t radio_sub_state;
 #define _NRF_MAX_PACKET_SIZE (256+2+4)
 static uint8_t tx_buf[_NRF_MAX_PACKET_SIZE]; //starting from the header, and including CRC
 static uint8_t rx_buf[_NRF_MAX_PACKET_SIZE]; // "
-static uint8_t *rx_pkt_buffer_ptr;
+static uint8_t *rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
 
 static bool radio_on = false;
 
@@ -533,15 +533,11 @@ static void Tx_abort_eval_respond(){
 }
 
 static void start_Tx(){
-  int S1Offset = 0;
+
   radio_state = TX;
   NRF_RADIO_regs.STATE = TX;
 
   nrfra_check_packet_conf();
-
-  if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
-    S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
-  }
 
   //TOLOW: Add support for other packet formats and bitrates
   uint8_t preamble_len;
@@ -551,52 +547,35 @@ static void start_Tx(){
   //Note: I assume in Tx the length is always < PCNF1.MAXLEN and that STATLEN is always 0 (otherwise add a check)
   uint8_t crc_len     = 3;
 
-  uint32_t crc_init = NRF_RADIO_regs.CRCINIT & RADIO_CRCINIT_CRCINIT_Msk;
-
-  //Note: we only support BALEN = 3 (== BLE 4 byte addresses)
-  //Note: We only support address 0 being used
-  uint32_t address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
-                       | (NRF_RADIO_regs.BASE0 >> 8);
-
-  uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
   //Note only default freq. map supported
-  double TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     preamble_len = 1; //1 byte
-    ongoing_tx.radio_params.modulation = P2G4_MOD_BLE;
     bits_per_us = 1;
   } else { //2Mbps
     preamble_len = 2; //2 bytes
-    ongoing_tx.radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
   }
-  ongoing_tx.coding_rate = 0;
 
   tx_buf[0] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0];
   tx_buf[1] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1];
+
+  int S1Offset = 0;
+  if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
+    S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
+  }
   memcpy(&tx_buf[2], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + S1Offset], payload_len);
+
+  uint32_t crc_init = NRF_RADIO_regs.CRCINIT & RADIO_CRCINIT_CRCINIT_Msk;
   append_crc_ble(tx_buf, 2/*header*/ + payload_len, crc_init);
 
-  uint packet_bitlen = 0;
-  packet_bitlen += preamble_len*8 + address_len*8;
-  packet_bitlen += header_len*8;
-  packet_bitlen += payload_len*8;
-  packet_bitlen += crc_len*8;
+  bs_time_t packet_duration; //From preamble to CRC
+  packet_duration  = preamble_len*8 + address_len*8;
+  packet_duration += header_len*8 + payload_len*8 + crc_len*8;
+  packet_duration /= bits_per_us;
+  uint packet_size = header_len + payload_len + crc_len;
 
-  ongoing_tx.phy_address = address;
-  ongoing_tx.power_level = p2G4_power_from_d(TxPower); //Note that any possible Tx antenna or PA gain would need to be included here
-
-  p2G4_freq_t center_freq;
-  p2G4_freq_from_d(freq_off, 1, &center_freq);
-  ongoing_tx.radio_params.center_freq = center_freq;
-  ongoing_tx.packet_size  = header_len + payload_len + crc_len; //Not including preamble or address
-
-  bs_time_t tx_start_time = tm_get_abs_time() + nrfra_timings_get_TX_chain_delay();
-  ongoing_tx.start_tx_time = hwll_phy_time_from_dev(tx_start_time);
-  ongoing_tx.start_packet_time = ongoing_tx.start_tx_time ;
-  ongoing_tx.end_tx_time = ongoing_tx.start_tx_time + (bs_time_t)(packet_bitlen / bits_per_us);
-  ongoing_tx.end_packet_time = ongoing_tx.end_tx_time;
+  nrfra_prep_tx_request(&ongoing_tx, packet_size, packet_duration);
 
   //Prepare abort times:
   next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
@@ -615,7 +594,6 @@ static void start_Tx(){
   Timer_RADIO = TX_ADDRESS_end_time;
   nrf_hw_find_next_timer_to_trigger();
 }
-
 
 /**
  * Handle all possible responses from the phy to a Rx request
@@ -726,66 +704,24 @@ static void start_Rx(){
     ongoing_rx_RADIO_status.S1Offset = 0;
   }
 
-  //TOLOW: Add support for other packet formats and bitrates
-  uint8_t preamble_length;
-  uint8_t address_length  = 4;
-  uint8_t header_length   = 2;
-  //Note: we only support BALEN = 3 (== BLE 4 byte addresses)
-  //Note: We only support address 0 being used
-  uint32_t address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
-                                          | (NRF_RADIO_regs.BASE0 >> 8);
-
-  uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
-
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
-    //Note that we only support BLE packet formats by now (so we ignore the configuration of the preamble and just assume it is what it needs to be)
-    //we rely on the Tx side error/warning being enough to warn users that we do not support other formats
-    preamble_length = 1; //1 byte
-    ongoing_rx.radio_params.modulation = P2G4_MOD_BLE;
     bits_per_us = 1;
   } else { //2Mbps
-    preamble_length = 2; //2 bytes
-    ongoing_rx.radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
   }
-  ongoing_rx.coding_rate = 0;
 
   ongoing_rx_RADIO_status.CRC_duration = 3*8/bits_per_us;
   ongoing_rx_RADIO_status.CRC_OK = false;
-
-  p2G4_freq_t center_freq;
-  p2G4_freq_from_d(freq_off, 1, &center_freq);
-  ongoing_rx.radio_params.center_freq = center_freq;
-
-  ongoing_rx.error_calc_rate = bits_per_us*1000000;
-  ongoing_rx.antenna_gain = 0;
-
-  ongoing_rx.header_duration  = header_length*8/bits_per_us;
-  ongoing_rx.header_threshold = 0; //(<=) we tolerate 0 bit errors in the header which will be found in the crc (we may want to tune this)
-  ongoing_rx.sync_threshold   = 2; //(<) we tolerate less than 2 errors in the preamble and sync word together
-  ongoing_rx.acceptable_pre_truncation = 0; //we don't tolerate lossing any of the preamble (note the real modem seems to be able to lose some of it. This is just a starting point)
-
-  rx_addresses[0] = address;
-  ongoing_rx.n_addr = 1;
-
-  ongoing_rx.pream_and_addr_duration = (preamble_length + address_length)*8/bits_per_us;
-
-  ongoing_rx.scan_duration = 0xFFFFFFFF; //the phy does not support infinite scans.. but this is 1 hour..
-  ongoing_rx.forced_packet_duration = UINT32_MAX; //we follow the transmitted packet (assuming no length errors by now)
-
   ongoing_rx_done.status = P2G4_RXSTATUS_NOSYNC;
 
-  //attempt to receive
+  nrfra_prep_rx_request(&ongoing_rx, rx_addresses);
+
+  //TODO: check if we can move these to a common function for Tx, Rx, etc
   next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
-
-  ongoing_rx.start_time  = hwll_phy_time_from_dev(tm_get_abs_time());
-
-  ongoing_rx.resp_type = 0;
-
   ongoing_rx.abort.abort_time = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
   ongoing_rx.abort.recheck_time = hwll_phy_time_from_dev(next_recheck_time);
 
-  rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
+  //attempt to receive
   int ret = p2G4_dev_req_rxv2_nc_b(&ongoing_rx,
       rx_addresses,
       &ongoing_rx_done,
