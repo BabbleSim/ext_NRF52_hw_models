@@ -21,6 +21,8 @@
 #include "NRF_HWLowL.h"
 #include "crc_ble.h"
 #include "NRF_RADIO_signals.h"
+#include "NRF_RADIO_utils.h"
+#include "NRF_RADIO_timings.h"
 
 /**
  * RADIO — 2.4 GHz Radio
@@ -64,22 +66,6 @@
 
 NRF_RADIO_Type NRF_RADIO_regs;
 uint32_t NRF_RADIO_INTEN = 0; //interrupt enable
-
-static struct {
-  /*Ramp up times*/
-  bs_time_t TX_RU_time[2][2][2];
-  /* The versions are [1,2Mbps] [Normal, Fast] [No_TIFS, HW_TIFS] */
-  /* where HW TIFS only applies for Normal rampup */
-  bs_time_t RX_RU_time[2][2][2];
-
-  /*Digital processing delay:*/
-  bs_time_t TX_chain_delay;
-  bs_time_t RX_chain_delay[2]; /*Indexed as 1Mbps, 2Mbps*/
-
-  /*Ramp down times*/
-  bs_time_t TX_RD_time;
-  bs_time_t RX_RD_time;
-} radio_timings;
 
 bs_time_t Timer_RADIO = TIME_NEVER; //main radio timer
 bs_time_t Timer_RADIO_abort_reeval = TIME_NEVER; //Abort reevaluation response timer, this timer must have the lowest priority of all events (which may cause an abort)
@@ -171,28 +157,7 @@ static void radio_reset() {
 }
 
 void nrf_radio_init() {
-  /* The versions are [1,2Mbps] [Normal, Fast] [No_TIFS, HW_TIFS] */
-  /* where HW TIFS only applies for Normal rampup */
-  radio_timings.TX_RU_time[0][1][0] =  41; // 41000
-  radio_timings.TX_RU_time[0][0][1] = 141; //141000
-  radio_timings.TX_RU_time[0][0][0] = 130; //130000
-  radio_timings.TX_RU_time[1][1][0] =  40; // 40000
-  radio_timings.TX_RU_time[1][0][1] = 140; //140000
-  radio_timings.TX_RU_time[1][0][0] = 129; //128900
-
-  radio_timings.RX_RU_time[0][1][0] =  40; // 40000
-  radio_timings.RX_RU_time[0][0][1] = 140; //140000
-  radio_timings.RX_RU_time[0][0][0] = 129; //129000
-  radio_timings.RX_RU_time[1][1][0] =  40; // 40000
-  radio_timings.RX_RU_time[1][0][1] = 140; //140000
-  radio_timings.RX_RU_time[1][0][0] = 129; //129000
-
-  radio_timings.TX_chain_delay    = 1; //0.6 /*both 1 and 2Mbps*/
-  radio_timings.RX_chain_delay[0] = 9; //9.4  /* 1Mbps */
-  radio_timings.RX_chain_delay[1] = 5; //5.45 /* 2Mbps */
-
-  radio_timings.TX_RD_time = 6;
-  radio_timings.RX_RD_time = 0;
+  nrfra_timings_init();
   radio_reset();
   radio_on = false;
   bits_per_us = 1;
@@ -200,44 +165,6 @@ void nrf_radio_init() {
 
 void nrf_radio_clean_up() {
 
-}
-
-static int HW_TIFS_enabled() {
-  if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
-      && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
-          || ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) )
-  ){
-    return 1;
-  }
-  return 0;
-}
-
-static bs_time_t get_Rx_chain_delay(){
-  int Mbps2 = 0;
-  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
-    Mbps2 = 1;
-  }
-  return radio_timings.RX_chain_delay[Mbps2];
-}
-
-static bs_time_t get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
-  int fast  = 0;
-  int Mbps2 = 0;
-  int HWTIFS= 0;
-
-  if ( NRF_RADIO_regs.MODECNF0 & 1 ){ /* MODECNF0.RU */
-    fast = 1;
-  } else {
-    HWTIFS = from_hw_TIFS | HW_TIFS_enabled();
-  }
-  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
-    Mbps2 = 1;
-  }
-  if (TxNotRx) {
-    return radio_timings.TX_RU_time[Mbps2][fast][HWTIFS];
-  } else {
-    return radio_timings.RX_RU_time[Mbps2][fast][HWTIFS];
-  }
 }
 
 void nrf_radio_tasks_txen() {
@@ -253,7 +180,7 @@ void nrf_radio_tasks_txen() {
   radio_state = TXRU;
   NRF_RADIO_regs.STATE = TXRU;
 
-  Timer_RADIO = tm_get_hw_time() + get_rampup_time(1, from_hw_tifs);
+  Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_rampup_time(1, from_hw_tifs);
   nrf_hw_find_next_timer_to_trigger();
 }
 
@@ -269,7 +196,7 @@ void nrf_radio_tasks_rxen() {
   TIFS_state = TIFS_DISABLE;
   radio_state = RXRU;
   NRF_RADIO_regs.STATE = RXRU;
-  Timer_RADIO = tm_get_hw_time() + get_rampup_time(0, from_hw_tifs);
+  Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_rampup_time(0, from_hw_tifs);
   nrf_hw_find_next_timer_to_trigger();
 }
 
@@ -343,13 +270,13 @@ void nrf_radio_tasks_disable() {
     radio_state = TXDISABLE;
     NRF_RADIO_regs.STATE = TXDISABLE;
     TIFS_state = TIFS_DISABLE;
-    Timer_RADIO = tm_get_hw_time() + radio_timings.TX_RD_time;
+    Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_TX_rampdown_time();
     nrf_hw_find_next_timer_to_trigger();
   } else if ( ( radio_state == RXRU ) || ( radio_state == RXIDLE ) ) {
     radio_state = RXDISABLE;
     NRF_RADIO_regs.STATE = RXDISABLE;
     TIFS_state = TIFS_DISABLE;
-    Timer_RADIO = tm_get_hw_time() + radio_timings.RX_RD_time;
+    Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_RX_rampdown_time();
     nrf_hw_find_next_timer_to_trigger();
   } else if ( radio_state == DISABLED ) {
     //It seems the radio will also signal a DISABLED event even if it was already disabled
@@ -409,7 +336,7 @@ void nrf_radio_fake_task_TRXEN_TIFS(){
 
 void maybe_prepare_TIFS(bool Tx_Not_Rx){
   bs_time_t delta;
-  if ( !HW_TIFS_enabled() ) {
+  if ( !nrfra_is_HW_TIFS_enabled() ) {
     return;
   }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ){
@@ -419,9 +346,9 @@ void maybe_prepare_TIFS(bool Tx_Not_Rx){
   }
 
   if ( Tx_Not_Rx ){ //End of Tx
-    delta = NRF_RADIO_regs.TIFS + radio_timings.TX_chain_delay - get_rampup_time(0, 1) - 3; /*open slightly earlier to have jitter margin*/
+    delta = NRF_RADIO_regs.TIFS + nrfra_timings_get_TX_chain_delay() - nrfra_timings_get_rampup_time(0, 1) - 3; /*open slightly earlier to have jitter margin*/
   } else { //End of Rx
-    delta = NRF_RADIO_regs.TIFS - get_Rx_chain_delay() - radio_timings.TX_chain_delay - get_rampup_time(1, 1) + 1;
+    delta = NRF_RADIO_regs.TIFS - nrfra_timings_get_Rx_chain_delay() - nrfra_timings_get_TX_chain_delay() - nrfra_timings_get_rampup_time(1, 1) + 1;
   }
   Timer_TIFS = tm_get_hw_time() + delta;
   TIFS_state = TIFS_WAITING_FOR_DISABLE;
@@ -610,51 +537,7 @@ static void start_Tx(){
   radio_state = TX;
   NRF_RADIO_regs.STATE = TX;
 
-  {// a few checks to ensure the model is only used with the currently supported packet format
-    int checked =NRF_RADIO_regs.PCNF0 &
-        (RADIO_PCNF0_PLEN_Msk
-            | RADIO_PCNF0_S1LEN_Msk
-            | RADIO_PCNF0_S0LEN_Msk
-            | RADIO_PCNF0_LFLEN_Msk);
-
-    if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
-      int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
-          | ( 1 << RADIO_PCNF0_S0LEN_Pos )
-          | ( 0 << RADIO_PCNF0_S1LEN_Pos )
-          | ( RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos ) );
-
-      if (checked != check) {
-        bs_trace_error_line_time(
-            "NRF_RADIO: For 1 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
-            NRF_RADIO_regs.PCNF0);
-      }
-
-    } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
-
-      int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
-          | ( 1 << RADIO_PCNF0_S0LEN_Pos )
-          | ( 0 << RADIO_PCNF0_S1LEN_Pos )
-          | ( RADIO_PCNF0_PLEN_16bit << RADIO_PCNF0_PLEN_Pos ) );
-
-      if (checked != check) {
-        bs_trace_error_line_time(
-            "NRF_RADIO: For 2 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
-            NRF_RADIO_regs.PCNF0);
-      }
-
-    } else {
-      bs_trace_error_line_time(
-          "NRF_RADIO: Only 1&2 Mbps BLE packet format supported so far (MODE=%u)\n",
-          NRF_RADIO_regs.MODE);
-    }
-
-    if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
-        != (RADIO_CRCCNF_LEN_Three << RADIO_CRCCNF_LEN_Pos) ) {
-      bs_trace_error_line_time(
-          "NRF_RADIO: CRCCNF Only 3 bytes CRC is supported (CRCCNF=%u)\n",
-          NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk);
-    }
-  }
+  nrfra_check_packet_conf();
 
   if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
     S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
@@ -709,7 +592,7 @@ static void start_Tx(){
   ongoing_tx.radio_params.center_freq = center_freq;
   ongoing_tx.packet_size  = header_len + payload_len + crc_len; //Not including preamble or address
 
-  bs_time_t tx_start_time = tm_get_abs_time() + radio_timings.TX_chain_delay;
+  bs_time_t tx_start_time = tm_get_abs_time() + nrfra_timings_get_TX_chain_delay();
   ongoing_tx.start_tx_time = hwll_phy_time_from_dev(tx_start_time);
   ongoing_tx.start_packet_time = ongoing_tx.start_tx_time ;
   ongoing_tx.end_tx_time = ongoing_tx.start_tx_time + (bs_time_t)(packet_bitlen / bits_per_us);
@@ -733,11 +616,6 @@ static void start_Tx(){
   nrf_hw_find_next_timer_to_trigger();
 }
 
-uint32_t RSSI_value_to_modem_format(double rssi_value){
-  rssi_value = -BS_MAX(rssi_value,-127);
-  rssi_value = BS_MAX(rssi_value,0);
-  return (uint32_t)rssi_value;
-}
 
 /**
  * Handle all possible responses from the phy to a Rx request
@@ -759,7 +637,7 @@ static void handle_Rx_response(int ret){
     bs_time_t address_time = hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp); //this is the end of the sync word in air time
     tm_update_last_phy_sync_time(address_time);
 
-    ongoing_rx_RADIO_status.ADDRESS_End_Time = address_time + get_Rx_chain_delay();
+    ongoing_rx_RADIO_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
     uint length = rx_buf[1];
     uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
     if (length > max_length){
@@ -768,10 +646,10 @@ static void handle_Rx_response(int ret){
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
     }
     ongoing_rx_RADIO_status.packet_rejected = false;
-    ongoing_rx_RADIO_status.PAYLOAD_End_Time = get_Rx_chain_delay() +
+    ongoing_rx_RADIO_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
         hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us));
-    ongoing_rx_RADIO_status.CRC_End_Time = get_Rx_chain_delay() +
+    ongoing_rx_RADIO_status.CRC_End_Time = nrfra_timings_get_Rx_chain_delay() +
         hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us)
             + ongoing_rx_RADIO_status.CRC_duration); //Provisional value
@@ -794,7 +672,7 @@ static void handle_Rx_response(int ret){
     tm_update_last_phy_sync_time(end_time);
 
     if (ongoing_rx_done.status != P2G4_RXSTATUS_HEADER_ERROR) {
-        ongoing_rx_RADIO_status.CRC_End_Time = end_time + get_Rx_chain_delay();
+        ongoing_rx_RADIO_status.CRC_End_Time = end_time + nrfra_timings_get_Rx_chain_delay();
     } //Otherwise we do not really now how the Nordic RADIO behaves depending on
     //where the biterrors are and so forth. So let's always behave like if the
     //packet lenght was received correctly, and just report a CRC error at the
@@ -936,7 +814,7 @@ static void Rx_Addr_received(){
   bool accept_packet = !ongoing_rx_RADIO_status.packet_rejected;
 
   if ( rssi_sampling_on ){
-    NRF_RADIO_regs.RSSISAMPLE = RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(ongoing_rx_done.rssi.RSSI));
+    NRF_RADIO_regs.RSSISAMPLE = nrfra_RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(ongoing_rx_done.rssi.RSSI));
     nrf_radio_signal_RSSIEND();
   }
 
