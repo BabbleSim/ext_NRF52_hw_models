@@ -33,7 +33,7 @@
  *
  * Note4: only default freq. map supported
  *
- * Note5: Only little endian supported (x86 is little endian)
+ * Note5: Only little endian hosts supported (x86 is little endian)
  *
  * Note6: RSSI is always sampled at the end of the address (and RSSIEND raised there)
  *
@@ -58,6 +58,8 @@
  * Note15: PDUSTAT not yet implemented
  *
  * Note16: No antenna switching
+ *
+ * Note17: Interrupts are modeled as pulses to the NVIC, not level interrupts as they are in reality
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
@@ -86,6 +88,7 @@ bs_time_t Timer_RADIO_bitcounter = TIME_NEVER;
 static enum {TIFS_DISABLE = 0, TIFS_WAITING_FOR_DISABLE, TIFS_TRIGGERING_TRX_EN } TIFS_state = TIFS_DISABLE;
 bool TIFS_ToTxNotRx = false;
 bs_time_t Timer_TIFS = TIME_NEVER;
+static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
 
 static bs_time_t TX_ADDRESS_end_time, TX_PAYLOAD_end_time, TX_CRC_end_time;
 
@@ -108,6 +111,7 @@ double bits_per_us; //Bits per us for the ongoing Tx or Rx (shared with the bit 
 
 typedef enum { No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval } abort_state_t;
 static abort_state_t abort_fsm_state = No_pending_abort_reeval; //This variable shall be set to Tx/Rx_Abort_reeval when the phy is waiting for an abort response (and in no other circumstance)
+static int aborting_set = 0; //If set, we will abort the current Tx/Rx at the next abort reevaluation
 
 typedef enum {
   DISABLED = 0, //No operations are going on inside the radio and the power consumption is at a minimum
@@ -130,8 +134,6 @@ typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX stat
 
 static radio_sub_state_t radio_sub_state;
 
-static int aborting_set = 0;
-
 #define _NRF_MAX_PACKET_SIZE (256+2+4)
 static uint8_t tx_buf[_NRF_MAX_PACKET_SIZE]; //starting from the header, and including CRC
 static uint8_t rx_buf[_NRF_MAX_PACKET_SIZE]; // "
@@ -144,7 +146,6 @@ static bool rssi_sampling_on = false;
 static bs_time_t Time_BitCounterStarted = TIME_NEVER;
 static bool bit_counter_running = false;
 
-static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
 
 static void nrf_radio_stop_bit_counter();
 static void start_Tx();
@@ -747,12 +748,14 @@ static void handle_Rx_response(int ret){
     hwll_disconnect_phy_and_exit();
 
   } else if ( ret == P2G4_MSG_ABORTREEVAL ) {
+
     tm_update_last_phy_sync_time( next_recheck_time );
     abort_fsm_state = Rx_Abort_reeval;
     Timer_RADIO_abort_reeval = BS_MAX(next_recheck_time,tm_get_abs_time());
     nrf_hw_find_next_timer_to_trigger();
 
   } else if ( ( ret == P2G4_MSG_RXV2_ADDRESSFOUND ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+
     bs_time_t address_time = hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp); //this is the end of the sync word in air time
     tm_update_last_phy_sync_time(address_time);
 
@@ -784,7 +787,9 @@ static void handle_Rx_response(int ret){
     radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
     Timer_RADIO = ongoing_rx_RADIO_status.ADDRESS_End_Time ;
     nrf_hw_find_next_timer_to_trigger();
+
   } else if ( ( ret == P2G4_MSG_RXV2_END ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+
     bs_time_t end_time = hwll_dev_time_from_phy(ongoing_rx_done.end_time);
     tm_update_last_phy_sync_time(end_time);
 
@@ -826,11 +831,16 @@ static void Rx_abort_eval_respond(){
   handle_Rx_response(ret);
 }
 
+/*
+ * Actually start the Rx in this microsecond
+ */
 static void start_Rx(){
   #define RX_N_ADDR 8 /* How many addresses we can search in parallel */
   p2G4_address_t rx_addresses[RX_N_ADDR];
+
   radio_state = RX;
   NRF_RADIO_regs.STATE = RX;
+  NRF_RADIO_regs.CRCSTATUS = 0;
 
   if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
     ongoing_rx_RADIO_status.S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
@@ -864,7 +874,6 @@ static void start_Rx(){
 
   ongoing_rx_RADIO_status.CRC_duration = 3*8/bits_per_us;
   ongoing_rx_RADIO_status.CRC_OK = false;
-  NRF_RADIO_regs.CRCSTATUS = 0;
 
   p2G4_freq_t center_freq;
   p2G4_freq_from_d(freq_off, 1, &center_freq);
@@ -915,11 +924,14 @@ static void start_Rx(){
 static void nrf_radio_device_address_match();
 
 /**
- * This function is called when the packet phy address has been received
+ * This function is called at the time when the Packet address would have been
+ * completely received
  * (at the time of the end of the last bit of the packet address)
+ * To continue processing the reception (the Phy was left waiting for a response)
+ *
+ * Note that libPhyCom has already copied the whole packet into the input buffer
  */
 static void Rx_Addr_received(){
-  //libPhyCom has already copied the whole packet into the input buffer
 
   bool accept_packet = !ongoing_rx_RADIO_status.packet_rejected;
 
@@ -936,7 +948,7 @@ static void Rx_Addr_received(){
      * NOTE: we cheat and we already check the advertisement addresses and
      * raise the event, even though we should wait for 16 + 48 bits more
      *
-     * If this is a problem, add a new timer and delay raising the event
+     * If this is a problem, add a new timer and Rx state and delay raising the event
      * until then
      */
     nrf_radio_device_address_match(rx_buf);
