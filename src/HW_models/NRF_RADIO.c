@@ -20,6 +20,7 @@
 #include "irq_ctrl.h"
 #include "NRF_HWLowL.h"
 #include "crc_ble.h"
+#include "NRF_RADIO_signals.h"
 
 /**
  * RADIO — 2.4 GHz Radio
@@ -60,7 +61,7 @@
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
-static uint32_t RADIO_INTEN = 0; //interrupt enable
+uint32_t NRF_RADIO_INTEN = 0; //interrupt enable
 
 static struct {
   /*Ramp up times*/
@@ -150,7 +151,7 @@ static void nrf_radio_stop_bit_counter();
 static void radio_reset() {
   memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
   radio_state = DISABLED;
-  RADIO_INTEN = 0;
+  NRF_RADIO_INTEN = 0;
   radio_sub_state = SUB_STATE_INVALID;
   Timer_RADIO = TIME_NEVER;
   rssi_sampling_on = false;
@@ -316,8 +317,6 @@ void nrf_radio_tasks_stop (){
   }
 }
 
-static void signal_DISABLED();
-
 void nrf_radio_tasks_disable() {
   nrf_radio_stop_bit_counter();
 
@@ -352,7 +351,8 @@ void nrf_radio_tasks_disable() {
     nrf_hw_find_next_timer_to_trigger();
   } else if ( radio_state == DISABLED ) {
     //It seems the radio will also signal a DISABLED event even if it was already disabled
-    signal_DISABLED();
+    nrf_radio_stop_bit_counter();
+    nrf_radio_signal_DISABLED();
   }
 }
 
@@ -403,15 +403,15 @@ void nrf_radio_regw_sideeffects_TASKS_RSSISTOP() {
 
 void nrf_radio_regw_sideeffects_INTENSET(){
   if ( NRF_RADIO_regs.INTENSET ){
-    RADIO_INTEN |= NRF_RADIO_regs.INTENSET;
-    NRF_RADIO_regs.INTENSET = RADIO_INTEN;
+    NRF_RADIO_INTEN |= NRF_RADIO_regs.INTENSET;
+    NRF_RADIO_regs.INTENSET = NRF_RADIO_INTEN;
   }
 }
 
 void nrf_radio_regw_sideeffects_INTENCLR(){
   if ( NRF_RADIO_regs.INTENCLR ){
-    RADIO_INTEN  &= ~NRF_RADIO_regs.INTENCLR;
-    NRF_RADIO_regs.INTENSET = RADIO_INTEN;
+    NRF_RADIO_INTEN  &= ~NRF_RADIO_regs.INTENCLR;
+    NRF_RADIO_regs.INTENSET = NRF_RADIO_INTEN;
     NRF_RADIO_regs.INTENCLR = 0;
   }
 }
@@ -429,151 +429,17 @@ void nrf_radio_regw_sideeffects_POWER(){
   }
 }
 
-static void signal_READY(){
-  NRF_RADIO_regs.EVENTS_READY = 1;
-  nrf_ppi_event(RADIO_EVENTS_READY);
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_READY_START_Msk ) {
-    nrf_radio_tasks_start();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_READY_Msk ){
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
 /*
- * The TX and RX READY missing in the registers header..
-static void signal_TXREADY(){
-  NRF_RADIO_regs.EVENTS_TXREADY = 1;
-  NRF_PPI_Event(RADIO_EVENTS_TXREADY);
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_TXREADY_START_Msk ) {
-    NRF_RADIO_TASK_START();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_TXREADY_Msk ){
-    hw_irq_controller_set_irq(NRF5_IRQ_RADIO_IRQn);
-  }
-}
-
-static void signal_RXREADY(){
-  NRF_RADIO_regs.EVENTS_RXREADY = 1;
-  NRF_PPI_Event(RADIO_EVENTS_RXREADY);
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_RXREADY_START_Msk ) {
-    NRF_RADIO_TASK_START();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_RXREADY_Msk ){
-    hw_irq_controller_set_irq(NRF5_IRQ_RADIO_IRQn);
-  }
-}
-*/
-
-static void signal_RSSIEND(){
-  NRF_RADIO_regs.EVENTS_RSSIEND = 1;
-  nrf_ppi_event(RADIO_EVENTS_RSSIEND);
-
-  if ( RADIO_INTEN & RADIO_INTENSET_RSSIEND_Msk ){
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_ADDRESS(){
-  NRF_RADIO_regs.EVENTS_ADDRESS = 1;
-  nrf_ppi_event(RADIO_EVENTS_ADDRESS);
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_ADDRESS_RSSISTART_Msk ) {
-    nrf_radio_tasks_rssistart();
-  }
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_ADDRESS_BCSTART_Msk ) {
-    nrf_radio_tasks_bcstart();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_ADDRESS_Msk ){
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_PAYLOAD(){
-  NRF_RADIO_regs.EVENTS_PAYLOAD = 1;
-  nrf_ppi_event(RADIO_EVENTS_PAYLOAD);
-
-  if ( RADIO_INTEN & RADIO_INTENSET_PAYLOAD_Msk ){
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_CRCOK(){
-  NRF_RADIO_regs.EVENTS_CRCOK = 1;
-  nrf_ppi_event(RADIO_EVENTS_CRCOK);
-
-  if ( RADIO_INTEN & RADIO_INTENSET_CRCOK_Msk ) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_CRCERROR(){
-  NRF_RADIO_regs.EVENTS_CRCERROR = 1;
-  nrf_ppi_event(RADIO_EVENTS_CRCERROR);
-
-  if ( RADIO_INTEN & RADIO_INTENSET_CRCERROR_Msk ) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_END(){
-  nrf_radio_stop_bit_counter();
-
-  NRF_RADIO_regs.EVENTS_END = 1;
-  nrf_ppi_event(RADIO_EVENTS_END);
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk ) {
-    nrf_radio_tasks_disable();
-  }
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_START_Msk ) {
-    nrf_radio_tasks_start();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_END_Msk ) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_DISABLED(){
-  nrf_radio_stop_bit_counter();
-
-  NRF_RADIO_regs.EVENTS_DISABLED = 1;
-  nrf_ppi_event(RADIO_EVENTS_DISABLED);
-
-  //These 2 are fake shortcuts meant to start a HW timer for the TIFS
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) {
-    if ( TIFS_state == TIFS_WAITING_FOR_DISABLE ) {
-      TIFS_state = TIFS_TRIGGERING_TRX_EN;
-      Timer_RADIO = Timer_TIFS;
-      if ( Timer_RADIO < tm_get_hw_time() ){
-        bs_trace_warning_line_time("NRF_RADIO: TIFS Ups: The Ramp down from Rx into a Tx takes more than the programmed TIFS time\n");
-      }
-      nrf_hw_find_next_timer_to_trigger();
+ * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
+ */
+void nrf_radio_fake_task_TRXEN_TIFS(){
+  if ( TIFS_state == TIFS_WAITING_FOR_DISABLE ) {
+    TIFS_state = TIFS_TRIGGERING_TRX_EN;
+    Timer_RADIO = Timer_TIFS;
+    if ( Timer_RADIO < tm_get_hw_time() ){
+      bs_trace_warning_line_time("NRF_RADIO: TIFS Ups: The Ramp down from Rx/Tx into a Tx/Rx takes more than the programmed TIFS time\n");
     }
-  }
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk ) {
-    if ( TIFS_state == TIFS_WAITING_FOR_DISABLE ) {
-      TIFS_state = TIFS_TRIGGERING_TRX_EN;
-      Timer_RADIO = Timer_TIFS;
-      if ( Timer_RADIO < tm_get_hw_time() ){
-        bs_trace_warning_line_time("NRF_RADIO: TIFS Ups 2\n");
-      }
-      nrf_hw_find_next_timer_to_trigger();
-    }
-  }
-
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RSSISTOP_Msk ) {
-    nrf_radio_tasks_rssistop();
-  }
-
-  if ( RADIO_INTEN & RADIO_INTENSET_DISABLED_Msk ) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
+    nrf_hw_find_next_timer_to_trigger();
   }
 }
 
@@ -604,30 +470,31 @@ void nrf_radio_timer_triggered(){
     NRF_RADIO_regs.STATE = TXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
-    signal_READY();
-    //signal_TXREADY();
+    nrf_radio_signal_READY();
+    //nrf_radio_signal_TXREADY();
   } else if ( radio_state == RXRU ){
     radio_state = RXIDLE;
     NRF_RADIO_regs.STATE = RXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
-    signal_READY();
-    //signal_RXREADY();
+    nrf_radio_signal_READY();
+    //nrf_radio_signal_RXREADY();
   } else if ( radio_state == TX ){
     if ( radio_sub_state == TX_WAIT_FOR_ADDRESS_END ){
       radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
       Timer_RADIO = TX_PAYLOAD_end_time;
-      signal_ADDRESS();
+      nrf_radio_signal_ADDRESS();
     } else if ( radio_sub_state == TX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = TX_WAIT_FOR_CRC_END;
       Timer_RADIO = TX_CRC_end_time;
-      signal_PAYLOAD();
+      nrf_radio_signal_PAYLOAD();
     } else if ( radio_sub_state == TX_WAIT_FOR_CRC_END ) {
       radio_sub_state = SUB_STATE_INVALID;
       radio_state = TXIDLE;
       NRF_RADIO_regs.STATE = TXIDLE;
       Timer_RADIO = TIME_NEVER;
-      signal_END();
+      nrf_radio_stop_bit_counter();
+      nrf_radio_signal_END();
       maybe_prepare_TIFS(true);
     }  else { //SUB_STATE_INVALID
       bs_trace_error_time_line("programming error\n");
@@ -637,7 +504,7 @@ void nrf_radio_timer_triggered(){
     if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ) {
       Timer_RADIO = TIME_NEVER;
       nrf_hw_find_next_timer_to_trigger();
-      signal_ADDRESS();
+      nrf_radio_signal_ADDRESS();
       Rx_Addr_received();
       radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
       Timer_RADIO = ongoing_rx_RADIO_status.PAYLOAD_End_Time;
@@ -646,7 +513,7 @@ void nrf_radio_timer_triggered(){
       radio_sub_state = RX_WAIT_FOR_CRC_END;
       Timer_RADIO = ongoing_rx_RADIO_status.CRC_End_Time;
       nrf_hw_find_next_timer_to_trigger();
-      signal_PAYLOAD();
+      nrf_radio_signal_PAYLOAD();
     } else if ( radio_sub_state == RX_WAIT_FOR_CRC_END ) {
       radio_sub_state = SUB_STATE_INVALID;
       radio_state = RXIDLE;
@@ -654,11 +521,12 @@ void nrf_radio_timer_triggered(){
       Timer_RADIO = TIME_NEVER;
       nrf_hw_find_next_timer_to_trigger();
       if ( ongoing_rx_RADIO_status.CRC_OK ) {
-        signal_CRCOK();
+        nrf_radio_signal_CRCOK();
       } else {
-        signal_CRCERROR();
+        nrf_radio_signal_CRCERROR();
       }
-      signal_END();
+      nrf_radio_stop_bit_counter();
+      nrf_radio_signal_END();
       maybe_prepare_TIFS(false);
     } else { //SUB_STATE_INVALID
       bs_trace_error_time_line("programming error\n");
@@ -667,13 +535,15 @@ void nrf_radio_timer_triggered(){
     radio_state = DISABLED;
     NRF_RADIO_regs.STATE = DISABLED;
     Timer_RADIO = TIME_NEVER;
-    signal_DISABLED();
+    nrf_radio_stop_bit_counter();
+    nrf_radio_signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
   } else if ( radio_state == RXDISABLE ){
     radio_state = DISABLED;
     NRF_RADIO_regs.STATE = DISABLED;
     Timer_RADIO = TIME_NEVER;
-    signal_DISABLED();
+    nrf_radio_stop_bit_counter();
+    nrf_radio_signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
   } else {
     if ( ( radio_state == DISABLED ) && ( TIFS_state == TIFS_TRIGGERING_TRX_EN ) ) {
@@ -1083,7 +953,7 @@ static void Rx_Addr_received(){
 
   if ( rssi_sampling_on ){
     NRF_RADIO_regs.RSSISAMPLE = RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(ongoing_rx_done.rssi.RSSI));
-    signal_RSSIEND();
+    nrf_radio_signal_RSSIEND();
   }
 
   NRF_RADIO_regs.RXMATCH = 0;//The only we support so far
@@ -1113,25 +983,6 @@ static void Rx_Addr_received(){
 /**************************************************************
  * Device address match functionality (advertisement packets) *
  **************************************************************/
-
-static void signal_DEVMATCH() {
-  NRF_RADIO_regs.EVENTS_DEVMATCH = 1;
-  nrf_ppi_event(RADIO_EVENTS_DEVMATCH);
-
-  if (RADIO_INTEN & RADIO_INTENSET_DEVMATCH_Msk) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
-static void signal_DEVMISS() {
-  NRF_RADIO_regs.EVENTS_DEVMISS = 1;
-  nrf_ppi_event(RADIO_EVENTS_DEVMISS);
-
-  if (RADIO_INTEN & RADIO_INTENSET_DEVMISS_Msk) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
 static void do_device_address_match() {
   int i;
   bool match_found = false;
@@ -1163,27 +1014,17 @@ static void do_device_address_match() {
   }
 
   if (match_found) {
-    signal_DEVMATCH();
+    nrf_radio_signal_DEVMATCH();
   } else {
-    signal_DEVMISS();
+    nrf_radio_signal_DEVMISS();
   }
 }
 
 /******************************
  * Bit counter functionality: *
  ******************************/
-
-static void signal_BCMATCH() {
-  NRF_RADIO_regs.EVENTS_BCMATCH = 1;
-  nrf_ppi_event(RADIO_EVENTS_BCMATCH);
-
-  if (RADIO_INTEN & RADIO_INTENSET_BCMATCH_Msk) {
-    hw_irq_ctrl_set_irq(RADIO_IRQn);
-  }
-}
-
 void nrf_radio_bitcounter_timer_triggered() {
-  signal_BCMATCH();
+  nrf_radio_signal_BCMATCH();
   Timer_RADIO_bitcounter = TIME_NEVER;
   nrf_hw_find_next_timer_to_trigger();
   //Note that we leave the bit counter running, so a new BCC can be programmed to make it trigger later
