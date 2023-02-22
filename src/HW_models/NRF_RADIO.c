@@ -147,6 +147,11 @@ static bool bit_counter_running = false;
 static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
 
 static void nrf_radio_stop_bit_counter();
+static void start_Tx();
+static void start_Rx();
+static void Rx_Addr_received();
+static void Tx_abort_eval_respond();
+static void Rx_abort_eval_respond();
 
 static void radio_reset() {
   memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
@@ -267,10 +272,6 @@ void nrf_radio_tasks_rxen() {
   nrf_hw_find_next_timer_to_trigger();
 }
 
-static void start_Tx();
-static void start_Rx();
-static void Rx_Addr_received();
-
 static void abort_if_needed(){
   if ( ( abort_fsm_state == Tx_Abort_reeval ) || ( abort_fsm_state == Rx_Abort_reeval ) ){
     //If the phy is waiting for a response from us, we need to tell it, that we are aborting whatever it was doing
@@ -364,43 +365,6 @@ void nrf_radio_tasks_rssistop(){
   rssi_sampling_on = false;
 }
 
-void nrf_radio_regw_sideeffects_TASKS_RXEN(){
-  if ( NRF_RADIO_regs.TASKS_RXEN ){
-    NRF_RADIO_regs.TASKS_RXEN = 0;
-    nrf_radio_tasks_rxen();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_TXEN(){
-  if ( NRF_RADIO_regs.TASKS_TXEN ){
-    NRF_RADIO_regs.TASKS_TXEN = 0;
-    nrf_radio_tasks_txen();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_DISABLE(){
-  if ( NRF_RADIO_regs.TASKS_DISABLE ){
-    NRF_RADIO_regs.TASKS_DISABLE = 0;
-    nrf_radio_tasks_disable();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_RSSISTART() {
-  //We don't need to model this as per now
-  if ( NRF_RADIO_regs.TASKS_RSSISTART ){
-    NRF_RADIO_regs.TASKS_RSSISTART = 0;
-    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTART register is not supported by the model\n");
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_RSSISTOP() {
-  //We don't need to model this as per now
-  if ( NRF_RADIO_regs.TASKS_RSSISTOP ){
-    NRF_RADIO_regs.TASKS_RSSISTOP = 0;
-    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTOP register is not supported by the model\n");
-  }
-}
-
 void nrf_radio_regw_sideeffects_INTENSET(){
   if ( NRF_RADIO_regs.INTENSET ){
     NRF_RADIO_INTEN |= NRF_RADIO_regs.INTENSET;
@@ -428,7 +392,6 @@ void nrf_radio_regw_sideeffects_POWER(){
     }
   }
 }
-
 /*
  * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
  */
@@ -567,9 +530,6 @@ void nrf_radio_timer_triggered(){
     }
   }
 }
-
-static void Tx_abort_eval_respond();
-static void Rx_abort_eval_respond();
 
 /**
  * The abort reevaluation timer has just triggered,
@@ -1071,18 +1031,4 @@ void nrf_radio_regw_sideeffects_BCC() {
     Timer_RADIO_bitcounter = TIME_NEVER;
   }
   nrf_hw_find_next_timer_to_trigger();
-}
-
-void nrf_radio_regw_sideeffects_TASKS_BCSTART() {
-  if (NRF_RADIO_regs.TASKS_BCSTART) {
-    NRF_RADIO_regs.TASKS_BCSTART = 0;
-    nrf_radio_tasks_bcstart();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_BCSTOP() {
-  if (NRF_RADIO_regs.TASKS_BCSTOP) {
-    NRF_RADIO_regs.TASKS_BCSTOP = 0;
-    nrf_radio_tasks_bcstop();
-  }
 }
