@@ -900,7 +900,7 @@ static void start_Rx(){
   handle_Rx_response(ret);
 }
 
-static void do_device_address_match();
+static void nrf_radio_device_address_match();
 
 /**
  * This function is called when the packet phy address has been received
@@ -927,7 +927,7 @@ static void Rx_Addr_received(){
      * If this is a problem, add a new timer and delay raising the event
      * until then
      */
-    do_device_address_match();
+    nrf_radio_device_address_match(rx_buf);
   }
 
   int ret = p2G4_dev_rx_cont_after_addr_nc_b(accept_packet);
@@ -940,16 +940,23 @@ static void Rx_Addr_received(){
 }
 
 
-/**************************************************************
- * Device address match functionality (advertisement packets) *
- **************************************************************/
-static void do_device_address_match() {
-  int i;
+/**
+ * Check if the address in the received (advertisement) packet
+ * matches one configured in the DAP/DAB registers as set by DACNF
+ *
+ * If it does, it sets appropriately the DAI register,
+ * in any case, it generates the DEVMATCH and DEVMISS signals accordingly
+ *
+ * Note that, as specified in the infocenter documentation,
+ * the address is assumed to be the first 48 bits after the 2 byte header
+ * and the TxAddr bit to be 7th bit in 1st header byte as per the BT Core spec.
+ */
+static void nrf_radio_device_address_match(uint8_t rx_buf[]) {
   bool match_found = false;
   bool nomatch;
   int TxAdd;
 
-  for (i = 0 ; i < 8; i++) {
+  for (int i = 0 ; i < 8; i++) {
     if (((NRF_RADIO_regs.DACNF >> i) & 1) == 0 ) {
       continue;
     }
