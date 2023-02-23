@@ -479,26 +479,6 @@ void nrf_radio_timer_abort_reeval_triggered(){
 }
 
 /**
- * Return the next time in which we should reevaluate the abort (in abs time)
- */
-static bs_time_t abort_ctrl_next_reevaluate_abort_time(){
-  return tm_get_next_timer_abstime();
-  //This is set to the minimum of any timer which can create a new abort == effectively any timer
-}
-
-/**
- * Return the next abort time (in abs time)
- */
-static bs_time_t abort_ctrl_next_abort_time(){
-  if ( aborting_set == 1 ) {
-    aborting_set = 0; //By returning tm_get_abs_time(), we are aborting ASAP
-    return tm_get_abs_time();
-  } else {
-    return TIME_NEVER;
-  }
-}
-
-/**
  * Handle all possible responses from the phy to a Tx request
  */
 static void handle_Tx_response(int ret){
@@ -517,15 +497,34 @@ static void handle_Tx_response(int ret){
 }
 
 /**
+ * Set the Phy abort structure to the next time we will want to either abort or have a recheck
+ * And store in next_recheck_time the next recheck time
+ */
+static void update_abort_struct(p2G4_abort_t *abort, bs_time_t *next_recheck_time){
+  //We will want to recheck next time anything may decide to stop the radio, that can be SW or HW
+  //The only logical way to do so is to set it to the next timer whatever it may be as many can trigger SW interrupts
+  *next_recheck_time = tm_get_next_timer_abstime();
+  abort->recheck_time = hwll_phy_time_from_dev(*next_recheck_time);
+
+  //We either have decided already we want to abort so we do it right now
+  //or we have not decided yet
+  if ( aborting_set == 1 ) {
+    aborting_set = 0; //By returning tm_get_abs_time(), we are aborting right now
+    abort->abort_time = hwll_phy_time_from_dev(tm_get_abs_time());
+  } else {
+    abort->abort_time = TIME_NEVER;
+  }
+}
+
+/**
  * We have reached the time in which we wanted to reevaluate if we would abort or not
  * so we answer to the phy with our decision
  */
 static void Tx_abort_eval_respond(){
   //The abort must have been evaluated by now so we can respond to the waiting phy
   p2G4_abort_t *abort = &ongoing_tx.abort;
-  next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
-  abort->abort_time  = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
-  abort->recheck_time = hwll_phy_time_from_dev(next_recheck_time);
+
+  update_abort_struct(abort, &next_recheck_time);
 
   int ret = p2G4_dev_provide_new_tx_abort_nc_b(abort);
 
@@ -577,10 +576,7 @@ static void start_Tx(){
 
   nrfra_prep_tx_request(&ongoing_tx, packet_size, packet_duration);
 
-  //Prepare abort times:
-  next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
-  ongoing_tx.abort.abort_time = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
-  ongoing_tx.abort.recheck_time = hwll_phy_time_from_dev(next_recheck_time);
+  update_abort_struct(&ongoing_tx.abort, &next_recheck_time);
 
   //Request the Tx from the phy:
   int ret = p2G4_dev_req_txv2_nc_b(&ongoing_tx, tx_buf,  &ongoing_tx_done);
@@ -678,9 +674,7 @@ static void handle_Rx_response(int ret){
 static void Rx_abort_eval_respond(){
   //The abort must have been evaluated by now so we can respond to the waiting phy
   p2G4_abort_t *abort = &ongoing_rx.abort;
-  next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
-  abort->abort_time  = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
-  abort->recheck_time = hwll_phy_time_from_dev(next_recheck_time);
+  update_abort_struct(abort, &next_recheck_time);
 
   int ret = p2G4_dev_provide_new_rxv2_abort_nc_b(abort);
 
@@ -716,10 +710,7 @@ static void start_Rx(){
 
   nrfra_prep_rx_request(&ongoing_rx, rx_addresses);
 
-  //TODO: check if we can move these to a common function for Tx, Rx, etc
-  next_recheck_time = abort_ctrl_next_reevaluate_abort_time();
-  ongoing_rx.abort.abort_time = hwll_phy_time_from_dev(abort_ctrl_next_abort_time());
-  ongoing_rx.abort.recheck_time = hwll_phy_time_from_dev(next_recheck_time);
+  update_abort_struct(&ongoing_rx.abort, &next_recheck_time);
 
   //attempt to receive
   int ret = p2G4_dev_req_rxv2_nc_b(&ongoing_rx,
