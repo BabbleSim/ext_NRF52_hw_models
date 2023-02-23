@@ -67,24 +67,18 @@
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
-uint32_t NRF_RADIO_INTEN = 0; //interrupt enable
+uint32_t NRF_RADIO_INTEN = 0; //interrupt enable (global for RADIO_signals.c)
 
 bs_time_t Timer_RADIO = TIME_NEVER; //main radio timer
 bs_time_t Timer_RADIO_abort_reeval = TIME_NEVER; //Abort reevaluation response timer, this timer must have the lowest priority of all events (which may cause an abort)
 
 static TIFS_state_t TIFS_state = TIFS_DISABLE;
-bool TIFS_ToTxNotRx = false;
-bs_time_t Timer_TIFS = TIME_NEVER;
+static bool TIFS_ToTxNotRx = false;
+static bs_time_t Timer_TIFS = TIME_NEVER;
 static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
 
-static bs_time_t TX_ADDRESS_end_time, TX_PAYLOAD_end_time, TX_CRC_end_time;
-
-//Ongoing Rx/Tx structures:
-static p2G4_rxv2_t ongoing_rx;
-static ongoing_rx_RADIO_status_t ongoing_rx_RADIO_status;
-static p2G4_txv2_t    ongoing_tx;
-static p2G4_tx_done_t ongoing_tx_done;
-static p2G4_rxv2_done_t ongoing_rx_done;
+static RADIO_Rx_status_t rx_status;
+static RADIO_Tx_status_t tx_status;
 
 static double bits_per_us; //Bits per us for the ongoing Tx or Rx
 
@@ -108,10 +102,11 @@ static void start_Rx();
 static void Rx_Addr_received();
 static void Tx_abort_eval_respond();
 static void Rx_abort_eval_respond();
+static void nrf_radio_device_address_match();
 
 static void radio_reset() {
   memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
-  radio_state = DISABLED;
+  radio_state = RAD_DISABLED;
   NRF_RADIO_INTEN = 0;
   radio_sub_state = SUB_STATE_INVALID;
   Timer_RADIO = TIME_NEVER;
@@ -140,34 +135,34 @@ double nrf_radio_get_bpus(){
 }
 
 void nrf_radio_tasks_txen() {
-  if ( ( radio_state != DISABLED )
-      && ( radio_state != TXIDLE )
-      && ( radio_state != RXIDLE ) ){
+  if ( ( radio_state != RAD_DISABLED )
+      && ( radio_state != RAD_TXIDLE )
+      && ( radio_state != RAD_RXIDLE ) ){
     bs_trace_warning_line_time(
         "NRF_RADIO: TXEN received when the radio was not DISABLED or TX/RXIDLE but in state %i. It will be ignored. Expect problems\n",
         radio_state);
     return;
   }
   TIFS_state = TIFS_DISABLE;
-  radio_state = TXRU;
-  NRF_RADIO_regs.STATE = TXRU;
+  radio_state = RAD_TXRU;
+  NRF_RADIO_regs.STATE = RAD_TXRU;
 
   Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_rampup_time(1, from_hw_tifs);
   nrf_hw_find_next_timer_to_trigger();
 }
 
 void nrf_radio_tasks_rxen() {
-  if ( ( radio_state != DISABLED )
-      && ( radio_state != TXIDLE )
-      && ( radio_state != RXIDLE ) ){
+  if ( ( radio_state != RAD_DISABLED )
+      && ( radio_state != RAD_TXIDLE )
+      && ( radio_state != RAD_RXIDLE ) ){
     bs_trace_warning_line_time(
         "NRF_RADIO: RXEN received when the radio was not DISABLED or TX/RXIDLE but in state %i. It will be ignored. Expect problems\n",
         radio_state);
     return;
   }
   TIFS_state = TIFS_DISABLE;
-  radio_state = RXRU;
-  NRF_RADIO_regs.STATE = RXRU;
+  radio_state = RAD_RXRU;
+  NRF_RADIO_regs.STATE = RAD_RXRU;
   Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_rampup_time(0, from_hw_tifs);
   nrf_hw_find_next_timer_to_trigger();
 }
@@ -185,9 +180,9 @@ static void abort_if_needed(){
 }
 
 void nrf_radio_tasks_start () {
-  if ( radio_state == TXIDLE ) {
+  if ( radio_state == RAD_TXIDLE ) {
     start_Tx();
-  } else if ( radio_state == RXIDLE ) {
+  } else if ( radio_state == RAD_RXIDLE ) {
     start_Rx();
   } else {
     bs_trace_warning_line_time(
@@ -199,16 +194,16 @@ void nrf_radio_tasks_start () {
 void nrf_radio_tasks_stop (){
   nrf_radio_stop_bit_counter();
 
-  if ( radio_state == TX ){
+  if ( radio_state == RAD_TX ){
     abort_if_needed();
-    radio_state = TXIDLE;
-    NRF_RADIO_regs.STATE = TXIDLE;
+    radio_state = RAD_TXIDLE;
+    NRF_RADIO_regs.STATE = RAD_TXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( radio_state == RX ){
+  } else if ( radio_state == RAD_RX ){
     abort_if_needed();
-    radio_state = RXIDLE;
-    NRF_RADIO_regs.STATE = RXIDLE;
+    radio_state = RAD_RXIDLE;
+    NRF_RADIO_regs.STATE = RAD_RXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
   } else {
@@ -221,14 +216,14 @@ void nrf_radio_tasks_stop (){
 void nrf_radio_tasks_disable() {
   nrf_radio_stop_bit_counter();
 
-  if ( radio_state == TX ){
+  if ( radio_state == RAD_TX ){
     abort_if_needed();
-    radio_state = TXIDLE; //Momentary (will be changedin the if below)
-    NRF_RADIO_regs.STATE = TXIDLE;
-  } else if ( radio_state == RX ){
+    radio_state = RAD_TXIDLE; //Momentary (will be changedin the if below)
+    NRF_RADIO_regs.STATE = RAD_TXIDLE;
+  } else if ( radio_state == RAD_RX ){
     abort_if_needed();
-    radio_state = RXIDLE; //Momentary (will be changed in the if below)
-    NRF_RADIO_regs.STATE = RXIDLE;
+    radio_state = RAD_RXIDLE; //Momentary (will be changed in the if below)
+    NRF_RADIO_regs.STATE = RAD_RXIDLE;
   }
 
   if (TIFS_state != TIFS_DISABLE) {
@@ -238,19 +233,19 @@ void nrf_radio_tasks_disable() {
     nrf_hw_find_next_timer_to_trigger();
   }
 
-  if ( ( radio_state == TXRU ) || ( radio_state == TXIDLE ) ) {
-    radio_state = TXDISABLE;
-    NRF_RADIO_regs.STATE = TXDISABLE;
+  if ( ( radio_state == RAD_TXRU ) || ( radio_state == RAD_TXIDLE ) ) {
+    radio_state = RAD_TXDISABLE;
+    NRF_RADIO_regs.STATE = RAD_TXDISABLE;
     TIFS_state = TIFS_DISABLE;
     Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_TX_rampdown_time();
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( ( radio_state == RXRU ) || ( radio_state == RXIDLE ) ) {
-    radio_state = RXDISABLE;
-    NRF_RADIO_regs.STATE = RXDISABLE;
+  } else if ( ( radio_state == RAD_RXRU ) || ( radio_state == RAD_RXIDLE ) ) {
+    radio_state = RAD_RXDISABLE;
+    NRF_RADIO_regs.STATE = RAD_RXDISABLE;
     TIFS_state = TIFS_DISABLE;
     Timer_RADIO = tm_get_hw_time() + nrfra_timings_get_RX_rampdown_time();
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( radio_state == DISABLED ) {
+  } else if ( radio_state == RAD_DISABLED ) {
     //It seems the radio will also signal a DISABLED event even if it was already disabled
     nrf_radio_stop_bit_counter();
     nrf_radio_signal_DISABLED();
@@ -328,33 +323,33 @@ void maybe_prepare_TIFS(bool Tx_Not_Rx){
 
 void nrf_radio_timer_triggered(){
 
-  if ( radio_state == TXRU ){
-    radio_state = TXIDLE;
-    NRF_RADIO_regs.STATE = TXIDLE;
+  if ( radio_state == RAD_TXRU ){
+    radio_state = RAD_TXIDLE;
+    NRF_RADIO_regs.STATE = RAD_TXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
     nrf_radio_signal_READY();
     //nrf_radio_signal_TXREADY();
-  } else if ( radio_state == RXRU ){
-    radio_state = RXIDLE;
-    NRF_RADIO_regs.STATE = RXIDLE;
+  } else if ( radio_state == RAD_RXRU ){
+    radio_state = RAD_RXIDLE;
+    NRF_RADIO_regs.STATE = RAD_RXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
     nrf_radio_signal_READY();
     //nrf_radio_signal_RXREADY();
-  } else if ( radio_state == TX ){
+  } else if ( radio_state == RAD_TX ){
     if ( radio_sub_state == TX_WAIT_FOR_ADDRESS_END ){
       radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
-      Timer_RADIO = TX_PAYLOAD_end_time;
+      Timer_RADIO = tx_status.PAYLOAD_end_time;
       nrf_radio_signal_ADDRESS();
     } else if ( radio_sub_state == TX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = TX_WAIT_FOR_CRC_END;
-      Timer_RADIO = TX_CRC_end_time;
+      Timer_RADIO = tx_status.CRC_end_time;
       nrf_radio_signal_PAYLOAD();
     } else if ( radio_sub_state == TX_WAIT_FOR_CRC_END ) {
       radio_sub_state = SUB_STATE_INVALID;
-      radio_state = TXIDLE;
-      NRF_RADIO_regs.STATE = TXIDLE;
+      radio_state = RAD_TXIDLE;
+      NRF_RADIO_regs.STATE = RAD_TXIDLE;
       Timer_RADIO = TIME_NEVER;
       nrf_radio_stop_bit_counter();
       nrf_radio_signal_END();
@@ -363,27 +358,27 @@ void nrf_radio_timer_triggered(){
       bs_trace_error_time_line("programming error\n");
     }
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( radio_state == RX ){
+  } else if ( radio_state == RAD_RX ){
     if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ) {
       Timer_RADIO = TIME_NEVER;
       nrf_hw_find_next_timer_to_trigger();
       nrf_radio_signal_ADDRESS();
       Rx_Addr_received();
       radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
-      Timer_RADIO = ongoing_rx_RADIO_status.PAYLOAD_End_Time;
+      Timer_RADIO = rx_status.PAYLOAD_End_Time;
       nrf_hw_find_next_timer_to_trigger();
     } else if ( radio_sub_state == RX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = RX_WAIT_FOR_CRC_END;
-      Timer_RADIO = ongoing_rx_RADIO_status.CRC_End_Time;
+      Timer_RADIO = rx_status.CRC_End_Time;
       nrf_hw_find_next_timer_to_trigger();
       nrf_radio_signal_PAYLOAD();
     } else if ( radio_sub_state == RX_WAIT_FOR_CRC_END ) {
       radio_sub_state = SUB_STATE_INVALID;
-      radio_state = RXIDLE;
-      NRF_RADIO_regs.STATE = RXIDLE;
+      radio_state = RAD_RXIDLE;
+      NRF_RADIO_regs.STATE = RAD_RXIDLE;
       Timer_RADIO = TIME_NEVER;
       nrf_hw_find_next_timer_to_trigger();
-      if ( ongoing_rx_RADIO_status.CRC_OK ) {
+      if ( rx_status.CRC_OK ) {
         nrf_radio_signal_CRCOK();
       } else {
         nrf_radio_signal_CRCERROR();
@@ -394,22 +389,22 @@ void nrf_radio_timer_triggered(){
     } else { //SUB_STATE_INVALID
       bs_trace_error_time_line("programming error\n");
     }
-  } else if ( radio_state == TXDISABLE ){
-    radio_state = DISABLED;
-    NRF_RADIO_regs.STATE = DISABLED;
+  } else if ( radio_state == RAD_TXDISABLE ){
+    radio_state = RAD_DISABLED;
+    NRF_RADIO_regs.STATE = RAD_DISABLED;
     Timer_RADIO = TIME_NEVER;
     nrf_radio_stop_bit_counter();
     nrf_radio_signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
-  } else if ( radio_state == RXDISABLE ){
-    radio_state = DISABLED;
-    NRF_RADIO_regs.STATE = DISABLED;
+  } else if ( radio_state == RAD_RXDISABLE ){
+    radio_state = RAD_DISABLED;
+    NRF_RADIO_regs.STATE = RAD_DISABLED;
     Timer_RADIO = TIME_NEVER;
     nrf_radio_stop_bit_counter();
     nrf_radio_signal_DISABLED();
     nrf_hw_find_next_timer_to_trigger();
   } else {
-    if ( ( radio_state == DISABLED ) && ( TIFS_state == TIFS_TRIGGERING_TRX_EN ) ) {
+    if ( ( radio_state == RAD_DISABLED ) && ( TIFS_state == TIFS_TRIGGERING_TRX_EN ) ) {
       if ( Timer_RADIO != Timer_TIFS ){
         bs_trace_warning_line_time("NRF_RADIO: TIFS Ups 3\n");
       }
@@ -458,7 +453,7 @@ static void handle_Tx_response(int ret){
     bs_trace_raw_manual_time(3,tm_get_abs_time(),"The phy disconnected us during a Tx\n");
     hwll_disconnect_phy_and_exit();
   } else if ( ret == P2G4_MSG_TX_END  ) {
-    bs_time_t end_time = hwll_dev_time_from_phy(ongoing_tx_done.end_time);
+    bs_time_t end_time = hwll_dev_time_from_phy(tx_status.tx_resp.end_time);
     tm_update_last_phy_sync_time( end_time );
   } else if ( ret == P2G4_MSG_ABORTREEVAL ) {
     tm_update_last_phy_sync_time( next_recheck_time );
@@ -494,7 +489,7 @@ static void update_abort_struct(p2G4_abort_t *abort, bs_time_t *next_recheck_tim
  */
 static void Tx_abort_eval_respond(){
   //The abort must have been evaluated by now so we can respond to the waiting phy
-  p2G4_abort_t *abort = &ongoing_tx.abort;
+  p2G4_abort_t *abort = &tx_status.tx_req.abort;
 
   update_abort_struct(abort, &next_recheck_time);
 
@@ -505,8 +500,8 @@ static void Tx_abort_eval_respond(){
 
 static void start_Tx(){
 
-  radio_state = TX;
-  NRF_RADIO_regs.STATE = TX;
+  radio_state = RAD_TX;
+  NRF_RADIO_regs.STATE = RAD_TX;
 
   nrfra_check_packet_conf();
 
@@ -546,20 +541,20 @@ static void start_Tx(){
   packet_duration /= bits_per_us;
   uint packet_size = header_len + payload_len + crc_len;
 
-  nrfra_prep_tx_request(&ongoing_tx, packet_size, packet_duration);
+  nrfra_prep_tx_request(&tx_status.tx_req, packet_size, packet_duration);
 
-  update_abort_struct(&ongoing_tx.abort, &next_recheck_time);
+  update_abort_struct(&tx_status.tx_req.abort, &next_recheck_time);
 
   //Request the Tx from the phy:
-  int ret = p2G4_dev_req_txv2_nc_b(&ongoing_tx, tx_buf,  &ongoing_tx_done);
+  int ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf,  &tx_status.tx_resp);
   handle_Tx_response(ret);
 
-  TX_ADDRESS_end_time = tm_get_hw_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us);
-  TX_PAYLOAD_end_time = TX_ADDRESS_end_time + (bs_time_t)(8*(header_len + payload_len)/bits_per_us);
-  TX_CRC_end_time = TX_PAYLOAD_end_time + (bs_time_t)(crc_len*8/bits_per_us);
+  tx_status.ADDRESS_end_time = tm_get_hw_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us);
+  tx_status.PAYLOAD_end_time = tx_status.ADDRESS_end_time + (bs_time_t)(8*(header_len + payload_len)/bits_per_us);
+  tx_status.CRC_end_time = tx_status.PAYLOAD_end_time + (bs_time_t)(crc_len*8/bits_per_us);
 
   radio_sub_state = TX_WAIT_FOR_ADDRESS_END;
-  Timer_RADIO = TX_ADDRESS_end_time;
+  Timer_RADIO = tx_status.ADDRESS_end_time;
   nrf_hw_find_next_timer_to_trigger();
 }
 
@@ -578,12 +573,12 @@ static void handle_Rx_response(int ret){
     Timer_RADIO_abort_reeval = BS_MAX(next_recheck_time,tm_get_abs_time());
     nrf_hw_find_next_timer_to_trigger();
 
-  } else if ( ( ret == P2G4_MSG_RXV2_ADDRESSFOUND ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+  } else if ( ( ret == P2G4_MSG_RXV2_ADDRESSFOUND ) && ( radio_state == RAD_RX /*if we havent aborted*/ ) ) {
 
-    bs_time_t address_time = hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp); //this is the end of the sync word in air time
+    bs_time_t address_time = hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp); //this is the end of the sync word in air time
     tm_update_last_phy_sync_time(address_time);
 
-    ongoing_rx_RADIO_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
+    rx_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
     uint length = rx_buf[1];
     uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
     if (length > max_length){
@@ -591,49 +586,49 @@ static void handle_Rx_response(int ret){
       length  = max_length;
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
     }
-    ongoing_rx_RADIO_status.packet_rejected = false;
-    ongoing_rx_RADIO_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
-        hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp
+    rx_status.packet_rejected = false;
+    rx_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
+        hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us));
-    ongoing_rx_RADIO_status.CRC_End_Time = nrfra_timings_get_Rx_chain_delay() +
-        hwll_dev_time_from_phy(ongoing_rx_done.rx_time_stamp
+    rx_status.CRC_End_Time = nrfra_timings_get_Rx_chain_delay() +
+        hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us)
-            + ongoing_rx_RADIO_status.CRC_duration); //Provisional value
+            + rx_status.CRC_duration); //Provisional value
 
-    if (ongoing_rx_done.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
+    if (rx_status.rx_resp.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
       ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
       ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1] = rx_buf[1];
       /* We cheat a bit and copy the whole packet already (The AAR block will look in Adv packets after 64 bits)*/
-      memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + ongoing_rx_RADIO_status.S1Offset],
+      memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + rx_status.S1Offset],
           &rx_buf[2] , length);
     }
 
     radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
-    Timer_RADIO = ongoing_rx_RADIO_status.ADDRESS_End_Time ;
+    Timer_RADIO = rx_status.ADDRESS_End_Time ;
     nrf_hw_find_next_timer_to_trigger();
 
-  } else if ( ( ret == P2G4_MSG_RXV2_END ) && ( radio_state == RX /*if we havent aborted*/ ) ) {
+  } else if ( ( ret == P2G4_MSG_RXV2_END ) && ( radio_state == RAD_RX /*if we havent aborted*/ ) ) {
 
-    bs_time_t end_time = hwll_dev_time_from_phy(ongoing_rx_done.end_time);
+    bs_time_t end_time = hwll_dev_time_from_phy(rx_status.rx_resp.end_time);
     tm_update_last_phy_sync_time(end_time);
 
-    if (ongoing_rx_done.status != P2G4_RXSTATUS_HEADER_ERROR) {
-        ongoing_rx_RADIO_status.CRC_End_Time = end_time + nrfra_timings_get_Rx_chain_delay();
+    if (rx_status.rx_resp.status != P2G4_RXSTATUS_HEADER_ERROR) {
+        rx_status.CRC_End_Time = end_time + nrfra_timings_get_Rx_chain_delay();
     } //Otherwise we do not really now how the Nordic RADIO behaves depending on
     //where the biterrors are and so forth. So let's always behave like if the
     //packet lenght was received correctly, and just report a CRC error at the
     //end of the CRC
 
-    if ( ( ongoing_rx_done.status == P2G4_RXSTATUS_OK ) &&
-        ( ongoing_rx_done.packet_size > 5 ) ) {
+    if ( ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ) &&
+        ( rx_status.rx_resp.packet_size > 5 ) ) {
       memcpy((void*)&NRF_RADIO_regs.RXCRC, &rx_buf[2 + rx_buf[1]], 3);
     }
-    if ( ongoing_rx_done.status == P2G4_RXSTATUS_OK ){
-      ongoing_rx_RADIO_status.CRC_OK = 1;
+    if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
+      rx_status.CRC_OK = 1;
       NRF_RADIO_regs.CRCSTATUS = 1;
     }
 
-    nrf_ccm_radio_received_packet(!ongoing_rx_RADIO_status.CRC_OK);
+    nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
 
   }
 
@@ -645,7 +640,7 @@ static void handle_Rx_response(int ret){
  */
 static void Rx_abort_eval_respond(){
   //The abort must have been evaluated by now so we can respond to the waiting phy
-  p2G4_abort_t *abort = &ongoing_rx.abort;
+  p2G4_abort_t *abort = &rx_status.rx_req.abort;
   update_abort_struct(abort, &next_recheck_time);
 
   int ret = p2G4_dev_provide_new_rxv2_abort_nc_b(abort);
@@ -660,14 +655,14 @@ static void start_Rx(){
   #define RX_N_ADDR 8 /* How many addresses we can search in parallel */
   p2G4_address_t rx_addresses[RX_N_ADDR];
 
-  radio_state = RX;
-  NRF_RADIO_regs.STATE = RX;
+  radio_state = RAD_RX;
+  NRF_RADIO_regs.STATE = RAD_RX;
   NRF_RADIO_regs.CRCSTATUS = 0;
 
   if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
-    ongoing_rx_RADIO_status.S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
+    rx_status.S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
   } else {
-    ongoing_rx_RADIO_status.S1Offset = 0;
+    rx_status.S1Offset = 0;
   }
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
@@ -676,18 +671,18 @@ static void start_Rx(){
     bits_per_us = 2;
   }
 
-  ongoing_rx_RADIO_status.CRC_duration = 3*8/bits_per_us;
-  ongoing_rx_RADIO_status.CRC_OK = false;
-  ongoing_rx_done.status = P2G4_RXSTATUS_NOSYNC;
+  rx_status.CRC_duration = 3*8/bits_per_us;
+  rx_status.CRC_OK = false;
+  rx_status.rx_resp.status = P2G4_RXSTATUS_NOSYNC;
 
-  nrfra_prep_rx_request(&ongoing_rx, rx_addresses);
+  nrfra_prep_rx_request(&rx_status.rx_req, rx_addresses);
 
-  update_abort_struct(&ongoing_rx.abort, &next_recheck_time);
+  update_abort_struct(&rx_status.rx_req.abort, &next_recheck_time);
 
   //attempt to receive
-  int ret = p2G4_dev_req_rxv2_nc_b(&ongoing_rx,
+  int ret = p2G4_dev_req_rxv2_nc_b(&rx_status.rx_req,
       rx_addresses,
-      &ongoing_rx_done,
+      &rx_status.rx_resp,
       &rx_pkt_buffer_ptr,
       _NRF_MAX_PACKET_SIZE);
 
@@ -697,8 +692,6 @@ static void start_Rx(){
 
   handle_Rx_response(ret);
 }
-
-static void nrf_radio_device_address_match();
 
 /**
  * This function is called at the time when the Packet address would have been
@@ -710,10 +703,10 @@ static void nrf_radio_device_address_match();
  */
 static void Rx_Addr_received(){
 
-  bool accept_packet = !ongoing_rx_RADIO_status.packet_rejected;
+  bool accept_packet = !rx_status.packet_rejected;
 
   if ( rssi_sampling_on ){
-    NRF_RADIO_regs.RSSISAMPLE = nrfra_RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(ongoing_rx_done.rssi.RSSI));
+    NRF_RADIO_regs.RSSISAMPLE = nrfra_RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI));
     nrf_radio_signal_RSSIEND();
   }
 

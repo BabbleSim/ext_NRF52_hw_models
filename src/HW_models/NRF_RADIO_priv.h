@@ -16,17 +16,17 @@ extern "C"{
 typedef enum {TIFS_DISABLE = 0, TIFS_WAITING_FOR_DISABLE, TIFS_TRIGGERING_TRX_EN} TIFS_state_t;
 typedef enum {No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval} abort_state_t;
 
-typedef enum {
-  DISABLED = 0, //No operations are going on inside the radio and the power consumption is at a minimum
-  RXRU, //The radio is ramping up and preparing for reception
-  RXIDLE, //The radio is ready for reception to start
-  RX, //Reception has been started and the addresses enabled in the RXADDRESSES register are being monitored
-  RXDISABLE, //The radio is disabling the receiver
+typedef enum { //Note: This should match the real RADIO state values in the STATE register
+  RAD_DISABLED = 0, //No operations are going on inside the radio and the power consumption is at a minimum
+  RAD_RXRU, //The radio is ramping up and preparing for reception
+  RAD_RXIDLE, //The radio is ready for reception to start
+  RAD_RX, //Reception has been started and the addresses enabled in the RXADDRESSES register are being monitored
+  RAD_RXDISABLE, //The radio is disabling the receiver
 
-  TXRU = 9, //The radio is ramping up and preparing for transmission
-  TXIDLE, //The radio is ready for transmission to start
-  TX, //The radio is transmitting a packet
-  TXDISABLE //The radio is disabling the transmitter
+  RAD_TXRU = 9, //The radio is ramping up and preparing for transmission
+  RAD_TXIDLE, //The radio is ready for transmission to start
+  RAD_TX, //The radio is transmitting a packet
+  RAD_TXDISABLE //The radio is disabling the transmitter
 } nrfra_state_t;
 
 typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX state with this substate*/
@@ -35,14 +35,24 @@ typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX stat
 } nrfra_sub_state_t;
 
 typedef struct {
-  bs_time_t CRC_duration;
-  bool CRC_OK;
   bs_time_t ADDRESS_End_Time;
   bs_time_t PAYLOAD_End_Time;
   bs_time_t CRC_End_Time;
+  bs_time_t CRC_duration;
+  p2G4_rxv2_t rx_req;
+  p2G4_rxv2_done_t rx_resp;
+  bool CRC_OK;
   bool packet_rejected;
   bool S1Offset;
-} ongoing_rx_RADIO_status_t;
+} RADIO_Rx_status_t;
+
+typedef struct {
+  bs_time_t ADDRESS_end_time;
+  bs_time_t PAYLOAD_end_time;
+  bs_time_t CRC_end_time;
+  p2G4_txv2_t tx_req;
+  p2G4_tx_done_t tx_resp;
+} RADIO_Tx_status_t;
 
 #define _NRF_MAX_PACKET_SIZE (256+2+4)
 
