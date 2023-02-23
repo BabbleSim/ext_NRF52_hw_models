@@ -23,6 +23,7 @@
 #include "NRF_RADIO_signals.h"
 #include "NRF_RADIO_utils.h"
 #include "NRF_RADIO_timings.h"
+#include "NRF_RADIO_bitcounter.h"
 
 /**
  * RADIO — 2.4 GHz Radio
@@ -69,7 +70,6 @@ uint32_t NRF_RADIO_INTEN = 0; //interrupt enable
 
 bs_time_t Timer_RADIO = TIME_NEVER; //main radio timer
 bs_time_t Timer_RADIO_abort_reeval = TIME_NEVER; //Abort reevaluation response timer, this timer must have the lowest priority of all events (which may cause an abort)
-bs_time_t Timer_RADIO_bitcounter = TIME_NEVER;
 
 static enum {TIFS_DISABLE = 0, TIFS_WAITING_FOR_DISABLE, TIFS_TRIGGERING_TRX_EN } TIFS_state = TIFS_DISABLE;
 bool TIFS_ToTxNotRx = false;
@@ -93,7 +93,7 @@ static p2G4_txv2_t    ongoing_tx;
 static p2G4_tx_done_t ongoing_tx_done;
 static p2G4_rxv2_done_t ongoing_rx_done;
 static bs_time_t next_recheck_time; // when we asked the phy to recheck (in our own time) next time
-double bits_per_us; //Bits per us for the ongoing Tx or Rx (shared with the bit counter)
+static double bits_per_us; //Bits per us for the ongoing Tx or Rx (shared with the bit counter)
 
 typedef enum { No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval } abort_state_t;
 static abort_state_t abort_fsm_state = No_pending_abort_reeval; //This variable shall be set to Tx/Rx_Abort_reeval when the phy is waiting for an abort response (and in no other circumstance)
@@ -129,11 +129,6 @@ static bool radio_on = false;
 
 static bool rssi_sampling_on = false;
 
-static bs_time_t Time_BitCounterStarted = TIME_NEVER;
-static bool bit_counter_running = false;
-
-
-static void nrf_radio_stop_bit_counter();
 static void start_Tx();
 static void start_Rx();
 static void Rx_Addr_received();
@@ -152,8 +147,7 @@ static void radio_reset() {
   TIFS_ToTxNotRx = false;
   Timer_TIFS = TIME_NEVER;
 
-  Timer_RADIO_bitcounter = TIME_NEVER;
-  bit_counter_running = 0;
+  nrf_radio_bitcounter_reset();
 }
 
 void nrf_radio_init() {
@@ -164,7 +158,11 @@ void nrf_radio_init() {
 }
 
 void nrf_radio_clean_up() {
+  nrf_radio_bitcounter_cleanup();
+}
 
+double nrf_radio_get_bpus(){
+  return bits_per_us;
 }
 
 void nrf_radio_tasks_txen() {
@@ -768,7 +766,6 @@ static void Rx_Addr_received(){
   }
 }
 
-
 /**
  * Check if the address in the received (advertisement) packet
  * matches one configured in the DAP/DAB registers as set by DACNF
@@ -814,57 +811,4 @@ static void nrf_radio_device_address_match(uint8_t rx_buf[]) {
   } else {
     nrf_radio_signal_DEVMISS();
   }
-}
-
-/******************************
- * Bit counter functionality: *
- ******************************/
-void nrf_radio_bitcounter_timer_triggered() {
-  nrf_radio_signal_BCMATCH();
-  Timer_RADIO_bitcounter = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
-  //Note that we leave the bit counter running, so a new BCC can be programmed to make it trigger later
-}
-
-void nrf_radio_tasks_bcstart() {
-  /* Note that we do not validate that the end of the address has been received */
-
-  if (bit_counter_running) {
-    bs_trace_warning_line_time("NRF_RADIO: BCSTART received while the bitcounter was already running."
-        "New BCSTART is just ignored\n");
-    return;
-  }
-  bit_counter_running = true;
-  Time_BitCounterStarted = tm_get_hw_time();
-  Timer_RADIO_bitcounter = Time_BitCounterStarted + NRF_RADIO_regs.BCC/bits_per_us;
-  nrf_hw_find_next_timer_to_trigger();
-}
-
-static void nrf_radio_stop_bit_counter() {
-  if (!bit_counter_running){
-    return;
-  }
-  bit_counter_running = false;
-  if (Timer_RADIO_bitcounter != TIME_NEVER) {
-    Timer_RADIO_bitcounter = TIME_NEVER;
-    nrf_hw_find_next_timer_to_trigger();
-  }
-}
-
-void nrf_radio_tasks_bcstop() {
-  nrf_radio_stop_bit_counter();
-}
-
-void nrf_radio_regw_sideeffects_BCC() {
-  if (!bit_counter_running){
-    return;
-  }
-  Timer_RADIO_bitcounter = Time_BitCounterStarted + NRF_RADIO_regs.BCC/bits_per_us;
-  if (Timer_RADIO_bitcounter < tm_get_hw_time()) {
-    bs_trace_warning_line_time("NRF_RADIO: Reprogrammed bitcounter with a BCC which has already"
-        "passed (%"PRItime") => we ignore it\n",
-        Timer_RADIO_bitcounter);
-    Timer_RADIO_bitcounter = TIME_NEVER;
-  }
-  nrf_hw_find_next_timer_to_trigger();
 }

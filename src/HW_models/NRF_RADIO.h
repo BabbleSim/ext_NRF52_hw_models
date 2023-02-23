@@ -41,6 +41,11 @@ void nrf_radio_regw_sideeffects_TASKS_TXEN();
 void nrf_radio_regw_sideeffects_INTENSET();
 void nrf_radio_regw_sideeffects_INTENCLR();
 
+/*
+ * Internal interface to bitcounter
+ */
+double nrf_radio_get_bpus();
+
 #ifdef __cplusplus
 }
 #endif
