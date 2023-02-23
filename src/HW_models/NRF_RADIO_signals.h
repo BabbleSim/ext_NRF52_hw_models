@@ -25,6 +25,7 @@ void nrf_radio_signal_END();
 void nrf_radio_signal_DEVMATCH();
 void nrf_radio_signal_DEVMISS();
 void nrf_radio_signal_BCMATCH();
+void nrf_radio_signal_SYNC();
 
 #ifdef __cplusplus
 }

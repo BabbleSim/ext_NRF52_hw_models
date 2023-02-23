@@ -178,3 +178,13 @@ void nrf_radio_signal_BCMATCH() {
     hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
+
+void nrf_radio_signal_SYNC() {
+  NRF_RADIO_regs.EVENTS_SYNC = 1;
+  nrf_ppi_event(RADIO_EVENTS_SYNC);
+
+  if (NRF_RADIO_INTEN & RADIO_INTENSET_SYNC_Msk) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
