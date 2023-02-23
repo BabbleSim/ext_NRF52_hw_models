@@ -73,7 +73,7 @@ bs_time_t Timer_RADIO = TIME_NEVER; //main radio timer
 bs_time_t Timer_RADIO_abort_reeval = TIME_NEVER; //Abort reevaluation response timer, this timer must have the lowest priority of all events (which may cause an abort)
 
 static TIFS_state_t TIFS_state = TIFS_DISABLE;
-static bool TIFS_ToTxNotRx = false;
+static bool TIFS_ToTxNotRx = false; //Are we in a TIFS automatically starting a Tx from a Rx (true), or Rx from Tx (false)
 static bs_time_t Timer_TIFS = TIME_NEVER;
 static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
 
@@ -287,7 +287,7 @@ void nrf_radio_regw_sideeffects_POWER(){
     }
   }
 }
-/*
+/**
  * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
  */
 void nrf_radio_fake_task_TRXEN_TIFS(){
@@ -301,6 +301,13 @@ void nrf_radio_fake_task_TRXEN_TIFS(){
   }
 }
 
+/**
+ * If the HW automatic TIFS switch is enabled, prepare the internals for an automatic switch
+ * (when a fake_task_TRXEN_TIFS is automatically triggered after a disable due to a shortcut)
+ * otherwise do nothing
+ *
+ * Input Tx_Not_Rx: Are we finishing a Tx (true) or an Rx (false)
+ */
 void maybe_prepare_TIFS(bool Tx_Not_Rx){
   bs_time_t delta;
   if ( !nrfra_is_HW_TIFS_enabled() ) {
@@ -321,8 +328,13 @@ void maybe_prepare_TIFS(bool Tx_Not_Rx){
   TIFS_state = TIFS_WAITING_FOR_DISABLE;
 }
 
+/**
+ * The main radio timer (Timer_RADIO) has just triggered,
+ * continue whatever activity we are on
+ * (typically do something at the end/start of a state, set the new state
+ * and schedule further the next state change)
+ */
 void nrf_radio_timer_triggered(){
-
   if ( radio_state == RAD_TXRU ){
     radio_state = RAD_TXIDLE;
     NRF_RADIO_regs.STATE = RAD_TXIDLE;
@@ -428,7 +440,7 @@ void nrf_radio_timer_triggered(){
 
 /**
  * The abort reevaluation timer has just triggered,
- * => we can now respond to the phy with our abort decision
+ * => we can now respond to the Phy with our abort decision
  */
 void nrf_radio_timer_abort_reeval_triggered(){
   Timer_RADIO_abort_reeval = TIME_NEVER;
@@ -446,7 +458,7 @@ void nrf_radio_timer_abort_reeval_triggered(){
 }
 
 /**
- * Handle all possible responses from the phy to a Tx request
+ * Handle all possible responses to a Tx request from the Phy
  */
 static void handle_Tx_response(int ret){
   if (ret == -1){
@@ -455,6 +467,7 @@ static void handle_Tx_response(int ret){
   } else if ( ret == P2G4_MSG_TX_END  ) {
     bs_time_t end_time = hwll_dev_time_from_phy(tx_status.tx_resp.end_time);
     tm_update_last_phy_sync_time( end_time );
+    //The main machine was already pre-programmed at the Tx Start, no need to do anything else now
   } else if ( ret == P2G4_MSG_ABORTREEVAL ) {
     tm_update_last_phy_sync_time( next_recheck_time );
     abort_fsm_state = Tx_Abort_reeval;
@@ -485,7 +498,7 @@ static void update_abort_struct(p2G4_abort_t *abort, bs_time_t *next_recheck_tim
 
 /**
  * We have reached the time in which we wanted to reevaluate if we would abort or not
- * so we answer to the phy with our decision
+ * so we answer to the Phy with our decision
  */
 static void Tx_abort_eval_respond(){
   //The abort must have been evaluated by now so we can respond to the waiting phy
@@ -498,6 +511,9 @@ static void Tx_abort_eval_respond(){
   handle_Tx_response(ret);
 }
 
+/*
+ * Actually start the Tx in this microsecond (+ the Tx chain delay in the Phy)
+ */
 static void start_Tx(){
 
   radio_state = RAD_TX;
@@ -579,17 +595,22 @@ static void handle_Rx_response(int ret){
     tm_update_last_phy_sync_time(address_time);
 
     rx_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
+
     uint length = rx_buf[1];
     uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+
     if (length > max_length){
       bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
       length  = max_length;
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
     }
+
     rx_status.packet_rejected = false;
+
     rx_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
         hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us));
+
     rx_status.CRC_End_Time = nrfra_timings_get_Rx_chain_delay() +
         hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp
             + (bs_time_t)((2+length)*8/bits_per_us)
@@ -623,15 +644,14 @@ static void handle_Rx_response(int ret){
         ( rx_status.rx_resp.packet_size > 5 ) ) {
       memcpy((void*)&NRF_RADIO_regs.RXCRC, &rx_buf[2 + rx_buf[1]], 3);
     }
+
     if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
       rx_status.CRC_OK = 1;
       NRF_RADIO_regs.CRCSTATUS = 1;
     }
 
     nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
-
   }
-
 }
 
 /**
