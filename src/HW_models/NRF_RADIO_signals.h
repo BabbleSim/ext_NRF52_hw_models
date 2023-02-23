@@ -14,8 +14,8 @@ extern "C"{
 
 void nrf_radio_signal_DISABLED();
 void nrf_radio_signal_READY();
-//void nrf_radio_signal_TXREADY();
-//void nrf_radio_signal_RXREADY();
+void nrf_radio_signal_TXREADY();
+void nrf_radio_signal_RXREADY();
 void nrf_radio_signal_RSSIEND();
 void nrf_radio_signal_ADDRESS();
 void nrf_radio_signal_PAYLOAD();

@@ -57,7 +57,7 @@
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
  * Note14: No 52833 new radio state change events (EVENTS_FRAMESTART, EVENTS_EDEND, EVENTS_EDSTOPPED, EVENTS_CCAIDLE, EVENTS_CCABUSY, EVENTS_CCASTOPPED,
- *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH & EVENTS_CTEPRESENT) implemented
+ *         EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT) implemented
  *
  * Note15: PDUSTAT not yet implemented
  *
@@ -371,14 +371,14 @@ void nrf_radio_timer_triggered(){
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
     nrf_radio_signal_READY();
-    //nrf_radio_signal_TXREADY();
+    nrf_radio_signal_TXREADY();
   } else if ( radio_state == RAD_RXRU ){
     radio_state = RAD_RXIDLE;
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
     Timer_RADIO = TIME_NEVER;
     nrf_hw_find_next_timer_to_trigger();
     nrf_radio_signal_READY();
-    //nrf_radio_signal_RXREADY();
+    nrf_radio_signal_RXREADY();
   } else if ( radio_state == RAD_TX ){
     if ( radio_sub_state == TX_WAIT_FOR_ADDRESS_END ){
       radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;

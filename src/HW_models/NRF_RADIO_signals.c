@@ -37,7 +37,6 @@ void nrf_radio_signal_READY(){
   }
 }
 
-/* The TX and RX READY are missing in the registers header..
 void nrf_radio_signal_TXREADY(){
   NRF_RADIO_regs.EVENTS_TXREADY = 1;
   nrf_ppi_event(RADIO_EVENTS_TXREADY);
@@ -47,7 +46,7 @@ void nrf_radio_signal_TXREADY(){
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_TXREADY_Msk ){
-    hw_irq_controller_set_irq(RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
 
@@ -58,12 +57,14 @@ void nrf_radio_signal_RXREADY(){
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_RXREADY_START_Msk ) {
     nrf_radio_tasks_START();
   }
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_RXREADY_CCASTART_Msk ) {
+    nrf_radio_tasks_CCASTART();
+  }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_RXREADY_Msk ){
-    hw_irq_controller_set_irq(RADIO_IRQn);
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
   }
 }
-*/
 
 extern void nrf_radio_fake_task_TRXEN_TIFS();
 
