@@ -151,7 +151,7 @@ double nrf_radio_get_bpus(){
   return bits_per_us;
 }
 
-void nrf_radio_tasks_txen() {
+void nrf_radio_tasks_TXEN() {
   if ( ( radio_state != RAD_DISABLED )
       && ( radio_state != RAD_TXIDLE )
       && ( radio_state != RAD_RXIDLE ) ){
@@ -168,7 +168,7 @@ void nrf_radio_tasks_txen() {
   nrf_hw_find_next_timer_to_trigger();
 }
 
-void nrf_radio_tasks_rxen() {
+void nrf_radio_tasks_RXEN() {
   if ( ( radio_state != RAD_DISABLED )
       && ( radio_state != RAD_TXIDLE )
       && ( radio_state != RAD_RXIDLE ) ){
@@ -196,7 +196,7 @@ static void abort_if_needed(){
   }
 }
 
-void nrf_radio_tasks_start () {
+void nrf_radio_tasks_START () {
   if ( radio_state == RAD_TXIDLE ) {
     start_Tx();
   } else if ( radio_state == RAD_RXIDLE ) {
@@ -208,7 +208,20 @@ void nrf_radio_tasks_start () {
   }
 }
 
-void nrf_radio_tasks_stop (){
+void nrf_radio_tasks_CCASTART() {
+  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+}
+void nrf_radio_tasks_CCASTOP() {
+  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+}
+void nrf_radio_tasks_EDSTART() {
+  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+}
+void nrf_radio_tasks_EDSTOP() {
+  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+}
+
+void nrf_radio_tasks_STOP(){
   nrf_radio_stop_bit_counter();
 
   if ( radio_state == RAD_TX ){
@@ -230,7 +243,7 @@ void nrf_radio_tasks_stop (){
   }
 }
 
-void nrf_radio_tasks_disable() {
+void nrf_radio_tasks_DISABLE() {
   nrf_radio_stop_bit_counter();
 
   if ( radio_state == RAD_TX ){
@@ -269,11 +282,11 @@ void nrf_radio_tasks_disable() {
   }
 }
 
-void nrf_radio_tasks_rssistart () {
+void nrf_radio_tasks_RSSISTART () {
   rssi_sampling_on = true;
 }
 
-void nrf_radio_tasks_rssistop(){
+void nrf_radio_tasks_RSSISTOP(){
   rssi_sampling_on = false;
 }
 
@@ -445,9 +458,9 @@ void nrf_radio_timer_triggered(){
       nrf_hw_find_next_timer_to_trigger();
       from_hw_tifs = true;
       if ( TIFS_ToTxNotRx ) {
-        nrf_radio_tasks_txen();
+        nrf_radio_tasks_TXEN();
       } else {
-        nrf_radio_tasks_rxen();
+        nrf_radio_tasks_RXEN();
       }
       from_hw_tifs = false;
     } else {

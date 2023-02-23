@@ -11,40 +11,20 @@
 #include "NRF_RADIO.h"
 #include "bs_tracing.h"
 
-void nrf_radio_regw_sideeffects_TASKS_BCSTART() {
-  if (NRF_RADIO_regs.TASKS_BCSTART) {
-    NRF_RADIO_regs.TASKS_BCSTART = 0;
-    nrf_radio_tasks_bcstart();
-  }
+
+#define RADIO_TASK_SIDEFFECT_FUNC(x) \
+void nrf_radio_regw_sideeffects_TASKS_##x() { \
+  if (NRF_RADIO_regs.TASKS_##x ) { \
+    NRF_RADIO_regs.TASKS_##x = 0; \
+    nrf_radio_tasks_##x(); \
+  }\
 }
 
-void nrf_radio_regw_sideeffects_TASKS_BCSTOP() {
-  if (NRF_RADIO_regs.TASKS_BCSTOP) {
-    NRF_RADIO_regs.TASKS_BCSTOP = 0;
-    nrf_radio_tasks_bcstop();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_RXEN(){
-  if ( NRF_RADIO_regs.TASKS_RXEN ){
-    NRF_RADIO_regs.TASKS_RXEN = 0;
-    nrf_radio_tasks_rxen();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_TXEN(){
-  if ( NRF_RADIO_regs.TASKS_TXEN ){
-    NRF_RADIO_regs.TASKS_TXEN = 0;
-    nrf_radio_tasks_txen();
-  }
-}
-
-void nrf_radio_regw_sideeffects_TASKS_DISABLE(){
-  if ( NRF_RADIO_regs.TASKS_DISABLE ){
-    NRF_RADIO_regs.TASKS_DISABLE = 0;
-    nrf_radio_tasks_disable();
-  }
-}
+RADIO_TASK_SIDEFFECT_FUNC(TXEN)
+RADIO_TASK_SIDEFFECT_FUNC(RXEN)
+RADIO_TASK_SIDEFFECT_FUNC(START)
+RADIO_TASK_SIDEFFECT_FUNC(STOP)
+RADIO_TASK_SIDEFFECT_FUNC(DISABLE)
 
 void nrf_radio_regw_sideeffects_TASKS_RSSISTART() {
   //We don't need to model this yet
@@ -61,3 +41,11 @@ void nrf_radio_regw_sideeffects_TASKS_RSSISTOP() {
     bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTOP register is not supported by the model yet\n");
   }
 }
+
+RADIO_TASK_SIDEFFECT_FUNC(BCSTART)
+RADIO_TASK_SIDEFFECT_FUNC(BCSTOP)
+RADIO_TASK_SIDEFFECT_FUNC(EDSTART)
+RADIO_TASK_SIDEFFECT_FUNC(EDSTOP)
+RADIO_TASK_SIDEFFECT_FUNC(CCASTART)
+RADIO_TASK_SIDEFFECT_FUNC(CCASTOP)
+

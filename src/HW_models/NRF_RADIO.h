@@ -19,25 +19,37 @@ void nrf_radio_clean_up();
 void nrf_radio_timer_triggered();
 void nrf_radio_timer_abort_reeval_triggered();
 
-void nrf_radio_tasks_txen ();
-void nrf_radio_tasks_rxen ();
-void nrf_radio_tasks_start ();
-void nrf_radio_tasks_stop () ;
-void nrf_radio_tasks_disable ();
-void nrf_radio_tasks_rssistart ();
-void nrf_radio_tasks_rssistop ();
-void nrf_radio_tasks_bcstart ();
-void nrf_radio_tasks_bcstop ();
+void nrf_radio_tasks_TXEN();
+void nrf_radio_tasks_RXEN();
+void nrf_radio_tasks_START();
+void nrf_radio_tasks_CCASTART();
+void nrf_radio_tasks_CCASTOP();
+void nrf_radio_tasks_EDSTART();
+void nrf_radio_tasks_EDSTOP();
+void nrf_radio_tasks_STOP() ;
+void nrf_radio_tasks_DISABLE();
+void nrf_radio_tasks_RSSISTART();
+void nrf_radio_tasks_RSSISTOP();
+void nrf_radio_tasks_BCSTART();
+void nrf_radio_tasks_BCSTOP();
 
 void nrf_radio_bitcounter_timer_triggered();
 
 void nrf_radio_regw_sideeffects_BCC();
 void nrf_radio_regw_sideeffects_POWER();
+void nrf_radio_regw_sideeffects_TASKS_TXEN();
+void nrf_radio_regw_sideeffects_TASKS_RXEN();
+void nrf_radio_regw_sideeffects_TASKS_START();
+void nrf_radio_regw_sideeffects_TASKS_STOP();
 void nrf_radio_regw_sideeffects_TASKS_DISABLE();
 void nrf_radio_regw_sideeffects_TASKS_RSSISTART();
 void nrf_radio_regw_sideeffects_TASKS_RSSISTOP();
-void nrf_radio_regw_sideeffects_TASKS_RXEN();
-void nrf_radio_regw_sideeffects_TASKS_TXEN();
+void nrf_radio_regw_sideeffects_TASKS_BCSTART();
+void nrf_radio_regw_sideeffects_TASKS_BCSTOP();
+void nrf_radio_regw_sideeffects_TASKS_EDSTART();
+void nrf_radio_regw_sideeffects_TASKS_EDSTOP();
+void nrf_radio_regw_sideeffects_TASKS_CCASTART();
+void nrf_radio_regw_sideeffects_TASKS_CCASTOP();
 void nrf_radio_regw_sideeffects_INTENSET();
 void nrf_radio_regw_sideeffects_INTENCLR();
 
@@ -51,3 +63,4 @@ double nrf_radio_get_bpus();
 #endif
 
 #endif
+

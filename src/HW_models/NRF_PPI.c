@@ -85,15 +85,19 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //{ (void*)&NRF_CLOCK_regs.TASKS_HFCLKSTOP , nrf_clock_TASKS_HFCLKSTOP},
 
     //RADIO:
-    { (void*)&NRF_RADIO_regs.TASKS_TXEN,         nrf_radio_tasks_txen},
-    { (void*)&NRF_RADIO_regs.TASKS_RXEN,         nrf_radio_tasks_rxen},
-    //{ (void*)&NRF_RADIO_regs.TASKS_START,        nrf_radio_tasks_start},
-    //{ (void*)&NRF_RADIO_regs.TASKS_STOP,         nrf_radio_tasks_stop},
-    { (void*)&NRF_RADIO_regs.TASKS_DISABLE,      nrf_radio_tasks_disable},
-    //{ (void*)&NRF_RADIO_regs.TASKS_RSSISTART,    nrf_radio_tasks_rssistart},
-    //{ (void*)&NRF_RADIO_regs.TASKS_RSSISTOP,     nrf_radio_tasks_rssistop},
-    //{ (void*)&NRF_RADIO_regs.TASKS_BCSTART,      nrf_radio_tasks_bcstart},
-    //{ (void*)&NRF_RADIO_regs.TASKS_BCSTOP,       nrf_radio_tasks_bcstop},
+    { (void*)&NRF_RADIO_regs.TASKS_TXEN,         nrf_radio_tasks_TXEN},
+    { (void*)&NRF_RADIO_regs.TASKS_RXEN,         nrf_radio_tasks_RXEN},
+    { (void*)&NRF_RADIO_regs.TASKS_START,        nrf_radio_tasks_START},
+    { (void*)&NRF_RADIO_regs.TASKS_STOP,         nrf_radio_tasks_STOP},
+    { (void*)&NRF_RADIO_regs.TASKS_DISABLE,      nrf_radio_tasks_DISABLE},
+    { (void*)&NRF_RADIO_regs.TASKS_RSSISTART,    nrf_radio_tasks_RSSISTART},
+    { (void*)&NRF_RADIO_regs.TASKS_RSSISTOP,     nrf_radio_tasks_RSSISTOP},
+    { (void*)&NRF_RADIO_regs.TASKS_BCSTART,      nrf_radio_tasks_BCSTART},
+    { (void*)&NRF_RADIO_regs.TASKS_BCSTOP,       nrf_radio_tasks_BCSTOP},
+    { (void*)&NRF_RADIO_regs.TASKS_EDSTART,      nrf_radio_tasks_EDSTART},
+    { (void*)&NRF_RADIO_regs.TASKS_EDSTOP,       nrf_radio_tasks_EDSTOP},
+    { (void*)&NRF_RADIO_regs.TASKS_CCASTART,     nrf_radio_tasks_CCASTART},
+    { (void*)&NRF_RADIO_regs.TASKS_CCASTOP,      nrf_radio_tasks_CCASTOP},
 
     //TIMER0:
     { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[0],  nrf_timer0_TASK_CAPTURE_0},
@@ -311,6 +315,8 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
 //    {RADIO_EVENTS_DEVMATCH,&NRF_RADIO_regs.EVENTS_DEVMATCH},
 //    {RADIO_EVENTS_DEVMISS ,&NRF_RADIO_regs.EVENTS_DEVMISS},
     {RADIO_EVENTS_BCMATCH, &NRF_RADIO_regs.EVENTS_BCMATCH},
+    {RADIO_EVENTS_TXREADY, &NRF_RADIO_regs.EVENTS_TXREADY},
+    {RADIO_EVENTS_RXREADY, &NRF_RADIO_regs.EVENTS_RXREADY},
     {RADIO_EVENTS_SYNC,    &NRF_RADIO_regs.EVENTS_SYNC},
     {RADIO_EVENTS_PHYEND,  &NRF_RADIO_regs.EVENTS_PHYEND},
 
@@ -467,15 +473,15 @@ static void set_fixed_channel_routes(){
   //Set the fixed channels configuration:
   //  20 TIMER0->EVENTS_COMPARE[0] RADIO->TASKS_TXEN
     ppi_evt_to_ch[TIMER0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 20 );
-    ppi_ch_tasks[20].tep_f = nrf_radio_tasks_txen; //RADIO->TASKS_TXEN
+    ppi_ch_tasks[20].tep_f = nrf_radio_tasks_TXEN; //RADIO->TASKS_TXEN
 
   //  21 TIMER0->EVENTS_COMPARE[0] RADIO->TASKS_RXEN
     ppi_evt_to_ch[TIMER0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 21 );
-    ppi_ch_tasks[21].tep_f = nrf_radio_tasks_rxen; //RADIO->TASKS_RXEN
+    ppi_ch_tasks[21].tep_f = nrf_radio_tasks_RXEN; //RADIO->TASKS_RXEN
 
   //  22 TIMER0->EVENTS_COMPARE[1] RADIO->TASKS_DISABLE
     ppi_evt_to_ch[TIMER0_EVENTS_COMPARE_1].channels_mask |= ( 1 << 22 );
-    ppi_ch_tasks[22].tep_f = nrf_radio_tasks_disable; //RADIO->TASKS_DISABLE
+    ppi_ch_tasks[22].tep_f = nrf_radio_tasks_DISABLE; //RADIO->TASKS_DISABLE
 
   //  23 RADIO->EVENTS_BCMATCH AAR->TASKS_START
     ppi_evt_to_ch[RADIO_EVENTS_BCMATCH].channels_mask |= ( 1 << 23 );
@@ -499,11 +505,11 @@ static void set_fixed_channel_routes(){
 
   //  28 RTC0->EVENTS_COMPARE[0] RADIO->TASKS_TXEN
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 28 );
-    ppi_ch_tasks[28].tep_f = nrf_radio_tasks_txen; //RADIO->TASKS_TXEN
+    ppi_ch_tasks[28].tep_f = nrf_radio_tasks_TXEN; //RADIO->TASKS_TXEN
 
   //  29 RTC0->EVENTS_COMPARE[0] RADIO->TASKS_RXEN
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 29 );
-    ppi_ch_tasks[29].tep_f = nrf_radio_tasks_rxen; //RADIO->TASKS_RXEN
+    ppi_ch_tasks[29].tep_f = nrf_radio_tasks_RXEN; //RADIO->TASKS_RXEN
 
   //  30 RTC0->EVENTS_COMPARE[0] TIMER0->TASKS_CLEAR
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 30 );

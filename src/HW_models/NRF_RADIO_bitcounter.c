@@ -35,7 +35,7 @@ void nrf_radio_bitcounter_timer_triggered() {
   //Note that we leave the bit counter running, so a new BCC can be programmed to make it trigger later
 }
 
-void nrf_radio_tasks_bcstart() {
+void nrf_radio_tasks_BCSTART() {
   /* Note that we do not validate that the end of the address has been received */
 
   if (bit_counter_running) {
@@ -60,7 +60,7 @@ void nrf_radio_stop_bit_counter() {
   }
 }
 
-void nrf_radio_tasks_bcstop() {
+void nrf_radio_tasks_BCSTOP() {
   nrf_radio_stop_bit_counter();
 }
 

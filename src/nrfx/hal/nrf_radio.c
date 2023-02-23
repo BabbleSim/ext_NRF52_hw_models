@@ -11,23 +11,30 @@
 
 void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
 {
-  if ( task == NRF_RADIO_TASK_TXEN ) {
-    p_reg->TASKS_TXEN = 1;
-    nrf_radio_regw_sideeffects_TASKS_TXEN();
-  } else if ( task == NRF_RADIO_TASK_RXEN ) {
-    p_reg->TASKS_RXEN = 1;
-    nrf_radio_regw_sideeffects_TASKS_RXEN();
-  } else if ( task == NRF_RADIO_TASK_DISABLE ) {
-    p_reg->TASKS_DISABLE = 1;
-    nrf_radio_regw_sideeffects_TASKS_DISABLE();
-  } else if ( task == NRF_RADIO_TASK_RSSISTOP ) {
-    p_reg->TASKS_RSSISTOP = 1;
-    nrf_radio_regw_sideeffects_TASKS_RSSISTOP();
-  } else if ( task == NRF_RADIO_TASK_RSSISTART ) {
-    p_reg->TASKS_RSSISTART = 1;
-    nrf_radio_regw_sideeffects_TASKS_RSSISTART();
-  } else {
-    bs_trace_error_line_time("Not supported task started in nrf_radio\n");
+  *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
+
+#define CASE_CALL_SIDEEFFECT(x) \
+  case NRF_RADIO_TASK_##x :\
+    nrf_radio_regw_sideeffects_TASKS_##x();\
+    break
+
+  switch (task) {
+    CASE_CALL_SIDEEFFECT(TXEN);
+    CASE_CALL_SIDEEFFECT(RXEN);
+    CASE_CALL_SIDEEFFECT(START);
+    CASE_CALL_SIDEEFFECT(STOP);
+    CASE_CALL_SIDEEFFECT(DISABLE);
+    CASE_CALL_SIDEEFFECT(RSSISTART);
+    CASE_CALL_SIDEEFFECT(RSSISTOP);
+    CASE_CALL_SIDEEFFECT(BCSTART);
+    CASE_CALL_SIDEEFFECT(BCSTOP);
+    CASE_CALL_SIDEEFFECT(EDSTART);
+    CASE_CALL_SIDEEFFECT(EDSTOP);
+    CASE_CALL_SIDEEFFECT(CCASTART);
+    CASE_CALL_SIDEEFFECT(CCASTOP);
+    default:
+      bs_trace_error_line_time("%s: Not supported task %i started\n", __func__, task);
+      break;
   }
 }
 

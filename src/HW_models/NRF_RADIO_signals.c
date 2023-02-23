@@ -17,6 +17,7 @@
 #include "NRF_RADIO.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
+#include "bs_tracing.h"
 
 extern uint32_t NRF_RADIO_INTEN; //interrupt enable
 
@@ -25,7 +26,10 @@ void nrf_radio_signal_READY(){
   nrf_ppi_event(RADIO_EVENTS_READY);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_READY_START_Msk ) {
-    nrf_radio_tasks_start();
+    nrf_radio_tasks_START();
+  }
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_READY_EDSTART_Msk ) {
+    nrf_radio_tasks_EDSTART();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_READY_Msk ){
@@ -39,7 +43,7 @@ void nrf_radio_signal_TXREADY(){
   nrf_ppi_event(RADIO_EVENTS_TXREADY);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_TXREADY_START_Msk ) {
-    NRF_RADIO_TASK_START();
+    nrf_radio_tasks_START();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_TXREADY_Msk ){
@@ -52,7 +56,7 @@ void nrf_radio_signal_RXREADY(){
   nrf_ppi_event(RADIO_EVENTS_RXREADY);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_RXREADY_START_Msk ) {
-    NRF_RADIO_TASK_START();
+    nrf_radio_tasks_START();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_RXREADY_Msk ){
@@ -76,7 +80,7 @@ void nrf_radio_signal_DISABLED(){
   }
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RSSISTOP_Msk ) {
-    nrf_radio_tasks_rssistop();
+    nrf_radio_tasks_RSSISTOP();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_DISABLED_Msk ) {
@@ -98,10 +102,10 @@ void nrf_radio_signal_ADDRESS(){
   nrf_ppi_event(RADIO_EVENTS_ADDRESS);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_ADDRESS_RSSISTART_Msk ) {
-    nrf_radio_tasks_rssistart();
+    nrf_radio_tasks_RSSISTART();
   }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_ADDRESS_BCSTART_Msk ) {
-    nrf_radio_tasks_bcstart();
+    nrf_radio_tasks_BCSTART();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_ADDRESS_Msk ){
@@ -141,10 +145,10 @@ void nrf_radio_signal_END(){
   nrf_ppi_event(RADIO_EVENTS_END);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk ) {
-    nrf_radio_tasks_disable();
+    nrf_radio_tasks_DISABLE();
   }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_START_Msk ) {
-    nrf_radio_tasks_start();
+    nrf_radio_tasks_START();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_END_Msk ) {
@@ -193,10 +197,10 @@ void nrf_radio_signal_PHYEND(){
   nrf_ppi_event(RADIO_EVENTS_PHYEND);
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_PHYEND_DISABLE_Msk ) {
-    nrf_radio_tasks_disable();
+    nrf_radio_tasks_DISABLE();
   }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_PHYEND_START_Msk ) {
-    nrf_radio_tasks_start();
+    nrf_radio_tasks_START();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_PHYEND_Msk ) {
