@@ -57,7 +57,7 @@
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
  * Note14: No 52833 new radio state change events (EVENTS_FRAMESTART, EVENTS_EDEND, EVENTS_EDSTOPPED, EVENTS_CCAIDLE, EVENTS_CCABUSY, EVENTS_CCASTOPPED,
- *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH, EVENTS_PHYEND & EVENTS_CTEPRESENT) implemented
+ *         EVENTS_RATEBOOST, EVENTS_TXREADY, EVENTS_RXREADY, EVENTS_MHRMATCH & EVENTS_CTEPRESENT) implemented
  *
  * Note15: PDUSTAT not yet implemented
  *
@@ -76,6 +76,11 @@
  *         so the assumption is that nobody uses it for anything timing critical.
  *         b) it is only generated when there is a full address match. While in real HW this is not required
  *         (so false positives happen in real HW)
+ *
+ * Note19: EVENTS_PHYEND
+ *         It is not generated at the exact correct time. In the model it is generated at the
+ *         exact same time as END. While according to the spec, it should be generated with the last
+ *         bit on *air* (That is the Tx chain delay later for Tx, and RxChainDelay earlier for Rx)
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
@@ -377,6 +382,7 @@ void nrf_radio_timer_triggered(){
       Timer_RADIO = TIME_NEVER;
       nrf_radio_stop_bit_counter();
       nrf_radio_signal_END();
+      nrf_radio_signal_PHYEND(); //See note on EVENTS_PHYEND
       maybe_prepare_TIFS(true);
     }  else { //SUB_STATE_INVALID
       bs_trace_error_time_line("programming error\n");
@@ -386,7 +392,7 @@ void nrf_radio_timer_triggered(){
     if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ) {
       Timer_RADIO = TIME_NEVER;
       nrf_hw_find_next_timer_to_trigger();
-      nrf_radio_signal_SYNC(); //see Note on EVENTS_SYNC
+      nrf_radio_signal_SYNC(); //See note on EVENTS_SYNC
       nrf_radio_signal_ADDRESS();
       Rx_Addr_received();
       radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
@@ -409,6 +415,7 @@ void nrf_radio_timer_triggered(){
         nrf_radio_signal_CRCERROR();
       }
       nrf_radio_stop_bit_counter();
+      nrf_radio_signal_PHYEND(); //See note on EVENTS_PHYEND
       nrf_radio_signal_END();
       maybe_prepare_TIFS(false);
     } else { //SUB_STATE_INVALID

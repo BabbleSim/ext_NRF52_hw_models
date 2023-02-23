@@ -188,3 +188,18 @@ void nrf_radio_signal_SYNC() {
   }
 }
 
+void nrf_radio_signal_PHYEND(){
+  NRF_RADIO_regs.EVENTS_PHYEND = 1;
+  nrf_ppi_event(RADIO_EVENTS_PHYEND);
+
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_PHYEND_DISABLE_Msk ) {
+    nrf_radio_tasks_disable();
+  }
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_PHYEND_START_Msk ) {
+    nrf_radio_tasks_start();
+  }
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_PHYEND_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
