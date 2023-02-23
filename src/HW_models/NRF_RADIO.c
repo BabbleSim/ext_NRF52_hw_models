@@ -24,6 +24,7 @@
 #include "NRF_RADIO_utils.h"
 #include "NRF_RADIO_timings.h"
 #include "NRF_RADIO_bitcounter.h"
+#include "NRF_RADIO_priv.h"
 
 /**
  * RADIO — 2.4 GHz Radio
@@ -71,7 +72,7 @@ uint32_t NRF_RADIO_INTEN = 0; //interrupt enable
 bs_time_t Timer_RADIO = TIME_NEVER; //main radio timer
 bs_time_t Timer_RADIO_abort_reeval = TIME_NEVER; //Abort reevaluation response timer, this timer must have the lowest priority of all events (which may cause an abort)
 
-static enum {TIFS_DISABLE = 0, TIFS_WAITING_FOR_DISABLE, TIFS_TRIGGERING_TRX_EN } TIFS_state = TIFS_DISABLE;
+static TIFS_state_t TIFS_state = TIFS_DISABLE;
 bool TIFS_ToTxNotRx = false;
 bs_time_t Timer_TIFS = TIME_NEVER;
 static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the HW to clear SHORTS*/
@@ -79,48 +80,21 @@ static bool from_hw_tifs = false; /* Unfortunate hack due to the SW racing the H
 static bs_time_t TX_ADDRESS_end_time, TX_PAYLOAD_end_time, TX_CRC_end_time;
 
 //Ongoing Rx/Tx structures:
-static p2G4_rxv2_t  ongoing_rx;
-static struct {
-  bs_time_t CRC_duration;
-  bool CRC_OK;
-  bs_time_t ADDRESS_End_Time;
-  bs_time_t PAYLOAD_End_Time;
-  bs_time_t CRC_End_Time;
-  bool packet_rejected;
-  bool S1Offset;
-} ongoing_rx_RADIO_status;
+static p2G4_rxv2_t ongoing_rx;
+static ongoing_rx_RADIO_status_t ongoing_rx_RADIO_status;
 static p2G4_txv2_t    ongoing_tx;
 static p2G4_tx_done_t ongoing_tx_done;
 static p2G4_rxv2_done_t ongoing_rx_done;
-static bs_time_t next_recheck_time; // when we asked the phy to recheck (in our own time) next time
-static double bits_per_us; //Bits per us for the ongoing Tx or Rx (shared with the bit counter)
 
-typedef enum { No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval } abort_state_t;
+static double bits_per_us; //Bits per us for the ongoing Tx or Rx
+
+static bs_time_t next_recheck_time; // when we asked the phy to recheck (in our own time) next time
 static abort_state_t abort_fsm_state = No_pending_abort_reeval; //This variable shall be set to Tx/Rx_Abort_reeval when the phy is waiting for an abort response (and in no other circumstance)
 static int aborting_set = 0; //If set, we will abort the current Tx/Rx at the next abort reevaluation
 
-typedef enum {
-  DISABLED = 0, //No operations are going on inside the radio and the power consumption is at a minimum
-  RXRU, //The radio is ramping up and preparing for reception
-  RXIDLE, //The radio is ready for reception to start
-  RX, //Reception has been started and the addresses enabled in the RXADDRESSES register are being monitored
-  RXDISABLE, //The radio is disabling the receiver
+static nrfra_state_t radio_state;
+static nrfra_sub_state_t radio_sub_state;
 
-  TXRU = 9, //The radio is ramping up and preparing for transmission
-  TXIDLE, //The radio is ready for transmission to start
-  TX, //The radio is transmitting a packet
-  TXDISABLE //The radio is disabling the transmitter
-} radio_state_t;
-static radio_state_t radio_state;
-
-typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX state with this substate*/
-  TX_WAIT_FOR_ADDRESS_END, TX_WAIT_FOR_PAYLOAD_END, TX_WAIT_FOR_CRC_END,
-  RX_WAIT_FOR_ADDRESS_END, RX_WAIT_FOR_PAYLOAD_END, RX_WAIT_FOR_CRC_END
-} radio_sub_state_t;
-
-static radio_sub_state_t radio_sub_state;
-
-#define _NRF_MAX_PACKET_SIZE (256+2+4)
 static uint8_t tx_buf[_NRF_MAX_PACKET_SIZE]; //starting from the header, and including CRC
 static uint8_t rx_buf[_NRF_MAX_PACKET_SIZE]; // "
 static uint8_t *rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
