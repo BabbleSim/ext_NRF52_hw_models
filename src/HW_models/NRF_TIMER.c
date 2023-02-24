@@ -19,8 +19,9 @@
 
 /**
  * Notes:
- *   Counter mode is not fully supported (no CC match check)
- *   For simplicity all 5 Timers have 6 functional CC registers
+ *   * Counter mode is not fully supported (no CC match check)
+ *   * For simplicity all 5 Timers have 6 functional CC registers
+ *     In reality, Timers0-2 have only 4 CC registers, events and TASKS_CAPTURE
  */
 
 #define N_TIMERS 5
@@ -377,9 +378,15 @@ void nrf_hw_model_timer_timer_triggered() {
         case 2:
           irq = TIMER2_IRQn;
           break;
+        case 3:
+          irq = TIMER3_IRQn;
+          break;
+        case 4:
+          irq = TIMER4_IRQn;
+          break;
         default:
           bs_trace_error_line_time("NRF HW TIMER%i CC[%i] interrupt "
-              "trigered but there is no interrupt "
+              "triggered but there is no interrupt "
               "mapped for it\n", t, cc);
           break;
         }
@@ -390,4 +397,3 @@ void nrf_hw_model_timer_timer_triggered() {
   }//for t(imer)
   update_master_timer();
 }
-
