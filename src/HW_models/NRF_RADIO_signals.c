@@ -158,7 +158,20 @@ void nrf_radio_signal_CRCERROR(){
 //void nrf_radio_signal_EDEND();
 //void nrf_radio_signal_EDSTOPPED();
 //void nrf_radio_signal_CCAIDLE();
-//void nrf_radio_signal_CCABUSY();
+
+void nrf_radio_signal_CCABUSY(){
+  NRF_RADIO_regs.EVENTS_CCABUSY = 1;
+  nrf_ppi_event(RADIO_EVENTS_CCABUSY);
+
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCABUSY_DISABLE_Msk ) {
+    nrf_radio_tasks_DISABLE();
+  }
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCABUSY_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
 //void nrf_radio_signal_CCASTOPPED();
 //void nrf_radio_signal_RATEBOOST();
 

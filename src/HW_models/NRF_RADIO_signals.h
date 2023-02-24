@@ -27,7 +27,7 @@ void nrf_radio_signal_CRCERROR();
 //void nrf_radio_signal_EDEND();
 //void nrf_radio_signal_EDSTOPPED();
 //void nrf_radio_signal_CCAIDLE();
-//void nrf_radio_signal_CCABUSY();
+void nrf_radio_signal_CCABUSY();
 //void nrf_radio_signal_CCASTOPPED();
 //void nrf_radio_signal_RATEBOOST();
 void nrf_radio_signal_TXREADY();
