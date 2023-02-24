@@ -154,10 +154,56 @@ void nrf_radio_signal_CRCERROR(){
   }
 }
 
-//void nrf_radio_signal_FRAMESTART();
-//void nrf_radio_signal_EDEND();
-//void nrf_radio_signal_EDSTOPPED();
-//void nrf_radio_signal_CCAIDLE();
+void nrf_radio_signal_FRAMESTART(){
+  NRF_RADIO_regs.EVENTS_FRAMESTART = 1;
+  nrf_ppi_event(RADIO_EVENTS_FRAMESTART);
+
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_FRAMESTART_BCSTART_Msk ) {
+    nrf_radio_tasks_BCSTART();
+  }
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_FRAMESTART_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
+void nrf_radio_signal_EDEND(){
+  NRF_RADIO_regs.EVENTS_EDEND = 1;
+  nrf_ppi_event(RADIO_EVENTS_EDEND);
+
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_EDEND_DISABLE_Msk ) {
+    nrf_radio_tasks_DISABLE();
+  }
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_EDEND_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
+void nrf_radio_signal_EDSTOPPED(){
+  NRF_RADIO_regs.EVENTS_EDSTOPPED = 1;
+  nrf_ppi_event(RADIO_EVENTS_EDSTOPPED);
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_EDSTOPPED_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
+void nrf_radio_signal_CCAIDLE(){
+  NRF_RADIO_regs.EVENTS_CCAIDLE = 1;
+  nrf_ppi_event(RADIO_EVENTS_CCAIDLE);
+
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCAIDLE_TXEN_Msk ) {
+    nrf_radio_tasks_TXEN();
+  }
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCAIDLE_STOP_Msk ) {
+    nrf_radio_tasks_STOP();
+  }
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCAIDLE_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
 
 void nrf_radio_signal_CCABUSY(){
   NRF_RADIO_regs.EVENTS_CCABUSY = 1;
@@ -172,8 +218,23 @@ void nrf_radio_signal_CCABUSY(){
   }
 }
 
-//void nrf_radio_signal_CCASTOPPED();
-//void nrf_radio_signal_RATEBOOST();
+void nrf_radio_signal_CCASTOPPED(){
+  NRF_RADIO_regs.EVENTS_CCASTOPPED = 1;
+  nrf_ppi_event(RADIO_EVENTS_CCASTOPPED);
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCASTOPPED_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
+
+void nrf_radio_signal_RATEBOOST(){
+  NRF_RADIO_regs.EVENTS_RATEBOOST = 1;
+  nrf_ppi_event(RADIO_EVENTS_RATEBOOST);
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_RATEBOOST_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
 
 void nrf_radio_signal_TXREADY(){
   NRF_RADIO_regs.EVENTS_TXREADY = 1;
@@ -204,7 +265,14 @@ void nrf_radio_signal_RXREADY(){
   }
 }
 
-//void nrf_radio_signal_MHRMATCH();
+void nrf_radio_signal_MHRMATCH(){
+  NRF_RADIO_regs.EVENTS_MHRMATCH = 1;
+  nrf_ppi_event(RADIO_EVENTS_MHRMATCH);
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_MHRMATCH_Msk ){
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
 
 void nrf_radio_signal_SYNC() {
   NRF_RADIO_regs.EVENTS_SYNC = 1;
@@ -231,4 +299,11 @@ void nrf_radio_signal_PHYEND(){
   }
 }
 
-//void nrf_radio_signal_CTEPRESENT();
+void nrf_radio_signal_CTEPRESENT(){
+  NRF_RADIO_regs.EVENTS_CTEPRESENT = 1;
+  nrf_ppi_event(RADIO_EVENTS_CTEPRESENT);
+
+  if ( NRF_RADIO_INTEN & RADIO_INTENSET_CTEPRESENT_Msk ) {
+    hw_irq_ctrl_set_irq(RADIO_IRQn);
+  }
+}
