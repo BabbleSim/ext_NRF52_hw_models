@@ -708,6 +708,8 @@ static void start_Rx(){
   #define RX_N_ADDR 8 /* How many addresses we can search in parallel */
   p2G4_address_t rx_addresses[RX_N_ADDR];
 
+  nrfra_check_packet_conf();
+
   radio_state = RAD_RX;
   NRF_RADIO_regs.STATE = RAD_RX;
   NRF_RADIO_regs.CRCSTATUS = 0;
