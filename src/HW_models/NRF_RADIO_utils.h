@@ -21,6 +21,8 @@ int nrfra_is_HW_TIFS_enabled();
 void nrfra_prep_rx_request(p2G4_rxv2_t *ongoing_rx, p2G4_address_t *rx_addresses);
 void nrfra_prep_tx_request(p2G4_txv2_t *ongoing_tx, uint packet_size, bs_time_t packet_duration);
 
+uint nrfra_tx_copy_payload(uint8_t *tx_buf);
+
 #ifdef __cplusplus
 }
 #endif

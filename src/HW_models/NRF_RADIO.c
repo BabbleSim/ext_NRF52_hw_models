@@ -561,33 +561,37 @@ static void start_Tx(){
 
   //TOLOW: Add support for other packet formats and bitrates
   uint8_t preamble_len;
-  uint8_t address_len = 4;
-  uint8_t header_len  = 2;
-  uint8_t payload_len = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1];
+  uint8_t address_len;
+  uint8_t header_len;
+  uint payload_len;
   //Note: I assume in Tx the length is always < PCNF1.MAXLEN and that STATLEN is always 0 (otherwise add a check)
-  uint8_t crc_len     = 3;
-
-  //Note only default freq. map supported
+  uint8_t crc_len;
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     preamble_len = 1; //1 byte
+    address_len = 4;
+    header_len  = 2;
+    crc_len = 3;
     bits_per_us = 1;
-  } else { //2Mbps
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     preamble_len = 2; //2 bytes
+    address_len = 4;
+    header_len  = 2;
+    crc_len = 3;
     bits_per_us = 2;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    preamble_len = 4;
+    address_len = 1;
+    header_len  = 1;
+    crc_len = 2;
+    bits_per_us = 0.25;
   }
 
-  tx_buf[0] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0];
-  tx_buf[1] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1];
+  payload_len = nrfra_tx_copy_payload(tx_buf);
 
-  int S1Offset = 0;
-  if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
-    S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
-  }
-  memcpy(&tx_buf[2], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + S1Offset], payload_len);
-
+  //TODO: CRC for 15.4, or in general whatever CRC
   uint32_t crc_init = NRF_RADIO_regs.CRCINIT & RADIO_CRCINIT_CRCINIT_Msk;
-  append_crc_ble(tx_buf, 2/*header*/ + payload_len, crc_init);
+  append_crc_ble(tx_buf, 2/*header*/ + payload_len, crc_init); //This size needs to be changed for 15.4
 
   bs_time_t packet_duration; //From preamble to CRC
   packet_duration  = preamble_len*8 + address_len*8;
@@ -599,7 +603,7 @@ static void start_Tx(){
 
   update_abort_struct(&tx_status.tx_req.abort, &next_recheck_time);
 
-  //Request the Tx from the phy:
+  //Request the Tx from the Phy:
   int ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf,  &tx_status.tx_resp);
   handle_Tx_response(ret);
 

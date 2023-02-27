@@ -7,6 +7,7 @@
  * This file includes miscellaneous utility functions used by the RADIO model
  * but no significant logic *
  */
+#include <string.h>
 #include "bs_tracing.h"
 #include "bs_utils.h"
 #include "bs_pc_2G4.h"
@@ -87,7 +88,7 @@ static void nrfra_check_802154_conf(void){
         RADIO_PCNF0_CRCINC_Msk
       | ( RADIO_PCNF0_PLEN_32bitZero << RADIO_PCNF0_PLEN_Pos )
       //CILEN = 0
-      //SIINCL = 0
+      //S1INCL = 0
       | ( 0 << RADIO_PCNF0_S1LEN_Pos )
       | ( 0 << RADIO_PCNF0_S0LEN_Pos )
       | ( 8 << RADIO_PCNF0_LFLEN_Pos )
@@ -253,24 +254,34 @@ void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
  * Note: The abort substructure is NOT filled.
  */
 void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration) {
+
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     tx_req->radio_params.modulation = P2G4_MOD_BLE;
-  } else { //2Mbps
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     tx_req->radio_params.modulation = P2G4_MOD_BLE2M;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    tx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
   }
 
-  {
+  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)
+      ) {
     //Note: we only support BALEN = 3 (== BLE 4 byte addresses)
     //Note: We only support address 0 being used
-    uint32_t address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
+    tx_req->phy_address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
                            | (NRF_RADIO_regs.BASE0 >> 8);
-    tx_req->phy_address = address;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    tx_req->phy_address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
   }
+
   {
     double TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
     tx_req->power_level = p2G4_power_from_d(TxPower); //Note that any possible Tx antenna or PA gain would need to be included here
   }
-  {
+
+  { //Note only default freq. map supported
     uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
     p2G4_freq_t center_freq;
     p2G4_freq_from_d(freq_off, 1, &center_freq);
@@ -286,4 +297,56 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
     tx_req->end_packet_time = tx_req->end_tx_time;
   }
   tx_req->coding_rate = 0;
+}
+
+/**
+ * Assemble a packet to be transmitted out thru the air into tx_buf[]
+ * Omitting the preamble and address/sync flag
+ *
+ * Return copied payload size (after S0 + len + S1) into tx_buf[]
+ *
+ * Note: When adding support for CodedPhy and or other packet formats,
+ * this needs to be reworked together with the start_Tx()
+ * function, as it is all way too interdependent
+ */
+uint nrfra_tx_copy_payload(uint8_t *tx_buf){
+  int S0Len, S1LenB, LFLenB; //All in bytes
+  int LFLenb, S1LenAirb;
+  int i;
+  uint payload_len;
+
+  S0Len = (NRF_RADIO_regs.PCNF0 &  RADIO_PCNF0_S0LEN_Msk) >> RADIO_PCNF0_S0LEN_Pos;
+  payload_len = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[S0Len];
+
+  S1LenAirb = (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_S1LEN_Msk) >> RADIO_PCNF0_S1LEN_Pos;
+  S1LenB = (S1LenAirb + 7)/8; //This is just : S1Offset = ceil(PCNF0.S1LEN / 8)
+
+  LFLenb = (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_LFLEN_Msk) >> RADIO_PCNF0_LFLEN_Pos;
+  LFLenB = (LFLenb + 7)/8;
+
+  //copy from RAM to Tx buffer
+  i = 0;
+  if (S0Len) {
+    tx_buf[0] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0];
+    i++;
+  }
+  for (int j = 0; j < LFLenB; j++){ //Copy up to 2 Length bytes
+    tx_buf[i] = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[i];
+    i++;
+  }
+  int S1Off = 0;
+  if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ) {
+    if (S1LenB == 0) {
+      S1Off = 1; //We skip 1 S1 byte in RAM
+    }
+    /*
+     * If S1INCL and S1LEN > 0, the assumption is that the
+     * the size in RAM will just be the same as in air
+     * TODO: this behavior needs to be confirmed
+     */
+  }
+
+  int copy_len = payload_len + S1LenB;
+  memcpy(&tx_buf[i], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[i + S1Off], copy_len);
+  return payload_len;
 }
