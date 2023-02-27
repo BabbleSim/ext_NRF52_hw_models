@@ -16,52 +16,130 @@
 #include "time_machine_if.h"
 #include "NRF_RADIO_timings.h"
 
-/*
- * A few checks to ensure the model is only used with the currently supported packet format
- */
-void nrfra_check_packet_conf(void){
+static void nrfra_check_crc_conf_ble(void) {
+  if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
+      != (RADIO_CRCCNF_LEN_Three << RADIO_CRCCNF_LEN_Pos) ) {
+    bs_trace_error_line_time(
+        "NRF_RADIO: CRCCNF Only 3 bytes CRC is supported in BLE mode (CRCCNF=%u)\n",
+        NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk);
+  }
+}
+
+static void nrfra_check_ble1M_conf(void){
   int checked =NRF_RADIO_regs.PCNF0 &
       (RADIO_PCNF0_PLEN_Msk
           | RADIO_PCNF0_S1LEN_Msk
           | RADIO_PCNF0_S0LEN_Msk
           | RADIO_PCNF0_LFLEN_Msk);
 
-  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
-    int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
-        | ( 1 << RADIO_PCNF0_S0LEN_Pos )
-        | ( 0 << RADIO_PCNF0_S1LEN_Pos )
-        | ( RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos ) );
+  int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
+      | ( 1 << RADIO_PCNF0_S0LEN_Pos )
+      | ( 0 << RADIO_PCNF0_S1LEN_Pos )
+      | ( RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos ) );
 
-    if (checked != check) {
-      bs_trace_error_line_time(
-          "NRF_RADIO: For 1 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
-          NRF_RADIO_regs.PCNF0);
-    }
-
-  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
-
-    int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
-        | ( 1 << RADIO_PCNF0_S0LEN_Pos )
-        | ( 0 << RADIO_PCNF0_S1LEN_Pos )
-        | ( RADIO_PCNF0_PLEN_16bit << RADIO_PCNF0_PLEN_Pos ) );
-
-    if (checked != check) {
-      bs_trace_error_line_time(
-          "NRF_RADIO: For 2 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
-          NRF_RADIO_regs.PCNF0);
-    }
-
-  } else {
+  if (checked != check) {
     bs_trace_error_line_time(
-        "NRF_RADIO: Only 1&2 Mbps BLE packet format supported so far (MODE=%u)\n",
-        NRF_RADIO_regs.MODE);
+        "NRF_RADIO: For 1 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
+        NRF_RADIO_regs.PCNF0);
   }
 
-  if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
-      != (RADIO_CRCCNF_LEN_Three << RADIO_CRCCNF_LEN_Pos) ) {
+  nrfra_check_crc_conf_ble();
+}
+
+
+static void nrfra_check_ble2M_conf(void){
+  int checked =NRF_RADIO_regs.PCNF0 &
+      (RADIO_PCNF0_PLEN_Msk
+          | RADIO_PCNF0_S1LEN_Msk
+          | RADIO_PCNF0_S0LEN_Msk
+          | RADIO_PCNF0_LFLEN_Msk);
+
+  int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
+      | ( 1 << RADIO_PCNF0_S0LEN_Pos )
+      | ( 0 << RADIO_PCNF0_S1LEN_Pos )
+      | ( RADIO_PCNF0_PLEN_16bit << RADIO_PCNF0_PLEN_Pos ) );
+
+  if (checked != check) {
     bs_trace_error_line_time(
-        "NRF_RADIO: CRCCNF Only 3 bytes CRC is supported (CRCCNF=%u)\n",
+        "NRF_RADIO: For 2 Mbps only BLE packet format is supported so far (PCNF0=%u)\n",
+        NRF_RADIO_regs.PCNF0);
+  }
+
+  nrfra_check_crc_conf_ble();
+}
+
+static void nrfra_check_802154_conf(void){
+  int checked, check;
+
+  //Overall packet structure:
+  checked =NRF_RADIO_regs.PCNF0 &
+         (  RADIO_PCNF0_TERMLEN_Msk
+          | RADIO_PCNF0_CRCINC_Msk
+          | RADIO_PCNF0_PLEN_Msk
+          | RADIO_PCNF0_CILEN_Msk
+          | RADIO_PCNF0_S1INCL_Msk
+          | RADIO_PCNF0_S1LEN_Msk
+          | RADIO_PCNF0_S0LEN_Msk
+          | RADIO_PCNF0_LFLEN_Msk);
+
+  check = (
+      //TERM = 0
+        RADIO_PCNF0_CRCINC_Msk
+      | ( RADIO_PCNF0_PLEN_32bitZero << RADIO_PCNF0_PLEN_Pos )
+      //CILEN = 0
+      //SIINCL = 0
+      | ( 0 << RADIO_PCNF0_S1LEN_Pos )
+      | ( 0 << RADIO_PCNF0_S0LEN_Pos )
+      | ( 8 << RADIO_PCNF0_LFLEN_Pos )
+       );
+  if (checked != check) {
+    bs_trace_error_line_time(
+        "%s w 15.4 modulation only the 802154 packet format is supported so far (PCNF0=%u)\n",
+        __func__, NRF_RADIO_regs.PCNF0);
+  }
+
+  checked = NRF_RADIO_regs.PCNF1 &
+        (  RADIO_PCNF1_WHITEEN_Msk
+         | RADIO_PCNF1_ENDIAN_Msk
+         | RADIO_PCNF1_BALEN_Msk
+         | RADIO_PCNF1_STATLEN_Msk );
+
+  check =   (0 << RADIO_PCNF1_WHITEEN_Pos)
+          | (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos)
+          | (0 << RADIO_PCNF1_BALEN_Pos) // => 1 byte for SFD
+          | (0 << RADIO_PCNF1_STATLEN_Pos);
+
+  if (checked != check) {
+    bs_trace_error_line_time(
+        "%s w 15.4 modulation only the 802154 packet format is supported so far (PCNF1=%u)\n",
+        __func__, NRF_RADIO_regs.PCNF1);
+  }
+
+  //CRC:
+  if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
+      != (RADIO_CRCCNF_LEN_Two << RADIO_CRCCNF_LEN_Pos) ) {
+    bs_trace_error_line_time(
+        "%s CRCCNF Only 2 bytes CRC is supported in 15.4 mode (CRCCNF=%u)\n",
+        __func__,
         NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk);
+  }
+}
+
+/*
+ * A few checks to ensure the model is only used with the currently supported packet format
+ */
+void nrfra_check_packet_conf(void){
+
+  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
+    nrfra_check_ble1M_conf();
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
+    nrfra_check_ble2M_conf();
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    nrfra_check_802154_conf();
+  } else {
+    bs_trace_error_line_time(
+        "NRF_RADIO: Only 1&2 Mbps BLE & 802.15.4 packet formats supported so far (MODE=%u)\n",
+        NRF_RADIO_regs.MODE);
   }
 }
 
