@@ -134,6 +134,19 @@ static void radio_reset() {
   Timer_TIFS = TIME_NEVER;
 
   nrf_radio_bitcounter_reset();
+
+  //Registers' reset values:
+  NRF_RADIO_regs.FREQUENCY = 0x00000002;
+  NRF_RADIO_regs.DATAWHITEIV = 0x00000040;
+  NRF_RADIO_regs.MODECNF0 = 0x00000200;
+  NRF_RADIO_regs.SFD = 0xA7;
+  NRF_RADIO_regs.CCACTRL = 0x052D0000;
+  NRF_RADIO_regs.CTEINLINECONF = 0x00002800;
+  NRF_RADIO_regs.DFECTRL1 = 0x00023282;
+  for (int i = 0; i < 8; i++)
+    NRF_RADIO_regs.PSEL.DFEGPIO[i] = 0xFFFFFFFF;
+  NRF_RADIO_regs.DFEPACKET.MAXCNT = 0x00001000;
+  NRF_RADIO_regs.POWER = 1;
 }
 
 void nrf_radio_init() {
