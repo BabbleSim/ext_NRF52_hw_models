@@ -170,27 +170,54 @@ void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   //TOLOW: Add support for other packet formats and bitrates
   uint8_t preamble_length;
-  uint8_t address_length  = 4;
-  uint8_t header_length   = 2;
-  //Note: we only support BALEN = 3 (== BLE 4 byte addresses)
-  //Note: We only support address 0 being used
-  uint32_t address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
-                                          | (NRF_RADIO_regs.BASE0 >> 8);
+  uint8_t address_length;
+  uint8_t header_length;
+  uint64_t address;
+  bs_time_t pre_trunc;
+  uint16_t sync_threshold;
 
   uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
   double bits_per_us;
+
+  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)
+      ) {
+    //Note: We only support address 0 being used
+    address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
+                | (NRF_RADIO_regs.BASE0 >> 8);
+  }
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     //Note that we only support BLE packet formats by now (so we ignore the configuration of the preamble and just assume it is what it needs to be)
     //we rely on the Tx side error/warning being enough to warn users that we do not support other formats
     preamble_length = 1; //1 byte
+    address_length  = 4;
+    header_length   = 2;
     rx_req->radio_params.modulation = P2G4_MOD_BLE;
     bits_per_us = 1;
-  } else { //2Mbps
+    pre_trunc = 0; //The modem can lose a lot of preamble and sync (~7µs), we leave it as 0 by now to avoid a behavior change
+    sync_threshold = 2; //(<) we tolerate less than 2 errors in the preamble and sync word together (old number, probably does not reflect the actual RADIO performance)
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     preamble_length = 2; //2 bytes
+    address_length  = 4;
+    header_length   = 2;
     rx_req->radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
+    pre_trunc = 0; //The modem can lose a lot of preamble and sync (~7µs), we leave it as 0 by now to avoid a behavior change
+    sync_threshold = 2;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    preamble_length = 4;
+    address_length  = 1;
+    header_length   = 0;
+    address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
+    rx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
+    bits_per_us = 0.25;
+    pre_trunc = 104; //The modem seems to be able to sync with just 3 sybmols of the preamble == lossing 13symbols|26bits|104us
+    sync_threshold = 0;
   }
+
   rx_req->coding_rate = 0;
 
   p2G4_freq_t center_freq;
@@ -202,8 +229,8 @@ void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   rx_req->header_duration  = header_length*8/bits_per_us;
   rx_req->header_threshold = 0; //(<=) we tolerate 0 bit errors in the header which will be found in the crc (we may want to tune this)
-  rx_req->sync_threshold   = 2; //(<) we tolerate less than 2 errors in the preamble and sync word together
-  rx_req->acceptable_pre_truncation = 0; //we don't tolerate lossing any of the preamble (note the real modem seems to be able to lose some of it. This is just a starting point)
+  rx_req->sync_threshold   = sync_threshold;
+  rx_req->acceptable_pre_truncation = pre_trunc;
 
   rx_addresses[0] = address;
   rx_req->n_addr = 1;

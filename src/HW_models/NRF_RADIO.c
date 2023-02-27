@@ -51,6 +51,7 @@
  *
  * Note11: During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
  *         On transmission we generate the correct CRC for correctness of the channel dump traces (and Ellisys traces)
+ * Note11b:The CRC configuration is directly deduced from the modulation, only BLE and 154 CRCs are supported so far
  *
  * Note12: Nothing related to 802.15.4 (including energy detection (ED) and CCA) is implemented
  *
@@ -649,6 +650,8 @@ static void handle_Rx_response(int ret){
       bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
       length  = max_length;
       //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
+    } else {
+      //NRF_RADIO_regs.PDUSTAT = 0; //TODO, set if greater
     }
 
     rx_status.packet_rejected = false;
@@ -735,11 +738,15 @@ static void start_Rx(){
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     bits_per_us = 1;
-  } else { //2Mbps
+    rx_status.CRC_duration = 3*8/bits_per_us;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     bits_per_us = 2;
+    rx_status.CRC_duration = 3*8/bits_per_us;
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    bits_per_us = 0.25;
+    rx_status.CRC_duration = 2*8/bits_per_us;
   }
 
-  rx_status.CRC_duration = 3*8/bits_per_us;
   rx_status.CRC_OK = false;
   rx_status.rx_resp.status = P2G4_RXSTATUS_NOSYNC;
 
@@ -778,8 +785,7 @@ static void Rx_Addr_received(){
     nrf_radio_signal_RSSIEND();
   }
 
-  NRF_RADIO_regs.RXMATCH = 0;//The only we support so far
-  //NRF_RADIO_regs.PDUSTAT = 0; PDUSTAT is missing in registers...
+  NRF_RADIO_regs.RXMATCH = 0; //The only we support so far
 
   if (NRF_RADIO_regs.DACNF & 0xFF) { /*If any of the addresses for device address match is enabled*/
     /*
