@@ -19,7 +19,7 @@
 #include "NRF_AES_CCM.h"
 #include "irq_ctrl.h"
 #include "NRF_HWLowL.h"
-#include "crc_ble.h"
+#include "crc.h"
 #include "NRF_RADIO_signals.h"
 #include "NRF_RADIO_utils.h"
 #include "NRF_RADIO_timings.h"
@@ -589,9 +589,17 @@ static void start_Tx(){
 
   payload_len = nrfra_tx_copy_payload(tx_buf);
 
-  //TODO: CRC for 15.4, or in general whatever CRC
+  /* This code should be generalized to support any CRC configuration (CRCCNF, CRCINIT AND CRCPOLY)
+   * When doing so, we should still calculate the ble and 154 crc's with their optimized table implementations
+   * Here we just assume the CRC is configured as it should given the modulation */
   uint32_t crc_init = NRF_RADIO_regs.CRCINIT & RADIO_CRCINIT_CRCINIT_Msk;
-  append_crc_ble(tx_buf, 2/*header*/ + payload_len, crc_init); //This size needs to be changed for 15.4
+  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+     || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) ) {
+    append_crc_ble(tx_buf, header_len + payload_len, crc_init);
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    //15.4 does not CRC the length (header) field
+    append_crc_154(&tx_buf[header_len], payload_len, crc_init);
+  }
 
   bs_time_t packet_duration; //From preamble to CRC
   packet_duration  = preamble_len*8 + address_len*8;

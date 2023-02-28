@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 void append_crc_ble(uint8_t* buf, unsigned int len, uint32_t crc_init);
+void append_crc_154(uint8_t* buf, unsigned int len, uint16_t crc_init);
 
 #ifdef __cplusplus
 }
