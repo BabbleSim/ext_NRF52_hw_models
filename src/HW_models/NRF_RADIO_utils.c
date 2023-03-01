@@ -299,6 +299,21 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->coding_rate = 0;
 }
 
+uint nrfra_get_payload_length(uint8_t *buf){
+  int S0Len;
+  int LFLenb, LFLenB;
+  uint payload_len = 0;
+  S0Len = (NRF_RADIO_regs.PCNF0 &  RADIO_PCNF0_S0LEN_Msk) >> RADIO_PCNF0_S0LEN_Pos;
+
+  LFLenb = (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_LFLEN_Msk) >> RADIO_PCNF0_LFLEN_Pos;
+  LFLenB = (LFLenb + 7)/8;
+
+  for (int i = 0; i < LFLenB; i++){
+    payload_len += buf[S0Len+i] << i*8;
+  }
+  return payload_len;
+}
+
 /**
  * Assemble a packet to be transmitted out thru the air into tx_buf[]
  * Omitting the preamble and address/sync flag
@@ -316,7 +331,7 @@ uint nrfra_tx_copy_payload(uint8_t *tx_buf){
   uint payload_len;
 
   S0Len = (NRF_RADIO_regs.PCNF0 &  RADIO_PCNF0_S0LEN_Msk) >> RADIO_PCNF0_S0LEN_Pos;
-  payload_len = ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[S0Len];
+
 
   S1LenAirb = (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_S1LEN_Msk) >> RADIO_PCNF0_S1LEN_Pos;
   S1LenB = (S1LenAirb + 7)/8; //This is just : S1Offset = ceil(PCNF0.S1LEN / 8)
@@ -346,6 +361,7 @@ uint nrfra_tx_copy_payload(uint8_t *tx_buf){
      */
   }
 
+  payload_len = nrfra_get_payload_length(tx_buf);
   int copy_len = payload_len + S1LenB;
   memcpy(&tx_buf[i], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[i + S1Off], copy_len);
   return payload_len;

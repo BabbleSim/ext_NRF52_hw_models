@@ -7,7 +7,7 @@ Current limitations and pending things to do:
 * Proper testing: All currently implemented models have only been tested lightly
 
 * RADIO:
-	* (L) Only BLE packet format supported (no LR)
+	* (L) Only BLE 1/2Mbps (no LR) and 802.15.4 packet format supported
 	* (L) Only default freq. map supported
 	* (VL) Only 1st logical address is supported
 	* (VL) More limitation listed in NRF_RADIO.c
