@@ -86,6 +86,9 @@
  *         It is not generated at the exact correct time. In the model it is generated at the
  *         exact same time as END. While according to the spec, it should be generated with the last
  *         bit on *air* (That is the Tx chain delay later for Tx, and RxChainDelay earlier for Rx)
+ *
+ * Note20: The LQI value is based on a single measurement at the end of the SFD.
+ *         While the real HW samples it in 3 places during the payload, and the middle one selected.
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
@@ -707,26 +710,33 @@ static void handle_Rx_response(int ret){
     //packet lenght was received correctly, and just report a CRC error at the
     //end of the CRC
 
+    uint payload_len = nrfra_get_payload_length(rx_buf);
+    uint crc_len = nrfra_get_crc_length();
+
     if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
       //Let's copy the CRC
-      uint payload_len = nrfra_get_payload_length(rx_buf);
       uint32_t crc = 0;
-
       //Eventually this should be generalized with the packet configuration
       if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
           || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
           && ( rx_status.rx_resp.packet_size >= 5 ) ){
-        memcpy((void*)&crc, &rx_buf[2 + payload_len], nrfra_get_crc_length());
+        memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
       } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
           && ( rx_status.rx_resp.packet_size >= 3 ) ){
-        memcpy((void*)&crc, &rx_buf[1 + payload_len], nrfra_get_crc_length());
-
-        //TODO: LQI
+        memcpy((void*)&crc, &rx_buf[1 + payload_len], crc_len);
       }
 
       NRF_RADIO_regs.RXCRC = crc;
       rx_status.CRC_OK = 1;
       NRF_RADIO_regs.CRCSTATUS = 1;
+    }
+
+    if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+      //The real HW only copies the LQI value after the payload in this mode
+      double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
+      uint8_t LQI = nrfra_RSSI_value_to_modem_LQIformat(RSSI);
+      //Eventually this should be generalized with the packet configuration:
+      rx_buf[1 + payload_len + crc_len] = LQI;
     }
 
     nrf_ccm_radio_received_packet(!rx_status.CRC_OK);

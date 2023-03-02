@@ -150,6 +150,16 @@ uint32_t nrfra_RSSI_value_to_modem_format(double rssi_value){
   return (uint32_t)rssi_value;
 }
 
+uint8_t nrfra_RSSI_value_to_modem_LQIformat(double rssi_value){
+  //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
+  //ED_RSSIOFFS = -93
+  //=> VALHARDWARE = PRF[dBm] - ED_RSSIOFFS = PRF[dBm] + 93
+  rssi_value +=93;
+  rssi_value = BS_MAX(rssi_value,0);
+  rssi_value = BS_MIN(rssi_value,255);
+  return (uint8_t)rssi_value;
+}
+
 int nrfra_is_HW_TIFS_enabled() {
   if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
       && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
@@ -159,7 +169,6 @@ int nrfra_is_HW_TIFS_enabled() {
   }
   return 0;
 }
-
 
 /**
  * Prepare a Phy Rxv2 request structure
