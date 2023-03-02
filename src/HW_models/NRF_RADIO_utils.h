@@ -23,6 +23,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *ongoing_tx, uint packet_size, bs_time_t 
 
 uint nrfra_tx_copy_payload(uint8_t *tx_buf);
 uint nrfra_get_payload_length(uint8_t *buf);
+uint nrfra_get_crc_length();
 
 #ifdef __cplusplus
 }

@@ -314,6 +314,10 @@ uint nrfra_get_payload_length(uint8_t *buf){
   return payload_len;
 }
 
+uint nrfra_get_crc_length(){
+  return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
+}
+
 /**
  * Assemble a packet to be transmitted out thru the air into tx_buf[]
  * Omitting the preamble and address/sync flag

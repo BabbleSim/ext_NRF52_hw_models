@@ -569,25 +569,22 @@ static void start_Tx(){
   uint8_t header_len;
   uint payload_len;
   //Note: I assume in Tx the length is always < PCNF1.MAXLEN and that STATLEN is always 0 (otherwise add a check)
-  uint8_t crc_len;
+  uint8_t crc_len = nrfra_get_crc_length();
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     preamble_len = 1; //1 byte
     address_len = 4;
     header_len  = 2;
-    crc_len = 3;
     bits_per_us = 1;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     preamble_len = 2; //2 bytes
     address_len = 4;
     header_len  = 2;
-    crc_len = 3;
     bits_per_us = 2;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     preamble_len = 4;
     address_len = 1;
     header_len  = 1;
-    crc_len = 2;
     bits_per_us = 0.25;
   }
 
@@ -659,6 +656,8 @@ static void handle_Rx_response(int ret){
       //NRF_RADIO_regs.PDUSTAT = 0; //TODO, set if greater
     }
 
+    //TODO: Discard Ieee802154_250Kbit frames with length == 0
+
     rx_status.packet_rejected = false;
 
     bs_time_t payload_end;
@@ -716,10 +715,10 @@ static void handle_Rx_response(int ret){
       if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
           || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
           && ( rx_status.rx_resp.packet_size >= 5 ) ){
-        memcpy((void*)&crc, &rx_buf[2 + payload_len], 3);
+        memcpy((void*)&crc, &rx_buf[2 + payload_len], nrfra_get_crc_length());
       } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
           && ( rx_status.rx_resp.packet_size >= 3 ) ){
-        memcpy((void*)&crc, &rx_buf[1 + payload_len], 2);
+        memcpy((void*)&crc, &rx_buf[1 + payload_len], nrfra_get_crc_length());
 
         //TODO: LQI
       }
@@ -768,14 +767,12 @@ static void start_Rx(){
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     bits_per_us = 1;
-    rx_status.CRC_duration = 3*8/bits_per_us;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     bits_per_us = 2;
-    rx_status.CRC_duration = 3*8/bits_per_us;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     bits_per_us = 0.25;
-    rx_status.CRC_duration = 2*8/bits_per_us;
   }
+  rx_status.CRC_duration = nrfra_get_crc_length()*8/bits_per_us;
 
   rx_status.CRC_OK = false;
   rx_status.rx_resp.status = P2G4_RXSTATUS_NOSYNC;
