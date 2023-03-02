@@ -45,11 +45,15 @@
  *
  * Note8: During idle nothing is sent to the air
  *
- * Note9: Only the BLE polynomial is supported
+ * Note9: Double buffering of registers is not implemented. Changing the register during the packet Tx/Rx will cause trouble
+ *        It should be (at least): PACKETPTR @ START
+ *                                 MODE @ TXEN | RXEN
+ *                                 CRC config @ START
  *
  * Note10: Maxlength is only partially checked (the packet is cut, but the interaction with the phy is not proper)
  *
- * Note11: During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
+ * Note11: Only the BLE & 15.4 CRC polynomials are supported
+ *         During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
  *         On transmission we generate the correct CRC for correctness of the channel dump traces (and Ellisys traces)
  * Note11b:The CRC configuration is directly deduced from the modulation, only BLE and 154 CRCs are supported so far
  *
