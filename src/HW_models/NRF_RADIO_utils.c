@@ -299,6 +299,17 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->coding_rate = 0;
 }
 
+
+/**
+ * Return the CRC length in bytes
+ */
+uint nrfra_get_crc_length(){
+  return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
+}
+
+/*
+ * Return the payload length, NOT including the CRC length
+ */
 uint nrfra_get_payload_length(uint8_t *buf){
   int S0Len;
   int LFLenb, LFLenB;
@@ -311,11 +322,18 @@ uint nrfra_get_payload_length(uint8_t *buf){
   for (int i = 0; i < LFLenB; i++){
     payload_len += buf[S0Len+i] << i*8;
   }
-  return payload_len;
-}
 
-uint nrfra_get_crc_length(){
-  return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
+  if (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_CRCINC_Msk) {
+    int crc_len = nrfra_get_crc_length();
+    if (payload_len >= crc_len) {
+      payload_len -= crc_len;
+    } else {
+      bs_trace_error_time_line("Programmed payload length (%i) smaller than CRC length (%i), "
+          "while it was configured as including the CRC.. => SW programming error\n",
+          payload_len, crc_len);
+    }
+  }
+  return payload_len;
 }
 
 /**
@@ -323,6 +341,7 @@ uint nrfra_get_crc_length(){
  * Omitting the preamble and address/sync flag
  *
  * Return copied payload size (after S0 + len + S1) into tx_buf[]
+ * (without the CRC)
  *
  * Note: When adding support for CodedPhy and or other packet formats,
  * this needs to be reworked together with the start_Tx()

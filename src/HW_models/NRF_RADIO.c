@@ -674,6 +674,7 @@ static void handle_Rx_response(int ret){
 
     rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value
 
+    //Copy the whole packet (S0, lenght, S1 & payload) excluding the CRC.
     if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
         || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
       if (rx_status.rx_resp.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
