@@ -89,6 +89,11 @@
  *
  * Note20: The LQI value is based on a single measurement at the end of the SFD.
  *         While the real HW samples it in 3 places during the payload, and the middle one selected.
+ *
+ * Note21: Timings:
+ *          * Radio ramp down time for 2Mbps BLE is 2 microseconds too long.
+ *          * Many timings are simplified, and some events which take slighly different amounts of time to occur
+ *            are produced at the same time as others, or so. Check NRF_RADIO_timings.c for some more notes.
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
