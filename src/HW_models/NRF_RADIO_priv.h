@@ -14,7 +14,7 @@ extern "C"{
 #endif
 
 typedef enum {TIFS_DISABLE = 0, TIFS_WAITING_FOR_DISABLE, TIFS_TRIGGERING_TRX_EN} TIFS_state_t;
-typedef enum {No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval} abort_state_t;
+typedef enum {No_pending_abort_reeval = 0, Tx_Abort_reeval, Rx_Abort_reeval, CCA_Abort_reeval} abort_state_t;
 
 typedef enum { //Note: This should match the real RADIO state values in the STATE register
   RAD_DISABLED = 0, //No operations are going on inside the radio and the power consumption is at a minimum
@@ -26,7 +26,9 @@ typedef enum { //Note: This should match the real RADIO state values in the STAT
   RAD_TXRU = 9, //The radio is ramping up and preparing for transmission
   RAD_TXIDLE, //The radio is ready for transmission to start
   RAD_TX, //The radio is transmitting a packet
-  RAD_TXDISABLE //The radio is disabling the transmitter
+  RAD_TXDISABLE, //The radio is disabling the transmitter
+
+  RAD_CCA, //Not a real HW state. In real HW the RADIO is in RXIDLE or some other RX state. Seems the CCA and ED procedures as separate machines
 } nrfra_state_t;
 
 typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX state with this substate*/
@@ -53,6 +55,14 @@ typedef struct {
   p2G4_txv2_t tx_req;
   p2G4_tx_done_t tx_resp;
 } RADIO_Tx_status_t;
+
+typedef struct {
+  bs_time_t CCA_end_time;
+  p2G4_cca_t cca_req;
+  p2G4_cca_done_t cca_resp;
+  bool is_busy;
+} RADIO_CCA_status_t;
+
 
 #define _NRF_MAX_PACKET_SIZE (256+2+4)
 

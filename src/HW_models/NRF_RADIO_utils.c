@@ -150,7 +150,7 @@ uint32_t nrfra_RSSI_value_to_modem_format(double rssi_value){
   return (uint32_t)rssi_value;
 }
 
-uint8_t nrfra_RSSI_value_to_modem_LQIformat(double rssi_value){
+uint8_t nrfra_dBm_to_modem_LQIformat(double rssi_value){
   //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
   //ED_RSSIOFFS = -93
   //=> VALHARDWARE = PRF[dBm] - ED_RSSIOFFS = PRF[dBm] + 93
@@ -158,6 +158,12 @@ uint8_t nrfra_RSSI_value_to_modem_LQIformat(double rssi_value){
   rssi_value = BS_MAX(rssi_value,0);
   rssi_value = BS_MIN(rssi_value,255);
   return (uint8_t)rssi_value;
+}
+
+double nrfra_LQIformat_to_dBm(uint value){
+  //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
+  //ED_RSSIOFFS = -93
+  return (double)value - 93;
 }
 
 int nrfra_is_HW_TIFS_enabled() {
@@ -306,6 +312,61 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
     tx_req->end_packet_time = tx_req->end_tx_time;
   }
   tx_req->coding_rate = 0;
+}
+
+/**
+ * Prepare a Phy CCA request structure
+ * based on the radio registers configuration.
+ *
+ * Note: The abort substructure is NOT filled.
+ */
+void nrfra_prep_cca_request(p2G4_cca_t *cca_req) {
+
+  cca_req->start_time  = hwll_phy_time_from_dev(tm_get_abs_time()); //We start right now
+  cca_req->antenna_gain = 0;
+
+  uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
+  p2G4_freq_t center_freq;
+  p2G4_freq_from_d(freq_off, 1, &center_freq);
+  cca_req->radio_params.center_freq = center_freq;
+
+  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    cca_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
+  } else {
+    bs_trace_error_line_time("CCA procedure only supported with 15.4 modulation\n");
+  }
+
+  uint edthreshold = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAEDTHRES_Msk) >> RADIO_CCACTRL_CCAEDTHRES_Pos;
+  uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
+  int symbol_time = 16; //micros
+  double carrier_detect_level = -110; //dBm : Any detectable signal by the modem
+
+  cca_req->scan_duration  = 8*symbol_time;
+  cca_req->scan_period    = 2*symbol_time; //let's measure 4 times (model design choice)
+
+  if (CCAMode == RADIO_CCACTRL_CCAMODE_EdMode) {
+    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+    cca_req->stop_when_found = 0;
+  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
+    cca_req->stop_when_found = 1;
+    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
+    //The Phy does not support detecting just based on something close enough in the correlator output
+    //so we ignore CCACTRL.CCACORRCNT & CCACTRL.CCACORRTHRES
+  } else if ((CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode)
+             || (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) ) {
+    cca_req->stop_when_found = 1;
+    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
+  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1) {
+    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+    cca_req->stop_when_found = 2;
+  } else {
+    bs_trace_error_time_line("%s, CCAMODE=%i support not yet implemented\n",
+        __func__, CCAMode);
+  }
 }
 
 

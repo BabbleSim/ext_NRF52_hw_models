@@ -193,11 +193,11 @@ void nrf_radio_signal_CCAIDLE(){
   NRF_RADIO_regs.EVENTS_CCAIDLE = 1;
   nrf_ppi_event(RADIO_EVENTS_CCAIDLE);
 
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCAIDLE_TXEN_Msk ) {
-    nrf_radio_tasks_TXEN();
-  }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCAIDLE_STOP_Msk ) {
     nrf_radio_tasks_STOP();
+  }
+  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_CCAIDLE_TXEN_Msk ) {
+    nrf_radio_tasks_TXEN();
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCAIDLE_Msk ) {

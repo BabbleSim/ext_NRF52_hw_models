@@ -17,10 +17,11 @@ extern "C"{
 
 void nrfra_check_packet_conf(void);
 uint32_t nrfra_RSSI_value_to_modem_format(double rssi_value);
-uint8_t nrfra_RSSI_value_to_modem_LQIformat(double rssi_value);
+uint8_t nrfra_dBm_to_modem_LQIformat(double rssi_value);
 int nrfra_is_HW_TIFS_enabled();
 void nrfra_prep_rx_request(p2G4_rxv2_t *ongoing_rx, p2G4_address_t *rx_addresses);
 void nrfra_prep_tx_request(p2G4_txv2_t *ongoing_tx, uint packet_size, bs_time_t packet_duration);
+void nrfra_prep_cca_request(p2G4_cca_t *cca_req);
 
 uint nrfra_tx_copy_payload(uint8_t *tx_buf);
 uint nrfra_get_payload_length(uint8_t *buf);
