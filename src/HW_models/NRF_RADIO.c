@@ -65,8 +65,8 @@
  *
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
- * Note14: No 52833 new radio state change events (EVENTS_FRAMESTART, EVENTS_EDEND, EVENTS_EDSTOPPED,
- *         EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT) implemented
+ * Note14: Several 52833 radio state change events are not yet implemented (EVENTS_EDEND, EVENTS_EDSTOPPED,
+ *         EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT)
  *
  * Note15: PDUSTAT not yet implemented
  *
@@ -98,6 +98,14 @@
  *          * Radio ramp down time for 2Mbps BLE is 2 microseconds too long.
  *          * Many timings are simplified, and some events which take slighly different amounts of time to occur
  *            are produced at the same time as others, or so. Check NRF_RADIO_timings.c for some more notes.
+ *
+ * Note22: EVENTS_FRAMESTART
+ *          * It is generated for all modulation types, this seems to be how the HW behaves even if the spec
+ *            seems to mildly imply it is only for 15.4
+ *          * In Tx: The spec seems unclear about the FRAMESTART being generated or not (after SHR).
+ *            Drawings imply it is, the text that it does not. The HW does. The model does generate it after SHR.
+ *          * In Rx: In the model it is generated at the SHR/SFD end (not PHR), meaning, at the same time as the ADDRESS EVENT
+ *            The spec seems to contradict itself here. But seems in real HW it is generated at the end of the PHR.
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
@@ -460,6 +468,7 @@ void nrf_radio_timer_triggered(){
       radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
       nrfra_set_Timer_RADIO(tx_status.PAYLOAD_end_time);
       nrf_radio_signal_ADDRESS();
+      nrf_radio_signal_FRAMESTART(); //See note on FRAMESTART
     } else if ( radio_sub_state == TX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = TX_WAIT_FOR_CRC_END;
       nrfra_set_Timer_RADIO(tx_status.CRC_end_time);
@@ -482,6 +491,7 @@ void nrf_radio_timer_triggered(){
       nrf_hw_find_next_timer_to_trigger();
       nrf_radio_signal_SYNC(); //See note on EVENTS_SYNC
       nrf_radio_signal_ADDRESS();
+      nrf_radio_signal_FRAMESTART(); //See note on FRAMESTART
       Rx_Addr_received();
       radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
       nrfra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);

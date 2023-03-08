@@ -23,7 +23,7 @@ void nrf_radio_signal_RSSIEND();
 void nrf_radio_signal_BCMATCH();
 void nrf_radio_signal_CRCOK();
 void nrf_radio_signal_CRCERROR();
-//void nrf_radio_signal_FRAMESTART();
+void nrf_radio_signal_FRAMESTART();
 //void nrf_radio_signal_EDEND();
 //void nrf_radio_signal_EDSTOPPED();
 void nrf_radio_signal_CCAIDLE();
