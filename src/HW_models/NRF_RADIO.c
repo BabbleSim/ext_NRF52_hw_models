@@ -30,7 +30,7 @@
  * RADIO — 2.4 GHz Radio
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=4_1_0_5_17
  *
- * Note: as of now, only 1&2Mbps BLE packet formats are supported, there is quite many notes around in the code
+ * Note: as of now, only 1&2Mbps BLE & 15.4 packet formats are supported, there is quite many notes around in the code
  * where changes would be required to support other formats
  *
  * Note3: Only logical address 0 (in Tx or Rx) is supported
@@ -76,7 +76,7 @@
  * Note18: EVENTS_SYNC:
  *         a) It is not generated at the exact correct time:
  *         In this model it is generated at the end of the address (or SFD)
- *         whileaccording to the infocenter spec this should come at the end of the preamble,
+ *         while according to the infocenter spec this should come at the end of the preamble,
  *         and only if in coded and 15.4 mode.
  *         In reality it seems to come somewhere during the preamble for 15.4 and coded phy,
  *         and somewhere during the address for 1&2Mbps BLE.
@@ -95,7 +95,7 @@
  *
  * Note21: Timings:
  *          * Radio ramp down time for 2Mbps BLE is 2 microseconds too long.
- *          * Many timings are simplified, and some events which take slighly different amounts of time to occur
+ *          * Many timings are simplified, and some events which take slightly different amounts of time to occur
  *            are produced at the same time as others, or so. Check NRF_RADIO_timings.c for some more notes.
  *
  * Note22: EVENTS_FRAMESTART
@@ -105,6 +105,57 @@
  *            Drawings imply it is, the text that it does not. The HW does. The model does generate it after SHR.
  *          * In Rx: In the model it is generated at the SHR/SFD end (not PHR), meaning, at the same time as the ADDRESS EVENT
  *            The spec seems to contradict itself here. But seems in real HW it is generated at the end of the PHR.
+ *
+ * Note23: Powering off/on is not properly modeled (it is mostly ignored)
+ *
+ *
+ * Implementation Specification:
+ *   A diagram of the main state machine can be found in docs/RADIO_states.svg
+ *   That main state machine is driven by a timer (Timer_RADIO) which results in calls to nrf_radio_timer_triggered()
+ *   and the tasks which cause transitions and/or the timer to be set to a new value.
+ *
+ *   Apart from this main state machine there is a small state machine for handling the automatic TIFS re-enabling.
+ *   See TIFS_state, Timer_TIFS, nrf_radio_fake_task_TRXEN_TIFS, and maybe_prepare_TIFS()
+ *   This TIFS machine piggybacks on the main machine and its timer.
+ *
+ *   And apart from this, there is an "abort" state machine, which is used to handle SW or another peripheral
+ *   triggering a TASK which requires us to stop a transaction with the Phy midway.
+ *   The idea here, is that when we start a transaction with the Phy (say a Tx), we do not know at the start if something
+ *   will want to stop it midway. So we tell the Phy when we start, when we expect to end, but also, when we
+ *   want the Phy to recheck with us if the transaction needs to be aborted midway.
+ *   This recheck time is set to the time anything may decide to stop. Which for simplicity is whenever *anything* may run.
+ *   That is, whenever any timer is scheduled. As this includes other peripherals which may trigger tasks thru the PPI,
+ *   or SW doing so after an interrupt.
+ *   If at any point, a TASK that stops a transaction comes while that transaction is ongoing, the abort state machine will flag it,
+ *   and the next time we need to respond to the Phy we will tell that we are stopping.
+ *
+ *   Apart from these, there is the interaction with the Phy (check ext_2G4_libPhyComv1/docs):
+ *   There is 3 different procedures for this (Tx, Rx & CCA) which fundamentally work in the same way.
+ *   At start_Rx/Tx/CCA_ED() (which is called at the micros when the actual Tx/Rx/CCA/ED measurement starts),
+ *   the Phy is told we want to start, and immediately we block until we get a response from the Phy.
+ *   (1) Here the response may be that:
+ *     * The Phy finished the procedure, in which case we just pre-program the main state machine timer,
+ *       and set registers and other state accordingly. (as we are done interacting with the Phy for this operation)
+ *       OR
+ *     * The Phy asks us to reevaluate if we want to abort. In this case, we hold responding to the Phy
+ *       and instead set the Timer_RADIO_abort_reeval to the time in which we need to respond to the Phy
+ *       and let time pass until that microsecond is ended.
+ *       At that point in time:
+ *          * If SW (or whatever else may trigger a TASK) has caused the procedure to end, we tell the Phy
+ *            we are aborting right now
+ *          * If nothing stopped it yet, we respond with a new abort reevaluation time in the future to the Phy,
+ *            and continue from (1).
+ *       The idea is that Timer_RADIO_abort_reeval is a separate timer that runs in parallel to the main Timer_RADIO and any other
+ *       HW event timer. And as Timer_RADIO_abort_reeval is the last timer scheduled by the HW_model_top in a given time, we will know if
+ *       anything else has affected the RADIO state in a way that requires us to stop the interaction with the Phy or not.
+ *   When we receive the CCA end from the Phy, we will also check the result, set registers accordingly, and pre-set the cca_status so
+ *   as to raise or not the CCABUSY/IDLE signals.
+ *   For an Rx it is marginally more complex, as we not only receive the end (either no sync, or crcok/failed), but also an intermediate
+ *   notification when the address has been received. At this point (address end) we pre-check some of the packet content (address for BLE adv,
+ *   length, etc) and already set some status registers and make some decisions about if we should proceed with the packet or not.
+ *
+ *   The CCA and ED procedures are so similar that they are handled with the same CCA_ED state in the main state machine,
+ *   most of the same CCA_ED code, and the same CCA procedure to the Phy.
  */
 
 NRF_RADIO_Type NRF_RADIO_regs;
@@ -419,6 +470,7 @@ void nrf_radio_regw_sideeffects_POWER(){
     }
   }
 }
+
 /**
  * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
  */
