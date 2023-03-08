@@ -28,7 +28,8 @@ typedef enum { //Note: This should match the real RADIO state values in the STAT
   RAD_TX, //The radio is transmitting a packet
   RAD_TXDISABLE, //The radio is disabling the transmitter
 
-  RAD_CCA, //Not a real HW state. In real HW the RADIO is in RXIDLE or some other RX state. Seems the CCA and ED procedures as separate machines
+  RAD_CCA_ED, //We are in either a CCA or ED procedure
+              //Not a real HW state. In real HW the RADIO is in RXIDLE or some other RX state. Seems the CCA and ED procedures as separate machines
 } nrfra_state_t;
 
 typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX state with this substate*/
@@ -61,6 +62,7 @@ typedef struct {
   p2G4_cca_t cca_req;
   p2G4_cca_done_t cca_resp;
   bool is_busy;
+  bool CCA_notED; //Is it a CCA procedure (1), or ED procedure (0)
 } RADIO_CCA_status_t;
 
 

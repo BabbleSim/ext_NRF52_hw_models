@@ -57,16 +57,15 @@
  *         On transmission we generate the correct CRC for correctness of the channel dump traces (and Ellisys traces)
  * Note11b:The CRC configuration is directly deduced from the modulation, only BLE and 154 CRCs are supported so far
  *
- * Note12: * Energy detection (ED) procedure is not yet implemented
- *         * CCA or ED procedures cannot be performed while the RADIO is performing an actual packet reception (they are exclusive)
+ * Note12: * CCA or ED procedures cannot be performed while the RADIO is performing an actual packet reception (they are exclusive)
  *         * In CCA Mode2 & 3, this model (due to the Phy) does not search for a SFD, or for a correlation peak
  *           instead it searches for a compatible modulation of sufficient power (which is in line with what the 802.15.4
  *           standard specifies)
  *
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
- * Note14: Several 52833 radio state change events are not yet implemented (EVENTS_EDEND, EVENTS_EDSTOPPED,
- *         EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT)
+ * Note14: Several 52833 radio state change events are not yet implemented
+ *         (EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT)
  *
  * Note15: PDUSTAT not yet implemented
  *
@@ -142,7 +141,7 @@ static bool rssi_sampling_on = false;
 
 static void start_Tx();
 static void start_Rx();
-static void start_CCA(void);
+static void start_CCA_ED(bool CCA_not_ED);
 static void Rx_Addr_received();
 static void Tx_abort_eval_respond();
 static void Rx_abort_eval_respond();
@@ -267,13 +266,11 @@ void nrf_radio_tasks_CCASTART() {
         radio_state);
     return;
   }
-  start_CCA();
+  start_CCA_ED(1);
 }
 
 void nrf_radio_tasks_CCASTOP() {
-  if ( radio_state == RAD_CCA ){
-    //The documentation is not clear about what happens if we get a STOP during a CCA procedure,
-    //the assumption here is that we stop just like if it was an active Rx, and do *not* trigger a CCASTOPPED event
+  if (( radio_state == RAD_CCA_ED ) && ( cca_status.CCA_notED )) {
     abort_if_needed();
     radio_state = RAD_RXIDLE;
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
@@ -281,17 +278,36 @@ void nrf_radio_tasks_CCASTOP() {
     nrf_radio_signal_CCASTOPPED();
   } else {
     bs_trace_info_line_time(3,
-        "NRF_RADIO: TASK_CCASTOP received while the radio was not on a CCA procedure (was %i). "
+        "NRF_RADIO: TASK_CCASTOP received while the radio was not on a CCA procedure (was %i, %i). "
         "It will be ignored\n",
-        radio_state);
+        radio_state, cca_status.CCA_notED);
   }
 }
 
 void nrf_radio_tasks_EDSTART() {
-  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+  if ((radio_state != RAD_RXIDLE)){
+    bs_trace_warning_line_time(
+        "NRF_RADIO: EDSTART received when the radio was not RXIDLE but in state %i. "
+        "It will be ignored. Expect problems\n",
+        radio_state);
+    return;
+  }
+  start_CCA_ED(0);
 }
+
 void nrf_radio_tasks_EDSTOP() {
-  bs_trace_error_time_line("%s not yet implemented\n", __func__);
+  if (( radio_state == RAD_CCA_ED ) && ( cca_status.CCA_notED == 0)) {
+    abort_if_needed();
+    radio_state = RAD_RXIDLE;
+    NRF_RADIO_regs.STATE = RAD_RXIDLE;
+    nrfra_set_Timer_RADIO(TIME_NEVER);
+    nrf_radio_signal_EDSTOPPED();
+  } else {
+    bs_trace_info_line_time(3,
+        "NRF_RADIO: TASK_EDSTOP received while the radio was not on a ED procedure (was %i, %i). "
+        "It will be ignored\n",
+        radio_state, cca_status.CCA_notED);
+  }
 }
 
 void nrf_radio_tasks_STOP(){
@@ -307,14 +323,13 @@ void nrf_radio_tasks_STOP(){
     radio_state = RAD_RXIDLE;
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
     nrfra_set_Timer_RADIO(TIME_NEVER);
-  } else if ( radio_state == RAD_CCA ){
-    //The documentation is not clear about what happens if we get a STOP during a CCA procedure,
-    //but it seems it can cause a bit of a mess depending on CCA mode.
-    //the behaviour here is that we stop just like if it was an active Rx, and do *not* trigger a CCASTOPPED event
+  } else if ( radio_state == RAD_CCA_ED ){
+    //The documentation is not clear about what happens if we get a STOP during a CCA or ED procedure,
+    //but it seems for CCA it can cause a bit of a mess depending on CCA mode.
+    //the behavior here is that we stop just like if it was an active Rx, and do *not* trigger a CCASTOPPED or EDSTOPPED event
     bs_trace_warning_line_time(
-        "NRF_RADIO: TASK_STOP received while the radio was performing a CCA procedure. "
-        "In this models we stop the procedure, but this can cause a mess in real HW\n",
-        radio_state);
+        "NRF_RADIO: TASK_STOP received while the radio was performing a CCA or ED procedure. "
+        "In this models we stop the procedure, but this can cause a mess in real HW\n");
     abort_if_needed();
     radio_state = RAD_RXIDLE;
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
@@ -338,9 +353,9 @@ void nrf_radio_tasks_DISABLE() {
     abort_if_needed();
     radio_state = RAD_RXIDLE; //Momentary (will be changed in the if below)
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
-  } else if ( radio_state == RAD_CCA ){
-    //The documentation is not clear about what happens if we get a disable during a CCA procedure,
-    //the assumption here is that we stop just like if it was an active Rx, but do not trigger a CCASTOPPED event
+  } else if ( radio_state == RAD_CCA_ED ){
+    //The documentation is not clear about what happens if we get a disable during a CCA  or ED procedure,
+    //the assumption here is that we stop just like if it was an active Rx, but do not trigger a CCASTOPPED or EDSTOPPED event
     abort_if_needed();
     radio_state = RAD_RXIDLE; //Momentary (will be changed in the if below)
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
@@ -516,14 +531,18 @@ void nrf_radio_timer_triggered(){
     } else { //SUB_STATE_INVALID
       bs_trace_error_time_line("programming error\n");
     }
-  } else if ( radio_state == RAD_CCA ){
+  } else if ( radio_state == RAD_CCA_ED ){
     radio_state = RAD_RXIDLE;
     NRF_RADIO_regs.STATE = RAD_RXIDLE;
     nrfra_set_Timer_RADIO(TIME_NEVER);
-    if (cca_status.is_busy) {
-      nrf_radio_signal_CCABUSY();
-    } else {
-      nrf_radio_signal_CCAIDLE();
+    if (cca_status.CCA_notED) { //CCA procedure ended
+      if (cca_status.is_busy) {
+        nrf_radio_signal_CCABUSY();
+      } else {
+        nrf_radio_signal_CCAIDLE();
+      }
+    } else { //ED procedure ended
+      nrf_radio_signal_EDEND();
     }
   } else if ( radio_state == RAD_TXDISABLE ){
     radio_state = RAD_DISABLED;
@@ -970,24 +989,29 @@ static void nrf_radio_device_address_match(uint8_t rx_buf[]) {
 
 static void CCA_handle_end_response(void) {
   //Depending on mode, set status and registers
-  //raising CCAIDLE or BUSY will happen in the correct time in the main machine
+  //raising CCAIDLE, CCABUSY or EDEND will happen in the correct time in the main machine
 
-  uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
+  if (cca_status.CCA_notED) { //End a CCA procedure
+    uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
 
-  if ((CCAMode == RADIO_CCACTRL_CCAMODE_EdMode)
-      || (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1)) {
-    cca_status.is_busy = cca_status.cca_resp.rssi_overthreshold;
-  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
-    cca_status.is_busy = cca_status.cca_resp.mod_found;
-  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode) {
-    cca_status.is_busy = cca_status.cca_resp.mod_found
-                        && cca_status.cca_resp.rssi_overthreshold;
-  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) {
-    cca_status.is_busy = cca_status.cca_resp.mod_found
-                        || cca_status.cca_resp.rssi_overthreshold;
-  } else {
-    bs_trace_error_time_line("%s, CCAMODE=%i suppport not yet implemented\n",
-        __func__, CCAMode);
+    if ((CCAMode == RADIO_CCACTRL_CCAMODE_EdMode)
+        || (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1)) {
+      cca_status.is_busy = cca_status.cca_resp.rssi_overthreshold;
+    } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
+      cca_status.is_busy = cca_status.cca_resp.mod_found;
+    } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode) {
+      cca_status.is_busy = cca_status.cca_resp.mod_found
+          && cca_status.cca_resp.rssi_overthreshold;
+    } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) {
+      cca_status.is_busy = cca_status.cca_resp.mod_found
+          || cca_status.cca_resp.rssi_overthreshold;
+    } else {
+      bs_trace_error_time_line("%s, CCAMODE=%i suppport not yet implemented\n",
+          __func__, CCAMode);
+    }
+  } else { // Ending an ED procedure
+    double RSSI = p2G4_RSSI_value_to_dBm(cca_status.cca_resp.RSSI_max);
+    NRF_RADIO_regs.EDSAMPLE = nrfra_dBm_to_modem_LQIformat(RSSI);
   }
 }
 
@@ -1002,7 +1026,9 @@ static void handle_CCA_response(int ret){
     bs_time_t end_time = hwll_dev_time_from_phy(cca_status.cca_resp.end_time);
     tm_update_last_phy_sync_time( end_time );
     cca_status.CCA_end_time = end_time;
-    nrfra_set_Timer_RADIO(cca_status.CCA_end_time);
+    if (radio_state == RAD_CCA_ED) { /*if we haven't aborted*/
+      nrfra_set_Timer_RADIO(cca_status.CCA_end_time);
+    }
     CCA_handle_end_response();
   } else if ( ret == P2G4_MSG_ABORTREEVAL ) {
     tm_update_last_phy_sync_time( next_recheck_time );
@@ -1026,16 +1052,22 @@ static void CCA_abort_eval_respond(){
   handle_CCA_response(ret);
 }
 
-static void start_CCA(void){
-  radio_state = RAD_CCA;
+/**
+ * Start CCA or ED procedure right now.
+ * input: CCA_not_ED = 1 for CCA, 0 for ED
+ */
+static void start_CCA_ED(bool CCA_not_ED){
 
+  radio_state = RAD_CCA_ED;
+
+  cca_status.CCA_notED = CCA_not_ED;
   cca_status.is_busy = false;
 
-  nrfra_prep_cca_request(&cca_status.cca_req);
+  nrfra_prep_cca_request(&cca_status.cca_req, CCA_not_ED);
 
   update_abort_struct(&cca_status.cca_req.abort, &next_recheck_time);
 
-  //Expected end time; may be shorter if detect over threshold is set
+  //Expected end time; note that it may be shorter if detect over threshold is set
   cca_status.CCA_end_time = tm_get_abs_time() + cca_status.cca_req.scan_duration;
   nrfra_set_Timer_RADIO(cca_status.CCA_end_time);
 

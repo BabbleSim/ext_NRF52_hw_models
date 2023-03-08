@@ -320,7 +320,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
  *
  * Note: The abort substructure is NOT filled.
  */
-void nrfra_prep_cca_request(p2G4_cca_t *cca_req) {
+void nrfra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
 
   cca_req->start_time  = hwll_phy_time_from_dev(tm_get_abs_time()); //We start right now
   cca_req->antenna_gain = 0;
@@ -336,36 +336,45 @@ void nrfra_prep_cca_request(p2G4_cca_t *cca_req) {
     bs_trace_error_line_time("CCA procedure only supported with 15.4 modulation\n");
   }
 
-  uint edthreshold = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAEDTHRES_Msk) >> RADIO_CCACTRL_CCAEDTHRES_Pos;
-  uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
   int symbol_time = 16; //micros
-  double carrier_detect_level = -110; //dBm : Any detectable signal by the modem
 
-  cca_req->scan_duration  = 8*symbol_time;
-  cca_req->scan_period    = 2*symbol_time; //let's measure 4 times (model design choice)
+  if (CCA_not_ED) { //CCA request
+    uint edthreshold = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAEDTHRES_Msk) >> RADIO_CCACTRL_CCAEDTHRES_Pos;
+    uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
+    double carrier_detect_level = -110; //dBm : Any detectable signal by the modem
 
-  if (CCAMode == RADIO_CCACTRL_CCAMODE_EdMode) {
-    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+    cca_req->scan_duration  = 8*symbol_time;
+    cca_req->scan_period    = 2*symbol_time; //let's measure 4 times (model design choice)
+
+    if (CCAMode == RADIO_CCACTRL_CCAMODE_EdMode) {
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+      cca_req->stop_when_found = 0;
+    } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
+      cca_req->stop_when_found = 1;
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+      cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
+      //The Phy does not support detecting just based on something close enough in the correlator output
+      //so we ignore CCACTRL.CCACORRCNT & CCACTRL.CCACORRTHRES
+    } else if ((CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode)
+        || (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) ) {
+      cca_req->stop_when_found = 1;
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
+    } else if (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1) {
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
+      cca_req->stop_when_found = 2;
+    } else {
+      bs_trace_error_time_line("%s, CCAMODE=%i support not yet implemented\n",
+          __func__, CCAMode);
+    }
+  } else { //ED request
+    cca_req->scan_duration = 8 * symbol_time * ((NRF_RADIO_regs.EDCNT & RADIO_EDCNT_EDCNT_Msk) + 1);
+    cca_req->scan_period   = 2 * symbol_time; //let's measure 4 times per EDCNT (model design choice)
+    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
     cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
     cca_req->stop_when_found = 0;
-  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
-    cca_req->stop_when_found = 1;
-    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
-    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
-    //The Phy does not support detecting just based on something close enough in the correlator output
-    //so we ignore CCACTRL.CCACORRCNT & CCACTRL.CCACORRTHRES
-  } else if ((CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode)
-             || (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) ) {
-    cca_req->stop_when_found = 1;
-    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
-    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
-  } else if (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1) {
-    cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
-    cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
-    cca_req->stop_when_found = 2;
-  } else {
-    bs_trace_error_time_line("%s, CCAMODE=%i support not yet implemented\n",
-        __func__, CCAMode);
   }
 }
 
