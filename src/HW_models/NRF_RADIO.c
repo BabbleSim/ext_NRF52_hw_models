@@ -775,6 +775,101 @@ static void start_Tx(){
   nrfra_set_Timer_RADIO(tx_status.ADDRESS_end_time);
 }
 
+
+static void Rx_handle_end_response(bs_time_t end_time) {
+
+  if (rx_status.rx_resp.status != P2G4_RXSTATUS_HEADER_ERROR) {
+      rx_status.CRC_End_Time = end_time + nrfra_timings_get_Rx_chain_delay();
+  } //Otherwise we do not really now how the Nordic RADIO behaves depending on
+  //where the biterrors are and so forth. So let's always behave like if the
+  //packet lenght was received correctly, and just report a CRC error at the
+  //end of the CRC
+
+  uint payload_len = nrfra_get_payload_length(rx_buf);
+  uint crc_len = nrfra_get_crc_length();
+
+  if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
+    //Let's copy the CRC
+    uint32_t crc = 0;
+    //Eventually this should be generalized with the packet configuration
+    if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+        || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
+        && ( rx_status.rx_resp.packet_size >= 5 ) ){
+      memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
+    } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
+        && ( rx_status.rx_resp.packet_size >= 3 ) ){
+      memcpy((void*)&crc, &rx_buf[1 + payload_len], crc_len);
+    }
+
+    NRF_RADIO_regs.RXCRC = crc;
+    rx_status.CRC_OK = 1;
+    NRF_RADIO_regs.CRCSTATUS = 1;
+  }
+
+  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    //The real HW only copies the LQI value after the payload in this mode
+    double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
+    uint8_t LQI = nrfra_dBm_to_modem_LQIformat(RSSI);
+    //Eventually this should be generalized with the packet configuration:
+    rx_buf[1 + payload_len + crc_len] = LQI;
+  }
+
+  nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
+}
+
+
+static void Rx_handle_address_end_response(bs_time_t address_time) {
+
+  rx_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
+
+  uint length = nrfra_get_payload_length(rx_buf);
+  uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+
+  if (length > max_length){
+    bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
+    length  = max_length;
+    //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
+  } else {
+    //NRF_RADIO_regs.PDUSTAT = 0; //TODO, set if greater
+  }
+
+  //TODO: Discard Ieee802154_250Kbit frames with length == 0
+
+  rx_status.packet_rejected = false;
+
+  bs_time_t payload_end;
+
+  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
+    payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((2+length)*8/bits_per_us);
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((1+length)*8/bits_per_us);
+  } //Eventually this should be generalized with the packet configuration
+
+  rx_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
+                               hwll_dev_time_from_phy(payload_end);
+
+  rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value
+
+  //Copy the whole packet (S0, lenght, S1 & payload) excluding the CRC.
+  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
+    if (rx_status.rx_resp.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
+      ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
+      ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1] = rx_buf[1];
+      /* We cheat a bit and copy the whole packet already (The AAR block will look in Adv packets after 64 bits)*/
+      memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + rx_status.S1Offset],
+          &rx_buf[2] , length);
+    }
+  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    if (rx_status.rx_resp.packet_size >= 3) { /*At least the header and CRC, otherwise better to not try to copy it*/
+            ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
+            memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1 + rx_status.S1Offset],
+                &rx_buf[1] , length);
+          }
+  } //Eventually this should be generalized with the packet configuration
+}
+
 /**
  * Handle all possible responses from the phy to a Rx request
  */
@@ -793,56 +888,7 @@ static void handle_Rx_response(int ret){
 
     bs_time_t address_time = hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp); //this is the end of the sync word in air time
     tm_update_last_phy_sync_time(address_time);
-
-    rx_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
-
-    uint length = nrfra_get_payload_length(rx_buf);
-    uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
-
-    if (length > max_length){
-      bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
-      length  = max_length;
-      //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
-    } else {
-      //NRF_RADIO_regs.PDUSTAT = 0; //TODO, set if greater
-    }
-
-    //TODO: Discard Ieee802154_250Kbit frames with length == 0
-
-    rx_status.packet_rejected = false;
-
-    bs_time_t payload_end;
-
-    if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-        || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
-      payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((2+length)*8/bits_per_us);
-    } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-      payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((1+length)*8/bits_per_us);
-    } //Eventually this should be generalized with the packet configuration
-
-    rx_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
-                                 hwll_dev_time_from_phy(payload_end);
-
-    rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value
-
-    //Copy the whole packet (S0, lenght, S1 & payload) excluding the CRC.
-    if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-        || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
-      if (rx_status.rx_resp.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
-        ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
-        ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1] = rx_buf[1];
-        /* We cheat a bit and copy the whole packet already (The AAR block will look in Adv packets after 64 bits)*/
-        memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[2 + rx_status.S1Offset],
-            &rx_buf[2] , length);
-      }
-    } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-      if (rx_status.rx_resp.packet_size >= 3) { /*At least the header and CRC, otherwise better to not try to copy it*/
-              ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
-              memcpy(&((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1 + rx_status.S1Offset],
-                  &rx_buf[1] , length);
-            }
-    } //Eventually this should be generalized with the packet configuration
-
+    Rx_handle_address_end_response(address_time);
     radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
     nrfra_set_Timer_RADIO(rx_status.ADDRESS_End_Time);
 
@@ -850,44 +896,7 @@ static void handle_Rx_response(int ret){
 
     bs_time_t end_time = hwll_dev_time_from_phy(rx_status.rx_resp.end_time);
     tm_update_last_phy_sync_time(end_time);
-
-    if (rx_status.rx_resp.status != P2G4_RXSTATUS_HEADER_ERROR) {
-        rx_status.CRC_End_Time = end_time + nrfra_timings_get_Rx_chain_delay();
-    } //Otherwise we do not really now how the Nordic RADIO behaves depending on
-    //where the biterrors are and so forth. So let's always behave like if the
-    //packet lenght was received correctly, and just report a CRC error at the
-    //end of the CRC
-
-    uint payload_len = nrfra_get_payload_length(rx_buf);
-    uint crc_len = nrfra_get_crc_length();
-
-    if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
-      //Let's copy the CRC
-      uint32_t crc = 0;
-      //Eventually this should be generalized with the packet configuration
-      if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-          || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
-          && ( rx_status.rx_resp.packet_size >= 5 ) ){
-        memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
-      } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
-          && ( rx_status.rx_resp.packet_size >= 3 ) ){
-        memcpy((void*)&crc, &rx_buf[1 + payload_len], crc_len);
-      }
-
-      NRF_RADIO_regs.RXCRC = crc;
-      rx_status.CRC_OK = 1;
-      NRF_RADIO_regs.CRCSTATUS = 1;
-    }
-
-    if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-      //The real HW only copies the LQI value after the payload in this mode
-      double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
-      uint8_t LQI = nrfra_dBm_to_modem_LQIformat(RSSI);
-      //Eventually this should be generalized with the packet configuration:
-      rx_buf[1 + payload_len + crc_len] = LQI;
-    }
-
-    nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
+    Rx_handle_end_response(end_time);
   }
 }
 
