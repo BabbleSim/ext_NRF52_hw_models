@@ -806,14 +806,6 @@ static void Rx_handle_end_response(bs_time_t end_time) {
     NRF_RADIO_regs.CRCSTATUS = 1;
   }
 
-  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-    //The real HW only copies the LQI value after the payload in this mode
-    double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
-    uint8_t LQI = nrfra_dBm_to_modem_LQIformat(RSSI);
-    //Eventually this should be generalized with the packet configuration:
-    rx_buf[1 + payload_len + crc_len] = LQI;
-  }
-
   nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
 }
 
@@ -868,6 +860,16 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
                 &rx_buf[1] , length);
           }
   } //Eventually this should be generalized with the packet configuration
+
+  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    //The real HW only copies the LQI value after the payload in this mode
+    //Note that doing it this early is a cheat
+    double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
+    uint8_t LQI = nrfra_dBm_to_modem_LQIformat(RSSI);
+    //Eventually this should be generalized with the packet configuration:
+    ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1 + rx_status.S1Offset + length] = LQI;
+  }
+
 }
 
 /**
