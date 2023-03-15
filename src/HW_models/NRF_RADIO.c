@@ -292,7 +292,7 @@ static void abort_if_needed(){
   }
   if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ){
     //we answer immediately to the phy rejecting the packet
-    p2G4_dev_rxv2_cont_after_addr_nc_b(false);
+    p2G4_dev_rxv2_cont_after_addr_nc_b(false, NULL);
     radio_sub_state = SUB_STATE_INVALID;
   }
 }
@@ -994,7 +994,8 @@ static void Rx_Addr_received(){
     nrf_radio_device_address_match(rx_buf);
   }
 
-  int ret = p2G4_dev_rxv2_cont_after_addr_nc_b(accept_packet);
+  update_abort_struct(&rx_status.rx_req.abort, &next_recheck_time);
+  int ret = p2G4_dev_rxv2_cont_after_addr_nc_b(accept_packet, &rx_status.rx_req.abort);
 
   if ( accept_packet ){
     handle_Rx_response(ret);
