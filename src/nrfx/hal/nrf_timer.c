@@ -60,7 +60,8 @@ void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
     p_reg->TASKS_STOP = 1;
     nrf_timer_regw_sideeffects_TASKS_STOP(i);
   } else if ( task == NRF_TIMER_TASK_SHUTDOWN) {
-    /* Shutdown not modelled (deprecated) */
+    p_reg->TASKS_SHUTDOWN = 1;
+    nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(i);
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_timer%i\n",
                              (int) task);

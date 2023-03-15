@@ -22,6 +22,7 @@
  *   * Counter mode is not fully supported (no CC match check)
  *   * For simplicity all 5 Timers have 6 functional CC registers
  *     In reality, Timers0-2 have only 4 CC registers, events and TASKS_CAPTURE
+ *   * The functionality of TASK_SHUTDOWN is a bit of a guess
  */
 
 #define N_TIMERS 5
@@ -178,6 +179,24 @@ void nrf_timer_TASK_STOP(int t){
   }
 }
 
+void nrf_timer_TASK_SHUTDOWN(int t){
+  /*
+   * TASK_SHUTDOWN is not documented in newer SOCs
+   * In older ones it indicates it STOPS + it reduces power consumption
+   * but that it cannot be resumed after from where it was
+   * The assumption is that the internal count is lost/reset to 0
+   * Effectively making a SHUTDOWN logically equivalent to a STOP + CLEAR
+   */
+  //Note: STATUS is missing in NRF_TIMER_Type
+  Timer_running[t] = false;
+  Counter[t] = 0;
+  Timer_counter_startT[t] = TIME_NEVER;
+  for (int cc = 0 ; cc < N_CC ; cc++){
+    CC_timers[t][cc] = TIME_NEVER;
+  }
+  update_master_timer();
+}
+
 void nrf_timer0_TASK_STOP() { nrf_timer_TASK_STOP(0); }
 void nrf_timer1_TASK_STOP() { nrf_timer_TASK_STOP(1); }
 void nrf_timer2_TASK_STOP() { nrf_timer_TASK_STOP(2); }
@@ -277,6 +296,13 @@ void nrf_timer_regw_sideeffects_TASKS_STOP(int t) {
   if (NRF_TIMER_regs[t].TASKS_STOP) {
     NRF_TIMER_regs[t].TASKS_STOP = 0;
     nrf_timer_TASK_STOP(t);
+  }
+}
+
+void nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(int t) {
+  if (NRF_TIMER_regs[t].TASKS_SHUTDOWN) {
+    NRF_TIMER_regs[t].TASKS_SHUTDOWN = 0;
+    nrf_timer_TASK_SHUTDOWN(t);
   }
 }
 

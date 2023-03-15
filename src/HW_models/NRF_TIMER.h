@@ -78,6 +78,7 @@ void nrf_timer3_TASK_STOP();
 void nrf_timer4_TASK_STOP();
 
 void nrf_timer_regw_sideeffects_TASKS_STOP(int t);
+void nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(int t);
 void nrf_timer_regw_sideeffects_TASKS_START(int t);
 void nrf_timer_regw_sideeffects_TASKS_CLEAR(int t);
 void nrf_timer_regw_sideeffects_TASKS_CAPTURE(int t, int cc_n);
