@@ -1,4 +1,5 @@
-**Models of some of the HW present in a NRF52xxx.**<br>
+# Models of some of the HW present in a NRF52xxx
+
 Where relevant differences exist, these models try to align with a NRF52833.
 
 This repo contains both models of the NRF52 HW as well as some replacement nrfx
@@ -49,3 +50,21 @@ are not modelled. Moreover, in the modelled peripherals, functionality which is
 not used in the Zephyr drivers is normally not modelled either.
 The [TODO](../TODO.txt) file list some mayor omissions.
 It is certainly possible to expand these models to include the rest.
+
+### About the ARM processor peripherals
+
+These models do not include the ARM processor peripherals (for ex. the SCB)
+Even though it would be technically possible to add those, it is considered both
+risky and unnecessary.
+
+Risky in the sense that adding the equivalent register structures would
+immediately hide the compiler errors which otherwise would identify the places
+in which they are used in the embeded code; while at the same time these models
+would not be precise enough to not require, with very high likelyhood,
+modification of that part of the embedded code which was using them.
+
+And unnecessary in the sense that the lack of these peripherals can be hidden
+most of the time if the CMSIS-Core APIs are used instead of direct register
+accesses, and where these APIs do not provide the necessary functionality,
+changes to the embedded code would be needed with high likelyhood to trigger
+sideeffects or so.
