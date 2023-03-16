@@ -6,44 +6,40 @@
 
 /**
  * Mocks the CMSIS dependency of the nRF MDK headers.
+ * And the bare minimum of required content.
+ * The proper CMSIS headers replacements are provided by the integrating program
+ * In the case of Zephyr, this is by the nrf52_bsim.
  */
 
-#ifndef CORE_CM4__
-#define CORE_CM4__
+#ifndef HW_MODELS_CORE_CM4_H
+#define HW_MODELS_CORE_CM4_H
 
+#if defined(CONFIG_BOARD_NRF52_BSIM) || defined(INTEGRATOR_PROVIDES_CMSIS)
+  /* The real core_cm4.h includes a very significant number of definitions
+   * and further CMSIS includes. Which may be needed by the integrating program.
+   * We provide this include as a means to allow the integrating to add those.
+   * */
+#include "cmsis.h"
+#endif
+
+#ifndef __I
 #define __I
+#endif
+#ifndef __IO
 #define __IO
+#endif
+#ifndef __O
 #define __O
+#endif
 
 /**
  * The model of the CPU & IRQ controller driver must provide
- * these functions below. These HW models do not provide them
+ * these function. These HW models do not provide them.
  */
 extern void __WFE(void);
-extern void __SEV(void);
-extern void NVIC_SetPendingIRQ(IRQn_Type IRQn);
-extern void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
-
-/* Implement the following ARM intrinsics as no-op:
- * - ARM Data Synchronization Barrier
- * - ARM Data Memory Synchronization Barrier
- * - ARM Instruction Synchronization Barrier
- * - ARM No Operation
- */
-#ifndef __DMB
-#define __DMB()
-#endif
 
 #ifndef __DSB
 #define __DSB()
 #endif
 
-#ifndef __ISB
-#define __ISB()
-#endif
-
-#ifndef __NOP
-#define __NOP()
-#endif
-
-#endif 
+#endif /* HW_MODELS_CORE_CM4_H */
