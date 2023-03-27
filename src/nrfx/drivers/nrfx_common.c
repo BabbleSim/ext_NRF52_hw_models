@@ -46,7 +46,19 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
   /*16*/
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 1)) {
       return RTC1_IRQn;
-  /*18-25*/
+  /*18-19*/
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 0)) {
+      return SWI0_EGU0_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 1)) {
+      return SWI1_EGU1_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 2)) {
+      return SWI2_EGU2_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 3)) {
+      return SWI3_EGU3_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 4)) {
+      return SWI4_EGU4_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, EGU, 5)) {
+      return SWI5_EGU5_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, TIMER,3)) {
       return TIMER3_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, TIMER,4)) {
