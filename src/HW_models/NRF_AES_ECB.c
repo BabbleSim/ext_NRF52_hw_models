@@ -26,6 +26,9 @@ NRF_ECB_Type NRF_ECB_regs;
 static uint32_t ECB_INTEN; /* interrupt enable */
 static bool ECB_Running;
 
+#define DEFAULT_t_ECB 7
+static uint ECB_t_ECB = DEFAULT_t_ECB;
+
 typedef struct {
 	uint8_t KEY[16];        /* 16 byte AES key */
 	uint8_t CLEARTEXT[16];  /* 16 byte AES cleartext input block */
@@ -41,6 +44,23 @@ void nrf_aes_ecb_init(){
 
 void nrf_aes_ecb_clean_up(){
 
+}
+
+/*
+ * Cheat interface to adjust the time in microseconds it takes
+ * for a 16byte AES ECB block to be computed
+ */
+void nrf_aes_ecb_cheat_set_t_ecb(unsigned int new_t){
+	ECB_t_ECB = new_t;
+}
+
+/*
+ * Cheat interface to reset the time it takes
+ * for a 16byte AES ECB block to be computed
+ * to the value specified in the infocenter spec.
+ */
+void nrf_aes_ecb_cheat_reset_t_ecb(void){
+	ECB_t_ECB = DEFAULT_t_ECB;
 }
 
 static void signal_ENDECB(){
@@ -74,7 +94,7 @@ void nrf_ecb_TASK_STOPECB(){
 
 void nrf_ecb_TASK_STARTECB(){
 	ECB_Running = true;
-	Timer_ECB = tm_get_hw_time() + 7 /*ECB delay*/;
+	Timer_ECB = tm_get_hw_time() + ECB_t_ECB;
 	nrf_hw_find_next_timer_to_trigger();
 }
 

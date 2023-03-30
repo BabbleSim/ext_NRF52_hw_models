@@ -19,6 +19,8 @@ void nrf_ecb_regw_sideeffects_INTENSET();
 void nrf_ecb_regw_sideeffects_INTENCLEAR();
 void nrf_ecb_regw_sideeffects_TASKS_STARTECB();
 void nrf_ecb_regw_sideeffects_TASKS_STOPECB();
+void nrf_aes_ecb_cheat_set_t_ecb(unsigned int new_t);
+void nrf_aes_ecb_cheat_reset_t_ecb(void);
 
 #ifdef __cplusplus
 }
