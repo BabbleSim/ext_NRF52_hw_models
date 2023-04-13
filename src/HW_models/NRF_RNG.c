@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -42,6 +43,29 @@ void nrf_rng_clean_up(){
 
 }
 
+static void nrf_rng_schedule_next(bool first_time){
+  bs_time_t delay = 0;
+
+  if ( first_time ) {
+    delay = 128;
+  }
+
+  if ( NRF_RNG_regs.CONFIG ){ //Bias correction enabled
+    delay += 120;
+    /*
+     * The spec says that the delay is unpredictable yet it does not
+     * provide any indication of what kind of random distribution to
+     * expect => I just assume the value is always the average(?) they
+     * provide
+     */
+  } else {
+    delay += 30;
+  }
+  Timer_RNG = tm_get_hw_time() + delay;
+
+  nrf_hw_find_next_timer_to_trigger();
+}
+
 /**
  * TASK_START triggered handler
  */
@@ -51,21 +75,7 @@ void nrf_rng_task_start(){
   }
   RNG_hw_started = true;
 
-  bs_time_t delay;
-  if ( NRF_RNG_regs.CONFIG ){ //Bias correction enabled
-    delay = 120 + 128;
-    /*
-     * The spec says that the delay is unpredictable yet it does not
-     * provide any indication of what kind of random distribution to
-     * expect => I just assume the value is always the average(?) they
-     * provide
-     */
-  } else {
-    delay = 30 + 128;
-  }
-  Timer_RNG = tm_get_hw_time() + delay;
-
-  nrf_hw_find_next_timer_to_trigger();
+  nrf_rng_schedule_next(true);
 }
 
 /**
@@ -129,19 +139,11 @@ void nrf_rng_timer_triggered(){
   NRF_RNG_regs.VALUE = bs_random_uint32();
   //A proper random number even if CONFIG is not set to correct the bias
 
-  if ( NRF_RNG_regs.SHORTS == 0 ) {
-    //When the next value will be ready:
-    bs_time_t delay;
-    if ( NRF_RNG_regs.CONFIG ){ //Bias correction enabled
-      delay = 120;
-    } else {
-      delay = 30 ;
-    }
-    Timer_RNG = tm_get_hw_time() + delay;
+  if ( NRF_RNG_regs.SHORTS & 1 ) {
+    nrf_rng_task_stop();
   } else {
-    Timer_RNG = TIME_NEVER;
+    nrf_rng_schedule_next(false);
   }
-  nrf_hw_find_next_timer_to_trigger();
 
   NRF_RNG_regs.EVENTS_VALRDY = 1;
   nrf_ppi_event(RNG_EVENTS_VALRDY);
