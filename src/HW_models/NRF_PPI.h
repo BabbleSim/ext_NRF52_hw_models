@@ -110,6 +110,7 @@ typedef enum { //Note that, for performance, it is better to leave commented the
   RTC0_EVENTS_COMPARE_3 ,
 
   //12 0x4000C000 Temperature sensor
+  TEMP_EVENTS_DATARDY,
 
   //13 0x4000D000 Random number generator
   //RNG

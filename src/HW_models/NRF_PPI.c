@@ -359,6 +359,8 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     {RTC0_EVENTS_COMPARE_2, &NRF_RTC_regs[0].EVENTS_COMPARE[2]},
     {RTC0_EVENTS_COMPARE_3, &NRF_RTC_regs[0].EVENTS_COMPARE[3]},
 
+    {TEMP_EVENTS_DATARDY, &NRF_TEMP_regs.EVENTS_DATARDY},
+
     //{RNG_EVENTS_VALRDY, &NRF_RNG_regs.EVENTS_VALRDY},
 
     {CCM_EVENTS_ENDKSGEN, &NRF_CCM_regs.EVENTS_ENDKSGEN},
