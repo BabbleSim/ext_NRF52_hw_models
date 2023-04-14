@@ -12,6 +12,7 @@
 #include "NRF_hw_args.h"
 #include "NRF_AAR.h"
 #include "NRF_RNG.h"
+#include "NRF_TEMP.h"
 #include "NRF_RTC.h"
 #include "NRF_AES_ECB.h"
 #include "NRF_AES_CCM.h"
@@ -28,6 +29,7 @@
 void nrf_hw_models_free_all(){
   nrf_clock_clean_up();
   nrf_rng_clean_up();
+  nrf_temp_clean_up();
   nrf_rtc_clean_up();
   nrf_aes_ecb_clean_up();
   nrf_aes_ccm_clean_up();
@@ -56,6 +58,7 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   hw_irq_ctrl_init();
   nrf_clock_init();
   nrg_rng_init();
+  nrg_temp_init();
   nrf_rtc_init();
   nrf_aes_ecb_init();
   nrf_aes_ccm_init();
@@ -71,6 +74,7 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
 extern bs_time_t Timer_event_fw_test_ticker;
 extern bs_time_t Timer_irq_ctrl;
 extern bs_time_t Timer_RNG;
+extern bs_time_t Timer_TEMP;
 extern bs_time_t Timer_CLOCK_LF;
 extern bs_time_t Timer_CLOCK_HF;
 extern bs_time_t Timer_RTC;
@@ -89,6 +93,7 @@ typedef enum {
   fw_test_ticker,
   irq_ctrl_timer,
   RNG_timer,
+  TEMP_timer,
   ECB_timer,
   AAR_timer,
   CLOCK_LF_timer,
@@ -106,6 +111,7 @@ static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_tim
     &Timer_event_fw_test_ticker,
     &Timer_irq_ctrl,
     &Timer_RNG,
+    &Timer_TEMP,
     &Timer_ECB,
     &Timer_AAR,
     &Timer_CLOCK_LF,
@@ -158,6 +164,10 @@ void nrf_hw_some_timer_reached() {
   case RNG_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RNG timer\n");
     nrf_rng_timer_triggered();
+    break;
+  case TEMP_timer:
+    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: TEMP timer\n");
+    nrf_temp_timer_triggered();
     break;
   case ECB_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: ECB timer\n");
