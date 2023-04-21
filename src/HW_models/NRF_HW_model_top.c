@@ -27,6 +27,9 @@
 #include "fake_timer.h"
 
 void nrf_hw_models_free_all(){
+  BLECrypt_if_free();
+  fake_timer_cleanup();
+  hw_irq_ctrl_cleanup();
   nrf_clock_clean_up();
   nrf_rng_clean_up();
   nrf_temp_clean_up();
@@ -55,6 +58,7 @@ void nrf_hw_pre_init() {
 void nrf_hw_initialize(nrf_hw_sub_args_t *args){
 
   BLECrypt_if_enable_real_encryption(args->useRealAES);
+  fake_timer_init();
   hw_irq_ctrl_init();
   nrf_clock_init();
   nrg_rng_init();

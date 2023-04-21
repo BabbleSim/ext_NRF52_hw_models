@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-void hw_irq_ctrl_init();
+void hw_irq_ctrl_init(void);
+void hw_irq_ctrl_cleanup(void);
 void hw_irq_ctrl_raise_im(uint32_t irq);
 uint64_t hw_irq_ctrl_get_irq_status();
 void hw_irq_ctrl_clear_all_irqs();
