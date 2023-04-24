@@ -543,7 +543,7 @@ static void set_fixed_channel_routes(){
     ppi_ch_tasks[30].tep_f = nrf_timer0_TASK_CLEAR; //TIMER0->TASKS_CLEAR
 
   //  31 RTC0->EVENTS_COMPARE[0] TIMER0->TASKS_START
-    ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 31 );
+    ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( (uint32_t)1 << 31 );
     ppi_ch_tasks[31].tep_f = nrf_timer0_TASK_START; //TIMER0->TASKS_START
 }
 
