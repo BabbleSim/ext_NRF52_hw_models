@@ -39,7 +39,7 @@ static double temperature = 25.0; /* Actual temperature the device is at */
 /**
  * Initialize the TEMP model
  */
-void nrg_temp_init(){
+void nrf_temp_init(){
   memset(&NRF_TEMP_regs, 0, sizeof(NRF_TEMP_regs));
   NRF_TEMP_regs.A0 = 0x00000326;
   NRF_TEMP_regs.A1 = 0x00000348;
@@ -133,7 +133,7 @@ void nrf_temp_regw_sideeffects_INTENCLEAR(){
 }
 
 /**
- * Time has come when a new random number is ready
+ * Time has come when the temperature measurement is ready
  */
 void nrf_temp_timer_triggered(){
 

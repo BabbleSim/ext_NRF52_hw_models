@@ -29,7 +29,7 @@ static bool RNG_INTEN = false; //interrupt enable
 /**
  * Initialize the RNG model
  */
-void nrg_rng_init(){
+void nrf_rng_init(){
   memset(&NRF_RNG_regs, 0, sizeof(NRF_RNG_regs));
   RNG_hw_started = false;
   RNG_INTEN = false;

@@ -12,7 +12,7 @@
 extern "C"{
 #endif
 
-void nrg_rng_init();
+void nrf_rng_init();
 void nrf_rng_clean_up();
 void nrf_rng_regw_sideeffects();
 void nrf_rng_regw_sideeffects_TASK_START();

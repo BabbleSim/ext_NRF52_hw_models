@@ -61,8 +61,8 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   fake_timer_init();
   hw_irq_ctrl_init();
   nrf_clock_init();
-  nrg_rng_init();
-  nrg_temp_init();
+  nrf_rng_init();
+  nrf_temp_init();
   nrf_rtc_init();
   nrf_aes_ecb_init();
   nrf_aes_ccm_init();
