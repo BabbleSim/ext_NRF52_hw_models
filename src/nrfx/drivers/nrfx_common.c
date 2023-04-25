@@ -34,7 +34,8 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return TIMER2_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 0)) {
       return RTC0_IRQn;
-  /*12*/
+  } else if (IS_PERIPHERAL_REG(p_reg, TEMP, )) {
+      return TEMP_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RNG,)) {
       return RNG_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, ECB,)) {
@@ -63,7 +64,9 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return TIMER3_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, TIMER,4)) {
       return TIMER4_IRQn;
-  /*28-30*/
+  /*28-29*/
+  } else if (IS_PERIPHERAL_REG(p_reg, NVMC,)) {
+      return 30;
   } else if (IS_PERIPHERAL_REG(p_reg, PPI,)) {
       return 0x1F;
   /*32-..*/

@@ -87,6 +87,9 @@ extern NRF_EGU_Type NRF_EGU_regs[6];
 #define NRF_EGU4_BASE                     (&NRF_EGU_regs[4])
 #undef NRF_EGU5_BASE
 #define NRF_EGU5_BASE                     (&NRF_EGU_regs[5])
+#undef NRF_UICR_BASE
+extern NRF_UICR_Type *NRF_UICR_regs_p;
+#define NRF_UICR_BASE                     (NRF_UICR_regs_p)
 
 /*
  * Redefine the peripheral pointers

@@ -22,6 +22,7 @@
 #include "NRF_PPI.h"
 #include "NRF_TIMER.h"
 #include "NRF_EGU.h"
+#include "NRF_NVMC.h"
 #include "irq_ctrl.h"
 #include "BLECrypt_if.h"
 #include "fake_timer.h"
@@ -41,6 +42,7 @@ void nrf_hw_models_free_all(){
   nrf_ficr_clean_up();
   nrf_ppi_clean_up();
   nrf_egu_clean_up();
+  nrfhw_nvmc_uicr_clean_up();
   nrf_hw_model_timer_clean_up();
 }
 
@@ -49,7 +51,7 @@ void nrf_hw_models_free_all(){
  * Like registering command line arguments or dump files
  */
 void nrf_hw_pre_init() {
-
+  nrfhw_nvmc_uicr_pre_init();
 }
 
 /*
@@ -71,6 +73,7 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_ficr_init();
   nrf_ppi_init();
   nrf_egu_init();
+  nrfhw_nvmc_uicr_init();
   nrf_hw_model_timer_init();
   nrf_hw_find_next_timer_to_trigger();
 }
@@ -79,6 +82,7 @@ extern bs_time_t Timer_event_fw_test_ticker;
 extern bs_time_t Timer_irq_ctrl;
 extern bs_time_t Timer_RNG;
 extern bs_time_t Timer_TEMP;
+extern bs_time_t Timer_NVMC;
 extern bs_time_t Timer_CLOCK_LF;
 extern bs_time_t Timer_CLOCK_HF;
 extern bs_time_t Timer_RTC;
@@ -98,6 +102,7 @@ typedef enum {
   irq_ctrl_timer,
   RNG_timer,
   TEMP_timer,
+  NVMC_timer,
   ECB_timer,
   AAR_timer,
   CLOCK_LF_timer,
@@ -116,6 +121,7 @@ static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_tim
     &Timer_irq_ctrl,
     &Timer_RNG,
     &Timer_TEMP,
+    &Timer_NVMC,
     &Timer_ECB,
     &Timer_AAR,
     &Timer_CLOCK_LF,
@@ -172,6 +178,10 @@ void nrf_hw_some_timer_reached() {
   case TEMP_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: TEMP timer\n");
     nrf_temp_timer_triggered();
+    break;
+  case NVMC_timer:
+    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: NVMC timer\n");
+    nrfhw_nvmc_timer_triggered();
     break;
   case ECB_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: ECB timer\n");

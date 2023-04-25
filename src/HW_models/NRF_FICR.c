@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "NRF_FICR.h"
+#include "NRF_NVMC.h"
 #include <string.h>
 #include "bs_rand_main.h"
 #include "weak_stubs.h"
@@ -24,6 +25,9 @@ NRF_FICR_Type NRF_FICR_regs;
 
 void nrf_ficr_init(){
   memset(&NRF_FICR_regs, 0xFF, sizeof(NRF_FICR_regs));
+
+  NRF_FICR_regs.CODEPAGESIZE = FLASH_PAGE_SIZE;
+  NRF_FICR_regs.CODESIZE     = FLASH_N_PAGES;
 
   NRF_FICR_regs.DEVICEID[0] = (bs_random_uint32() & 0xFFFFFF00) + get_device_nbr();
   NRF_FICR_regs.DEVICEID[1] = bs_random_uint32();
