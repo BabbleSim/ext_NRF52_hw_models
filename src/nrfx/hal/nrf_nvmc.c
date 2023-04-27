@@ -37,6 +37,21 @@ void nrf_nvmc_page_partial_erase_start(NRF_NVMC_Type * p_reg, uint32_t page_addr
     nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL();
 }
 
+uint8_t nrf_nvmc_byte_read(uint32_t addr)
+{
+    return nrfhw_nmvc_read_byte(addr);
+}
+
+uint16_t nrf_nvmc_halfword_read(uint32_t addr)
+{
+    return nrfhw_nmvc_read_halfword(addr);
+}
+
+uint32_t nrf_nvmc_word_read(uint32_t addr)
+{
+    return nrfhw_nmvc_read_word(addr);
+}
+
 void nrf_nvmc_word_write(uint32_t addr, uint32_t value)
 {
     nrfhw_nmvc_write_word(addr, value);

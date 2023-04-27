@@ -24,6 +24,9 @@
 /*
  * NVMC — Non-volatile memory controller
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/nvmc.html?cp=5_1_0_3_2
+ * &
+ * UICR — User information configuration registers
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/uicr.html?cp=5_1_0_3_4
  *
  * Notes for the NVMC:
  *  * The CPU is not stalled while doing flash operations, "while executing from flash"
@@ -389,7 +392,7 @@ void nrfhw_nmvc_write_word(uint32_t address, uint32_t value){
  * This operation is instantaneous in simulation.
  * In real HW it is "fast"
  */
-uint32_t nrfhw_nmvc_flash_read_word(uint32_t address) {
+uint32_t nrfhw_nmvc_read_word(uint32_t address) {
 
   if (address < FLASH_SIZE)
   {
@@ -400,6 +403,38 @@ uint32_t nrfhw_nmvc_flash_read_word(uint32_t address) {
   {
     address = address - (uintptr_t)NRF_UICR_regs_p;
     return *(uint32_t*)&uicr_st.storage[address];
+  } else {
+    OUT_OF_FLASH_ERROR(address);
+    return 0;
+  }
+}
+
+uint16_t nrfhw_nmvc_read_halfword(uint32_t address) {
+  if (address < FLASH_SIZE)
+  {
+    CHECK_PARTIAL_ERASE(address, "read");
+    return *(uint16_t*)&flash_st.storage[address];
+  }
+  else if (addr_in_uicr(address))
+  {
+    address = address - (uintptr_t)NRF_UICR_regs_p;
+    return *(uint16_t*)&uicr_st.storage[address];
+  } else {
+    OUT_OF_FLASH_ERROR(address);
+    return 0;
+  }
+}
+
+uint8_t nrfhw_nmvc_read_byte(uint32_t address) {
+  if (address < FLASH_SIZE)
+  {
+    CHECK_PARTIAL_ERASE(address, "read");
+    return *(uint8_t*)&flash_st.storage[address];
+  }
+  else if (addr_in_uicr(address))
+  {
+    address = address - (uintptr_t)NRF_UICR_regs_p;
+    return *(uint8_t*)&uicr_st.storage[address];
   } else {
     OUT_OF_FLASH_ERROR(address);
     return 0;
