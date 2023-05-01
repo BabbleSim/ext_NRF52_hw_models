@@ -80,6 +80,7 @@ static storage_state_t uicr_st;
 static enum flash_op_t {flash_idle = 0, flash_write, flash_erase, flash_erase_partial, flash_erase_uicr, flash_erase_all} flash_op;
 static uint32_t erase_address;
 static bs_time_t time_under_erase[FLASH_N_PAGES];
+static bool page_erased[FLASH_N_PAGES];
 
 static bs_time_t flash_t_eraseall  = 173000;
 static bs_time_t flash_t_erasepage =  87500;
@@ -95,6 +96,7 @@ struct nvmc_args_t {
   bool flash_erase;
   bool flash_rm;
   bool flash_in_ram;
+  bool flash_erase_warnings;
 } nvmc_args;
 
 static void nvmc_initialize_data_storage();
@@ -137,6 +139,21 @@ void nrfhw_nvmc_uicr_init(){
   nvmc_initialize_data_storage(&flash_st);
   nvmc_initialize_data_storage(&uicr_st);
   NRF_UICR_regs_p = (NRF_UICR_Type *)uicr_st.storage;
+
+  //Reset the partial erase tracking
+  for (int i = 0; i < FLASH_N_PAGES; i++) {
+    time_under_erase[i] = 0;
+    page_erased[i] = true;
+  }
+  if (nvmc_args.flash_erase_warnings) {
+    for (int i = 0; i < FLASH_SIZE/4; i+=4) {
+      if (*(uint32_t*)(flash_st.storage + i) != 0) {
+        page_erased[i/FLASH_PAGE_SIZE] = false;
+        //Jump to next page start:
+        i = (i + FLASH_PAGE_SIZE)/FLASH_PAGE_SIZE*FLASH_PAGE_SIZE;
+      }
+    }
+  }
 }
 
 /**
@@ -156,6 +173,7 @@ static void nrfhw_nvmc_complete_erase(void){
   memset(&flash_st.storage[base_address], 0xFF, FLASH_PAGE_SIZE);
 
   time_under_erase[erase_address/FLASH_PAGE_SIZE] = 0;
+  page_erased[erase_address/FLASH_PAGE_SIZE] = true;
 }
 
 /*
@@ -180,6 +198,10 @@ static void nrfhw_nvmc_complete_erase_uicr(void){
 static void nrfhw_nvmc_complete_erase_all(void){
   nrfhw_nvmc_complete_erase_uicr();
   (void)memset(flash_st.storage, 0xFF, flash_st.size);
+  for (int i = 0; i < FLASH_N_PAGES; i++) {
+    time_under_erase[i] = 0;
+    page_erased[i] = true;
+  }
 }
 
 /**
@@ -263,9 +285,10 @@ bs_time_t nrfhw_nvmc_time_to_ready(void) {
   }
 
 #define CHECK_PARTIAL_ERASE(addr, type) \
-  if (time_under_erase[addr/FLASH_PAGE_SIZE] > 0){ \
-    bs_trace_warning_line_time("%s: %s in partially erased address (%u)\n", \
-         __func__, type, addr); \
+  if (nvmc_args.flash_erase_warnings && time_under_erase[addr/FLASH_PAGE_SIZE] > 0){ \
+    bs_trace_warning_line_time("%s: %s in partially erased address (%u, "\
+         "time_under_erase: %"PRItime" < %"PRItime")\n", \
+         __func__, type, addr, time_under_erase[addr/FLASH_PAGE_SIZE], flash_t_erasepage); \
   }
 
 #define OUT_OF_FLASH_ERROR(addr) \
@@ -334,7 +357,9 @@ void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL(){
   NRF_NVMC_regs.READYNEXT = 0;
 
   bs_time_t duration = flash_partial_erase_factor * NRF_NVMC_regs.ERASEPAGEPARTIALCFG * 1000;
-  time_under_erase[erase_address/FLASH_PAGE_SIZE] += duration;
+  if (page_erased[erase_address/FLASH_PAGE_SIZE] == false) {
+    time_under_erase[erase_address/FLASH_PAGE_SIZE] += duration;
+  }
   Timer_NVMC = tm_get_hw_time() + duration;
   nrf_hw_find_next_timer_to_trigger();
 }
@@ -361,6 +386,7 @@ void nrfhw_nmvc_write_word(uint32_t address, uint32_t value){
 
   if (address < FLASH_SIZE) {
     CHECK_PARTIAL_ERASE(address, "write");
+    page_erased[address/FLASH_PAGE_SIZE] = false;
     /*
      * Writing to flash clears to 0 bits which were one, but does not
      * set to 1 bits which are 0.
@@ -458,6 +484,9 @@ void nrfhw_nmvc_read_buffer(void *dest, uint32_t address, size_t size) {
   if (address < FLASH_SIZE)
   {
     CHECK_ADDRESS_INRANGE(address + size - 1, "read");
+    for (uint32_t i = address; i < address + size ; i+= FLASH_PAGE_SIZE) {
+      CHECK_PARTIAL_ERASE(i, "read");
+    }
     (void)memcpy(dest, &flash_st.storage[address], size);
   }
   else if (addr_in_uicr(address))
@@ -627,6 +656,12 @@ static void nvmc_register_cmd_args(void){
     .call_when_found = arg_flash_in_ram_found,
     .descript = "(default) Instead of a file, keep the flash content in RAM. If this is "
            "set flash_erase, flash_file & flash_rm are ignored, and the flash content is always reset at startup"
+  },
+  { .is_switch = true,
+    .option = "flash_erase_warnings",
+    .type = 'b',
+    .dest = (void*)&nvmc_args.flash_erase_warnings,
+    .descript = "Give partial warnings when accessing partially erased pages"
   },
   ARG_TABLE_ENDMARKER
   };
