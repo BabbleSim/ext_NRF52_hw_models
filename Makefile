@@ -31,9 +31,9 @@ SO_LIBS:=
 DEBUG:=-g
 OPT:=
 ARCH:=-m32
-WARNINGS:=-Wall -pedantic
+WARNINGS:=-Wall -Wpedantic
 COVERAGE:=
-CFLAGS:=${ARCH} ${DEBUG} ${OPT} ${WARNINGS} -MMD -MP -std=c11 \
+CFLAGS:=${ARCH} ${DEBUG} ${OPT} ${WARNINGS} -MMD -MP -std=gnu11 \
         ${INCLUDES} -fdata-sections -ffunction-sections \
         -DNRF52833_XXAA -D_XOPEN_SOURCE=500
 LDFLAGS:=${ARCH} ${COVERAGE}
