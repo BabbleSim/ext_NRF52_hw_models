@@ -609,7 +609,7 @@ static void nvmc_register_cmd_args(void){
     .type = 's',
     .dest = (void*)&nvmc_args.uicr_file,
     .call_when_found = arg_uicr_file_found,
-    .descript = "Path to binary file where the UICR registers are stored (if set, toggles uicr_in_ram to false)"
+    .descript = "Path to the binary file where the UICR registers are stored (if set, toggles uicr_in_ram to false)"
   },
   { .is_switch = true,
     .option ="uicr_rm",
@@ -628,14 +628,14 @@ static void nvmc_register_cmd_args(void){
     .option ="flash_erase",
     .type = 'b',
     .dest = (void*)&nvmc_args.flash_erase,
-    .descript = "Reset the flash whole flash to its erase values (0xFF) at boot"
+    .descript = "Reset the whole flash (not UICR) to its erase values (0xFF) at boot"
   },
   { .option ="flash_file",
     .name = "path",
     .type = 's',
     .dest = (void*)&nvmc_args.flash_file,
     .call_when_found = arg_flash_file_found,
-    .descript = "Path to binary file where the flash content is stored (if set, toggles flash_in_ram to false)"
+    .descript = "Path to the binary file where the flash content is stored (if set, toggles flash_in_ram to false)"
   },
   { .option ="flash",
     .name = "path",
@@ -661,7 +661,7 @@ static void nvmc_register_cmd_args(void){
     .option = "flash_erase_warnings",
     .type = 'b',
     .dest = (void*)&nvmc_args.flash_erase_warnings,
-    .descript = "Give partial warnings when accessing partially erased pages"
+    .descript = "Give warnings when accessing partially erased pages"
   },
   ARG_TABLE_ENDMARKER
   };
