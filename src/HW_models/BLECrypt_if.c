@@ -57,17 +57,23 @@ static blecrypt_packet_decrypt_f blecrypt_packet_decrypt;
 static blecrypt_aes_128_f        blecrypt_aes_128;
 
 void BLECrypt_if_enable_real_encryption(bool mode) {
-  if ( mode ) { //if they try to enable it
-    //attempt to load the libCrypto
+  if ( mode ) { //if the user tries to enable it
+    //Attempt to load libCrypto
     char lib_name[128];
     char *error;
-    snprintf(lib_name,128,"../lib/libCryptov1.so"); //relative to bin folder
+    snprintf(lib_name,128,"../lib/libCryptov1.so"); //Relative to the working directory which is expected to be the bin folder
     LibCryptoHandle = dlopen(lib_name, RTLD_NOW);
-    if (!LibCryptoHandle) {
-      bs_trace_warning_line("%s\n",dlerror());
-      bs_trace_warning_line("Could not open the libcrypto library, is it compiled? => disabling real encryption\n");
-      Real_encryption_enabled = false;
-      return;
+    if (!LibCryptoHandle) { //Not found
+      snprintf(lib_name,128,"libCryptov1.so"); //Let's see if the user set LD_LIBRARY_PATH
+      LibCryptoHandle = dlopen(lib_name, RTLD_NOW);
+      if (!LibCryptoHandle) {
+        bs_trace_warning_line("%s\n",dlerror());
+        bs_trace_warning_line("Could not find the libCrypto library neither in ../lib or in LD_LIBRARY_PATH, is it compiled? => disabling real encryption\n");
+        Real_encryption_enabled = false;
+        return;
+      } else {
+        bs_trace_info_line(3, "This executable assumes the working directory is BabbleSim's bin/ folder, but it is not. libCrypto was found anyhow\n");
+      }
     }
     if ((error = dlerror()) != NULL) {
       bs_trace_error_line("%s\n",error);
