@@ -73,3 +73,9 @@ void nrf_ppi_group_disable(NRF_PPI_Type * p_reg, nrf_ppi_channel_group_t group)
   p_reg->TASKS_CHG[(uint32_t) group].DIS = 1;
   nrf_ppi_regw_sideeffects_TASKS_CHG_DIS(group);
 }
+
+void nrf_ppi_group_enable(NRF_PPI_Type * p_reg, nrf_ppi_channel_group_t group)
+{
+  p_reg->TASKS_CHG[(uint32_t) group].EN = 1;
+  nrf_ppi_regw_sideeffects_TASKS_CHG_EN(group);
+}
