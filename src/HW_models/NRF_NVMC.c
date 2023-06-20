@@ -509,24 +509,29 @@ void* nrfhw_nmvc_flash_get_base_address(void){
  * closing file descriptors, etc)
  */
 static void nvmc_clear_storage(storage_state_t *st){
+
   if (st->in_ram == true) {
     if (st->storage != NULL) {
       free(st->storage);
+      st->storage = NULL;
     }
     return;
   }
 
   if ((st->storage != MAP_FAILED) && (st->storage != NULL)) {
     munmap(st->storage, st->size);
+    st->storage = NULL;
   }
 
   if (st->fd != -1) {
     close(st->fd);
+    st->fd = -1;
   }
 
   if ((st->rm_at_exit == true) && (st->file_path != NULL)) {
     /* We try to remove the file but do not error out if we can't */
     (void) remove(st->file_path);
+    st->file_path = NULL;
   }
 }
 
