@@ -102,6 +102,7 @@ void BLECrypt_if_free(){
     //#define DONTCLOSELIBRARIES
 #ifndef DONTCLOSELIBRARIES /*To be able to profile time spent in libraries in callgrind*/
     dlclose(LibCryptoHandle);
+    LibCryptoHandle = NULL;
 #endif
   }
 }
