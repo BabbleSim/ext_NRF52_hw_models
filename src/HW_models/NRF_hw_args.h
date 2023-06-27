@@ -28,12 +28,36 @@ extern double nrfhw_drift;
 void nrf_hw_cmd_drift_found(char * argv, int offset);
 extern bool nrfhw_useRealAES;
 void nrf_hw_cmd_useRealAES_found(char * argv, int offset);
+extern char *gpio_in_file_path;
+extern char *gpio_out_file_path;
+extern char *gpio_conf_file_path;
 
 #define _NRF_HW_SUB_CMD_ARG_STRUCT \
   /*manual,mandatory,switch, option,             name ,   type,  destination,                callback,                      , description*/ \
   { false  , false , false, "start_offset" ,  "start_of", 'f', (void*)&nrfhw_start_of, nrf_hw_cmd_starto_found,"Offset in time (at the start of the simulation) of this device. At time 0 of the device, the phy will be at <start_of>"}, \
   { false  , false , false, "xo_drift" ,      "xo_drift", 'f', (void*)&nrfhw_drift,    nrf_hw_cmd_drift_found, "Simple linear model of the XO drift of this device. For ex. for -30ppm set to -30e-6"}, \
-  { false  , false , false, "RealEncryption", "realAES",  'b', (void*)&nrfhw_useRealAES, nrf_hw_cmd_useRealAES_found, "(0)/1 Use the real AES encryption for the LL or just send everything in plain text (default) (requires the ext_libCryptov1 component)"}
+  { false  , false , false, "RealEncryption", "realAES",  'b', (void*)&nrfhw_useRealAES, nrf_hw_cmd_useRealAES_found, "(0)/1 Use the real AES encryption for the LL or just send everything in plain text (default) (requires the ext_libCryptov1 component)"}, \
+  { \
+    .option="gpio_in_file",\
+    .name="path",\
+    .type='s',\
+    .dest=(void *)&gpio_in_file_path,\
+    .descript="Optional path to a file containing GPIOs inputs activity",\
+  },\
+  { \
+    .option="gpio_out_file",\
+    .name="path",\
+    .type='s',\
+    .dest=(void *)&gpio_out_file_path,\
+    .descript="Optional path to a file where GPIOs output activity will be saved",\
+  },\
+  { \
+    .option="gpio_conf_file",\
+    .name="path",\
+    .type='s',\
+    .dest=(void *)&gpio_conf_file_path,\
+    .descript="Optional path to a file where the GPIOs configuration will be found.",\
+  }\
 
 #ifdef __cplusplus
 }

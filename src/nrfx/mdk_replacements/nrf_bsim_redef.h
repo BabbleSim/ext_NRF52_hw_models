@@ -65,9 +65,11 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #undef NRF_POWER_BASE
 extern NRF_POWER_Type NRF_POWER_regs;
 #define NRF_POWER_BASE                    (&NRF_POWER_regs)
-extern NRF_GPIO_Type NRF_P0_regs;
+extern NRF_GPIO_Type NRF_GPIO_regs[];
 #undef NRF_P0_BASE
-#define NRF_P0_BASE                       (&NRF_P0_regs)
+#define NRF_P0_BASE                       (&NRF_GPIO_regs[0])
+#undef NRF_P1_BASE
+#define NRF_P1_BASE                       (&NRF_GPIO_regs[1])
 extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 #undef NRF_GPIOTE_BASE
 #define NRF_GPIOTE_BASE                   (&NRF_GPIOTE_regs)
@@ -159,6 +161,7 @@ extern NRF_UICR_Type *NRF_UICR_regs_p;
 #define NRF_I2S                     ((NRF_I2S_Type*)           NRF_I2S_BASE)
 #define NRF_FPU                     ((NRF_FPU_Type*)           NRF_FPU_BASE)
 #define NRF_P0                      ((NRF_GPIO_Type*)          NRF_P0_BASE)
+#define NRF_P1                      ((NRF_GPIO_Type*)          NRF_P1_BASE)
 
 #ifdef __cplusplus
 }

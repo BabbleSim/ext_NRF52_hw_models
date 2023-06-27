@@ -10,6 +10,7 @@
 #include "NRF_HW_model_top.h"
 #include "NRF_AAR.h"
 #include "NRF_AES_CCM.h"
+#include "NRF_GPIOTE.h"
 #include "NRF_RNG.h"
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
@@ -98,6 +99,40 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     { (void*)&NRF_RADIO_regs.TASKS_EDSTOP,       nrf_radio_tasks_EDSTOP},
     { (void*)&NRF_RADIO_regs.TASKS_CCASTART,     nrf_radio_tasks_CCASTART},
     { (void*)&NRF_RADIO_regs.TASKS_CCASTOP,      nrf_radio_tasks_CCASTOP},
+    //UART
+    //SPI0
+    //TWI0
+    //SPI1
+    //TWI1
+    //NFCT
+
+    //GPIOTE
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[0],  nrf_gpiote_TASKS_OUT_0},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[1],  nrf_gpiote_TASKS_OUT_1},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[2],  nrf_gpiote_TASKS_OUT_2},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[3],  nrf_gpiote_TASKS_OUT_3},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[4],  nrf_gpiote_TASKS_OUT_4},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[5],  nrf_gpiote_TASKS_OUT_5},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[6],  nrf_gpiote_TASKS_OUT_6},
+    { (void*)&NRF_GPIOTE_regs.TASKS_OUT[7],  nrf_gpiote_TASKS_OUT_7},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[0],  nrf_gpiote_TASKS_SET_0},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[1],  nrf_gpiote_TASKS_SET_1},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[2],  nrf_gpiote_TASKS_SET_2},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[3],  nrf_gpiote_TASKS_SET_3},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[4],  nrf_gpiote_TASKS_SET_4},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[5],  nrf_gpiote_TASKS_SET_5},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[6],  nrf_gpiote_TASKS_SET_6},
+    { (void*)&NRF_GPIOTE_regs.TASKS_SET[7],  nrf_gpiote_TASKS_SET_7},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[0],  nrf_gpiote_TASKS_CLR_0},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[1],  nrf_gpiote_TASKS_CLR_1},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[2],  nrf_gpiote_TASKS_CLR_2},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[3],  nrf_gpiote_TASKS_CLR_3},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[4],  nrf_gpiote_TASKS_CLR_4},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[5],  nrf_gpiote_TASKS_CLR_5},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[6],  nrf_gpiote_TASKS_CLR_6},
+    { (void*)&NRF_GPIOTE_regs.TASKS_CLR[7],  nrf_gpiote_TASKS_CLR_7},
+
+    //SAADC
 
     //TIMER0:
     { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[0],  nrf_timer0_TASK_CAPTURE_0},
@@ -331,6 +366,16 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     {RADIO_EVENTS_SYNC,    &NRF_RADIO_regs.EVENTS_SYNC},
     {RADIO_EVENTS_PHYEND,  &NRF_RADIO_regs.EVENTS_PHYEND},
     {RADIO_EVENTS_CTEPRESENT,&NRF_RADIO_regs.EVENTS_CTEPRESENT},
+
+    {GPIOTE_EVENTS_IN_0, &NRF_GPIOTE_regs.EVENTS_IN[0]},
+    {GPIOTE_EVENTS_IN_1, &NRF_GPIOTE_regs.EVENTS_IN[1]},
+    {GPIOTE_EVENTS_IN_2, &NRF_GPIOTE_regs.EVENTS_IN[2]},
+    {GPIOTE_EVENTS_IN_3, &NRF_GPIOTE_regs.EVENTS_IN[3]},
+    {GPIOTE_EVENTS_IN_4, &NRF_GPIOTE_regs.EVENTS_IN[4]},
+    {GPIOTE_EVENTS_IN_5, &NRF_GPIOTE_regs.EVENTS_IN[5]},
+    {GPIOTE_EVENTS_IN_6, &NRF_GPIOTE_regs.EVENTS_IN[6]},
+    {GPIOTE_EVENTS_IN_7, &NRF_GPIOTE_regs.EVENTS_IN[7]},
+    {GPIOTE_EVENTS_PORT, &NRF_GPIOTE_regs.EVENTS_PORT},
 
     {TIMER0_EVENTS_COMPARE_0, &NRF_TIMER_regs[0].EVENTS_COMPARE[0]},
     {TIMER0_EVENTS_COMPARE_1, &NRF_TIMER_regs[0].EVENTS_COMPARE[1]},

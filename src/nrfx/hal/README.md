@@ -3,7 +3,7 @@
 The HAL source files provided with these models implement
 some modifications to the HAL interface [real nRFx HAL](https://github.com/NordicSemiconductor/nrfx/)
 needed due to the HW models peculiarities.
-Its main purpose is to allow unmodified Zephyr code to run directly
+Its main purpose is to allow unmodified embedded code to run directly
 using this repository HW models.
 
 There is two main differences in this HAL compared to the real one:
@@ -33,7 +33,7 @@ official nRFx HAL, with only minor differences due to what is described above.
 And normally most differences between the official version and this one will be
 simply due to this not having been updated yet.
 
-Note that, so far, this replacement HAL only provides a small subset of the
+Note that, so far, this replacement HAL only provides a subset of the
 whole nRFx API: Mostly the functions and types used by the current Zephyr
 BLE controller and necessary drivers, and only for the peripherals which are
 part of these models.

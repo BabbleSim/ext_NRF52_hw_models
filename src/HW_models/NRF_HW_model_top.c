@@ -19,6 +19,8 @@
 #include "NRF_CLOCK.h"
 #include "NRF_RADIO.h"
 #include "NRF_FICR.h"
+#include "NRF_GPIO.h"
+#include "NRF_GPIOTE.h"
 #include "NRF_PPI.h"
 #include "NRF_TIMER.h"
 #include "NRF_EGU.h"
@@ -40,6 +42,8 @@ void nrf_hw_models_free_all(){
   nrf_aar_clean_up();
   nrf_radio_clean_up();
   nrf_ficr_clean_up();
+  nrf_gpio_clean_up();
+  nrf_gpiote_clean_up();
   nrf_ppi_clean_up();
   nrf_egu_clean_up();
   nrfhw_nvmc_uicr_clean_up();
@@ -71,6 +75,8 @@ void nrf_hw_initialize(nrf_hw_sub_args_t *args){
   nrf_aar_init();
   nrf_radio_init();
   nrf_ficr_init();
+  nrf_gpio_init();
+  nrf_gpiote_init();
   nrf_ppi_init();
   nrf_egu_init();
   nrfhw_nvmc_uicr_init();
@@ -85,6 +91,7 @@ extern bs_time_t Timer_TEMP;
 extern bs_time_t Timer_NVMC;
 extern bs_time_t Timer_CLOCK_LF;
 extern bs_time_t Timer_CLOCK_HF;
+extern bs_time_t Timer_GPIO_input;
 extern bs_time_t Timer_RTC;
 extern bs_time_t Timer_TIMERs;
 extern bs_time_t Timer_RADIO;
@@ -107,6 +114,7 @@ typedef enum {
   AAR_timer,
   CLOCK_LF_timer,
   CLOCK_HF_timer,
+  GPIO_input,
   RTC_timer,
   TIMER_timer,
   RADIO_timer,
@@ -115,6 +123,7 @@ typedef enum {
   NumberOfNRFHWTimers,
   None
 } NRF_HW_next_timer_to_trigger_t;
+
 static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_timer_to_trigger_t
     &Timer_fake_timer,
     &Timer_event_fw_test_ticker,
@@ -126,6 +135,7 @@ static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_tim
     &Timer_AAR,
     &Timer_CLOCK_LF,
     &Timer_CLOCK_HF,
+    &Timer_GPIO_input,
     &Timer_RTC,
     &Timer_TIMERs,
     &Timer_RADIO,
@@ -198,6 +208,10 @@ void nrf_hw_some_timer_reached() {
   case CLOCK_HF_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK HF timer\n");
     nrf_clock_HFTimer_triggered();
+    break;
+  case GPIO_input:
+    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: GPIO input timer\n");
+    nrf_gpio_input_event_triggered();
     break;
   case RTC_timer:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: RTC timer\n");
