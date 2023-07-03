@@ -11,26 +11,7 @@
  *   * Inputs can be driver from a file
  *   * Outputs can be short-circuited to inputs thru a configuration file
  *
- * The output and input file format is the same:
- * A comma separate file, with the columns
- * time,port,pin,level
- * Where time is a 64 bit unsigned value, representing time in microseconds since boot
- * Port is the GPIO port number starting from 0 (for a nrf52833: 0 or 1)
- * Pin is the pin number in that port (for a nrf52833: 0..31 for port 0, 0..9 for port 1)
- * Level is either 0 (for low) or 1 (for high)
- *
- * The configuration file can define output->input short-circuits.
- * Note that these shorts only work one way, that it is not possible to short 2 outputs together.
- * It is possible to short one output to several (up to 8) inputs.
- * The configuration is made of lines, each with the following format, of either:
- *   short out_port.out_pin in_port.in_pin
- *   s out_port.out_pin in_port.in_pin
- * The first word must always be either "short" or "s"
- * And it must always be followed by 4 unsigned integers in 2 pairs
- * Each pair separated by a dot. The first value of each pair being the port number,
- * the second value the pin in that port
- * The first pair indicating the output pin that will be shorted from, and the 2nd pair
- * the input pin that will be shorted to.
+ * Check docs/GPIO.md for more info.
  */
 
 #include <stdlib.h>
