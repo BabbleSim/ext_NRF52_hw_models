@@ -54,7 +54,7 @@ time(microsecond),port,pin,level
 ```
 
 Where pin 0 in port 0, is toggled at boot, 200µs, 600µs, 800µs, 1ms (up and immediately down),
-and 101.624ms
+and 101.624ms.
 
 ### Configuration file format
 
@@ -90,3 +90,10 @@ short 1.0 0.2
 to short pin 0 from port 1 to pin 2 from port 2.
 
 Note that both ports and pins are numbered from 0.
+
+### Comments in input files
+
+For both stimuli input and configuration files, '#' is treated as a comment delimiter: That
+character and anything after until the end of the line will be ignored.
+
+Empty lines, are also ignored.
