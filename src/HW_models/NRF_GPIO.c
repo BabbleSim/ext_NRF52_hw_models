@@ -83,7 +83,7 @@ void nrf_gpio_init() {
 	memset(NRF_GPIO_regs, 0, sizeof(NRF_GPIO_regs));
 
 	for (int p = 0; p < NRF_GPIOS; p ++) {
-		for (int n = 0; n < GPIO_n_ports_pins[n]; n++) {
+		for (int n = 0; n < GPIO_n_ports_pins[p]; n++) {
 			NRF_GPIO_regs[p].PIN_CNF[n] = 0x2; /* Disconnected out of reset */
 		}
 		INPUT_mask[p] = UINT32_MAX; /* All disconnected out of reset */
