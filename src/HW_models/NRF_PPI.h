@@ -19,8 +19,11 @@ typedef enum { //Note that, for performance, it is better to leave commented the
   //CLOCK:
   CLOCK_EVENTS_HFCLKSTARTED ,
   CLOCK_EVENTS_LFCLKSTARTED ,
-//  CLOCK_EVENTS_DONE         ,
-//  CLOCK_EVENTS_CTTO         ,
+  CLOCK_EVENTS_DONE         ,
+  CLOCK_EVENTS_CTTO         ,
+  CLOCK_EVENTS_CTSTARTED    ,
+  CLOCK_EVENTS_CTSTOPPED    ,
+
   //POWER:
 //  POWER_EVENTS_POFWARN     ,
 //  POWER_EVENTS_SLEEPENTER  ,

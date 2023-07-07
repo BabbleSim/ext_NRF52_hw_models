@@ -21,13 +21,6 @@ void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
   nrf_clock_reqw_sideeffects_INTENCLR();
 }
 
-uint32_t nrf_clock_int_enable_check(NRF_CLOCK_Type const * p_reg, uint32_t mask)
-{
-  /* Note that unlike the real NRF HW, INTENCLR is always
-   * reset to 0 by the HW models */
-  return p_reg->INTENSET & mask;
-}
-
 void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
 {
   if (task == NRF_CLOCK_TASK_HFCLKSTART) {
@@ -42,7 +35,27 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
   } else if (task == NRF_CLOCK_TASK_LFCLKSTOP) {
     NRF_CLOCK_regs.TASKS_LFCLKSTOP = 1;
     nrf_clock_reqw_sideeffects_TASKS_LFCLKSTOP();
+#if NRF_CLOCK_HAS_CALIBRATION
+  } else if (task == NRF_CLOCK_TASK_CAL) {
+    NRF_CLOCK_regs.TASKS_CAL = 1;
+    nrf_clock_reqw_sideeffects_TASKS_CAL();
+#endif
+#if NRF_CLOCK_HAS_CALIBRATION_TIMER
+  } else if (task == NRF_CLOCK_TASK_CTSTART) {
+    NRF_CLOCK_regs.TASKS_CTSTART = 1;
+    nrf_clock_reqw_sideeffects_TASKS_CTSTART();
+  } else if (task == NRF_CLOCK_TASK_CTSTOP) {
+    NRF_CLOCK_regs.TASKS_CTSTOP = 1;
+    nrf_clock_reqw_sideeffects_TASKS_CTSTOP();
+#endif
   } else {
     bs_trace_warning_line_time("Not supported task started in nrf_clock, %d\n", task);
   }
 }
+
+NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
+{
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
+    nrf_clock_regw_sideeffects_EVENTS_all();
+}
+

@@ -89,8 +89,7 @@ extern bs_time_t Timer_irq_ctrl;
 extern bs_time_t Timer_RNG;
 extern bs_time_t Timer_TEMP;
 extern bs_time_t Timer_NVMC;
-extern bs_time_t Timer_CLOCK_LF;
-extern bs_time_t Timer_CLOCK_HF;
+extern bs_time_t Timer_CLOCK;
 extern bs_time_t Timer_GPIO_input;
 extern bs_time_t Timer_RTC;
 extern bs_time_t Timer_TIMERs;
@@ -112,8 +111,7 @@ typedef enum {
   NVMC_timer,
   ECB_timer,
   AAR_timer,
-  CLOCK_LF_timer,
-  CLOCK_HF_timer,
+  CLOCK_timer,
   GPIO_input,
   RTC_timer,
   TIMER_timer,
@@ -133,8 +131,7 @@ static bs_time_t *Timers[NumberOfNRFHWTimers] = { //Indexed with NRF_HW_next_tim
     &Timer_NVMC,
     &Timer_ECB,
     &Timer_AAR,
-    &Timer_CLOCK_LF,
-    &Timer_CLOCK_HF,
+    &Timer_CLOCK,
     &Timer_GPIO_input,
     &Timer_RTC,
     &Timer_TIMERs,
@@ -201,13 +198,9 @@ void nrf_hw_some_timer_reached() {
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: AAR timer\n");
     nrf_aar_timer_triggered();
     break;
-  case CLOCK_LF_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK LF timer\n");
-    nrf_clock_LFTimer_triggered();
-    break;
-  case CLOCK_HF_timer:
-    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK HF timer\n");
-    nrf_clock_HFTimer_triggered();
+  case CLOCK_timer:
+    bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: CLOCK timer\n");
+    nrf_clock_timer_triggered();
     break;
   case GPIO_input:
     bs_trace_raw_manual_time(8, tm_get_abs_time(),"NRF HW: GPIO input timer\n");
