@@ -5,6 +5,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "NRF_GPIOTE.h"
 #include "NRF_GPIO.h"
 #include "NRF_PPI.h"
