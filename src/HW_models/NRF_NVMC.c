@@ -4,23 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "bs_tracing.h"
-#include "bs_cmd_line.h"
-#include "bs_oswrap.h"
-#include "NRF_NVMC.h"
-#include "NRF_HW_model_top.h"
-#include "time_machine_if.h"
-#include "weak_stubs.h"
-
 /*
  * NVMC — Non-volatile memory controller
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/nvmc.html?cp=5_1_0_3_2
@@ -59,6 +42,23 @@
  *    * Allow accumulating those statistics between runs (save stats to file)
  *  * Warn users if an address is written more than n_write between erases
  */
+
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "bs_tracing.h"
+#include "bs_cmd_line.h"
+#include "bs_oswrap.h"
+#include "NRF_NVMC.h"
+#include "NRF_HW_model_top.h"
+#include "time_machine_if.h"
+#include "weak_stubs.h"
 
 NRF_UICR_Type *NRF_UICR_regs_p;
 NRF_NVMC_Type NRF_NVMC_regs = {0};

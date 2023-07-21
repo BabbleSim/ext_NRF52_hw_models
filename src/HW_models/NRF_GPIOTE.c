@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <stdint.h>
-#include <string.h>
-#include "NRF_GPIOTE.h"
-#include "NRF_GPIO.h"
-#include "NRF_PPI.h"
-#include "irq_ctrl.h"
-#include "bs_tracing.h"
-
 /*
  * GPIOTE — GPIO tasks and events
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/gpiote.html?cp=5_1_0_5_8
@@ -21,6 +13,14 @@
  *  * Unlike in real HW, tasks cannot occur simultaneously, they always happen in some sequence
  *    so task priority is not accounted for
  */
+
+#include <stdint.h>
+#include <string.h>
+#include "NRF_GPIOTE.h"
+#include "NRF_GPIO.h"
+#include "NRF_PPI.h"
+#include "irq_ctrl.h"
+#include "bs_tracing.h"
 
 NRF_GPIOTE_Type NRF_GPIOTE_regs = {0};
 

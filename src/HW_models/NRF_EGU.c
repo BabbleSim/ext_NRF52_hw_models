@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*
+ * EGU — Event generator unit
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=4_1_0_5_6
+ */
+
 #include <string.h>
 #include "bs_tracing.h"
 #include "irq_ctrl.h"
 #include "NRF_EGU.h"
 #include "NRF_PPI.h"
-
-/*
- * EGU — Event generator unit
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=4_1_0_5_6
- */
 
 #define N_EGU 6
 #define N_EGU_EVENTS 16

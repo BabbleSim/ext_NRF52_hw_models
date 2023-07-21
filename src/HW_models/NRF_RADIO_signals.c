@@ -83,7 +83,7 @@ void nrf_radio_signal_DISABLED(){
   NRF_RADIO_regs.EVENTS_DISABLED = 1;
   nrf_ppi_event(RADIO_EVENTS_DISABLED);
 
-  //These 2 are fake shortcuts meant to start a HW timer for the TIFS
+  //These 2 are fake tasks meant to start a HW timer for the TIFS
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) {
     nrf_radio_fake_task_TRXEN_TIFS();
   }

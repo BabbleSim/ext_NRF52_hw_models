@@ -4,31 +4,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "bs_types.h"
-#include "bs_tracing.h"
-#include "bs_utils.h"
-#include "bs_pc_2G4.h"
-#include "bs_pc_2G4_utils.h"
-#include "time_machine_if.h"
-#include "NRF_RADIO.h"
-#include "NRF_HW_model_top.h"
-#include "NRF_PPI.h"
-#include "NRF_AES_CCM.h"
-#include "irq_ctrl.h"
-#include "NRF_HWLowL.h"
-#include "crc.h"
-#include "NRF_RADIO_signals.h"
-#include "NRF_RADIO_utils.h"
-#include "NRF_RADIO_timings.h"
-#include "NRF_RADIO_bitcounter.h"
-#include "NRF_RADIO_priv.h"
 
 /**
  * RADIO — 2.4 GHz Radio
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=4_1_0_5_17
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=5_1_0_5_17
  *
  * Note: as of now, only 1&2Mbps BLE & 15.4 packet formats are supported, there is quite many notes around in the code
  * where changes would be required to support other formats
@@ -157,6 +136,28 @@
  *   The CCA and ED procedures are so similar that they are handled with the same CCA_ED state in the main state machine,
  *   most of the same CCA_ED code, and the same CCA procedure to the Phy.
  */
+
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "bs_types.h"
+#include "bs_tracing.h"
+#include "bs_utils.h"
+#include "bs_pc_2G4.h"
+#include "bs_pc_2G4_utils.h"
+#include "time_machine_if.h"
+#include "NRF_RADIO.h"
+#include "NRF_HW_model_top.h"
+#include "NRF_PPI.h"
+#include "NRF_AES_CCM.h"
+#include "irq_ctrl.h"
+#include "NRF_HWLowL.h"
+#include "crc.h"
+#include "NRF_RADIO_signals.h"
+#include "NRF_RADIO_utils.h"
+#include "NRF_RADIO_timings.h"
+#include "NRF_RADIO_bitcounter.h"
+#include "NRF_RADIO_priv.h"
 
 NRF_RADIO_Type NRF_RADIO_regs;
 uint32_t NRF_RADIO_INTEN = 0; //interrupt enable (global for RADIO_signals.c)

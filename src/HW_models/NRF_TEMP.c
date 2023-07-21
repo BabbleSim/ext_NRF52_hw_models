@@ -3,14 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "NRF_TEMP.h"
-#include <string.h>
-#include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
-#include "NRF_PPI.h"
-#include "irq_ctrl.h"
-#include "bs_rand_main.h"
 
 /*
  * TEMP — Temperature sensor
@@ -24,6 +16,15 @@
  *   * There is no per device variability
  *   * There is no modeling of possible calibration errors or inaccuracies due to no non-linearities compensation
  */
+
+#include "NRF_TEMP.h"
+#include <string.h>
+#include <stdbool.h>
+#include "time_machine_if.h"
+#include "NRF_HW_model_top.h"
+#include "NRF_PPI.h"
+#include "irq_ctrl.h"
+#include "bs_rand_main.h"
 
 NRF_TEMP_Type NRF_TEMP_regs;
 

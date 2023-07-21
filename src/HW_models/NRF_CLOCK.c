@@ -4,16 +4,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "NRF_CLOCK.h"
-#include <string.h>
-#include <stdint.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
-#include "NRF_PPI.h"
-#include "NRF_RTC.h"
-#include "irq_ctrl.h"
-#include "bs_tracing.h"
-#include "bs_utils.h"
 
 /*
  * CLOCK — Clock control
@@ -46,6 +36,17 @@
  * 8. After TASK_CTSTART EVENTS_CTSTARTED is raised immediately,
  *    After TASK_CTSTOP EVENTS_CTSTOPPED is raised immediately.
  */
+
+#include "NRF_CLOCK.h"
+#include <string.h>
+#include <stdint.h>
+#include "time_machine_if.h"
+#include "NRF_HW_model_top.h"
+#include "NRF_PPI.h"
+#include "NRF_RTC.h"
+#include "irq_ctrl.h"
+#include "bs_tracing.h"
+#include "bs_utils.h"
 
 NRF_CLOCK_Type NRF_CLOCK_regs;
 static uint32_t CLOCK_INTEN = 0; //interrupt enable

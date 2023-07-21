@@ -4,6 +4,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/*
+ * RNG — Random number generator
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=4_1_0_5_18
+ *
+ * Very rough model
+ *
+ * The delay is constant
+ */
+
 #include "NRF_RNG.h"
 #include <string.h>
 #include <stdbool.h>
@@ -12,13 +22,6 @@
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_rand_main.h"
-
-/*
- * RNG — Random number generator
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=4_1_0_5_18
- *
- * Very rough model
- */
 
 NRF_RNG_Type NRF_RNG_regs;
 bs_time_t Timer_RNG = TIME_NEVER; //Time when the next random number will be ready

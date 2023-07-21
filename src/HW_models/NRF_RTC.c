@@ -3,16 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-#include "NRF_PPI.h"
-#include "NRF_CLOCK.h"
-#include "NRF_HW_model_top.h"
-#include "irq_ctrl.h"
-#include "bs_tracing.h"
-#include "time_machine_if.h"
 
 /*
  * RTC — Real-time counter
@@ -32,6 +22,17 @@
  *
  * * Note: RTC2 cannot be used (it does not have an assigned interrupt)
  */
+
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "NRF_PPI.h"
+#include "NRF_CLOCK.h"
+#include "NRF_HW_model_top.h"
+#include "irq_ctrl.h"
+#include "bs_tracing.h"
+#include "time_machine_if.h"
 
 #define N_RTC 3
 #define N_CC 4

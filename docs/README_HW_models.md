@@ -2,7 +2,7 @@ For general information about these models refer to [README.md](README.md)
 
 You will only need to continue reading if you are curious about how these
 models are built, or if you want to use them for some other purpose than
-with the nrf52_bsim.
+with Zephyr's nrf52_bsim.
 
 ## Requirements
 

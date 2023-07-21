@@ -3,6 +3,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/*
+ * AES electronic codebook mode encryption
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=4_1_0_5_5
+ */
+
 #include "NRF_AES_ECB.h"
 #include "NRF_PPI.h"
 #include <string.h>
@@ -13,11 +19,6 @@
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
-
-/*
- * AES electronic codebook mode encryption
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=4_1_0_5_5
- */
 
 bs_time_t Timer_ECB = TIME_NEVER; /* Time when the ECB will finish */
 

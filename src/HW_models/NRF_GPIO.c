@@ -4,12 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "NRF_GPIO.h"
-#include "NRF_GPIOTE.h"
-#include "bs_tracing.h"
-
 /*
  * GPIO — General purpose input/output
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/gpio.html?cp=5_1_0_5_7
@@ -39,6 +33,12 @@
  *    a few clocks, before being raised again (if it needs to), in the model the new pulse/raise
  *    is sent instantaneously to the GPIOTE
  */
+
+#include <stdint.h>
+#include <stdbool.h>
+#include "NRF_GPIO.h"
+#include "NRF_GPIOTE.h"
+#include "bs_tracing.h"
 
 NRF_GPIO_Type NRF_GPIO_regs[NRF_GPIOS];
 

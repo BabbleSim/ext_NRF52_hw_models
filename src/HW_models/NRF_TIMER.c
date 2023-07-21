@@ -3,14 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <string.h>
-#include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_TIMER.h"
-#include "NRF_HW_model_top.h"
-#include "NRF_PPI.h"
-#include "irq_ctrl.h"
-#include "bs_tracing.h"
 
 /*
  * TIMER — Timer/counter
@@ -24,6 +16,15 @@
  *     In reality, Timers0-2 have only 4 CC registers, events and TASKS_CAPTURE
  *   * The functionality of TASK_SHUTDOWN is a bit of a guess
  */
+
+#include <string.h>
+#include <stdbool.h>
+#include "time_machine_if.h"
+#include "NRF_TIMER.h"
+#include "NRF_HW_model_top.h"
+#include "NRF_PPI.h"
+#include "irq_ctrl.h"
+#include "bs_tracing.h"
 
 #define N_TIMERS 5
 #define N_CC 6

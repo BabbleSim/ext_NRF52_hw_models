@@ -3,11 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "NRF_FICR.h"
-#include "NRF_NVMC.h"
-#include <string.h>
-#include "bs_rand_main.h"
-#include "weak_stubs.h"
 
 /*
  * Factory information configuration registers
@@ -20,6 +15,12 @@
  * for example by specifying a file with their values. and/or by specifying particular ones
  * with command line options; something like -deviceaddr=<bt_address>
  */
+
+#include "NRF_FICR.h"
+#include "NRF_NVMC.h"
+#include <string.h>
+#include "bs_rand_main.h"
+#include "weak_stubs.h"
 
 NRF_FICR_Type NRF_FICR_regs;
 

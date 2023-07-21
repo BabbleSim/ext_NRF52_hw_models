@@ -1,11 +1,14 @@
-# Models of some of the HW present in a NRF52xxx
+# Models of the nRF52xxx HW peripherals
 
-Where relevant differences exist, these models try to align with a NRF52833.
-
-This repo contains both models of the NRF52 HW as well as some replacement nrfx
+This repo contains models of the nRF52 HW peripherals and some replacement nrfx
 HAL functions. When used in combination with the real nrfx, these should enable code
 meant for the nrfx to run without needing further changes.
 This includes Zephyr SW.
+
+Where relevant
+[differences](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
+exist, these models try to align with an
+[nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1).
 
 When compiling this component using the provided Makefile (not with Zephyr's build system),
 the environment variable `NRFX_BASE` must be set to the path where a nrfx has been cloned. 
@@ -33,23 +36,28 @@ for the radio environment simulation.
 For more information about the HW models, or how to use them without the
 nrf52_bsim please refer to [README_HW_models.md](./README_HW_models.md)
 
-## Faithfullness of these models
+## What these models include
+
+Not all SOC peripherals are modelled yet, and for some of the included peripherals
+not all features or options are modelled. This is typically the case for HW functionality
+which is not used by the Zephyr drivers/OS.
+You can find what features of which peripherals are included so far, and with what approximations in
+[README_impl_status.md](./README_impl_status.md).
+It is certainly possible to expand these models to include the missing peripherals or functionality.
+
+### Faithfullness of these models
 
 These models are accurate enough to allow the current Zephyr to run, and
-its BLE stack to function. For more details please see the notes on the source
+its BLE and 15.4 stacks to function. For more details please see the notes on the source
 files for each peripheral model.
+In general, functionality is modelled only to the necessary degree as to enable the SW to run,
+in a manner that is comparable to the real HW.
 
 These models are based solely on
 [the public SOC specifications](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html)
 
 They have been developed without any other knowledge and probably contain
 inacuracies, and defects.
-
-Several of the peripherals which are not necessary for typical BLE applications
-are not modelled. Moreover, in the modelled peripherals, functionality which is
-not used in the Zephyr drivers is normally not modelled either.
-The [TODO](../TODO.txt) file list some mayor omissions.
-It is certainly possible to expand these models to include the rest.
 
 ### About the ARM processor peripherals
 

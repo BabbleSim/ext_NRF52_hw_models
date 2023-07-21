@@ -3,6 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/*
+ * PPI — Programmable peripheral interconnect
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=4_1_0_5_14
+ *
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -19,12 +26,6 @@
 #include "NRF_RADIO.h"
 #include "NRF_EGU.h"
 #include "bs_tracing.h"
-
-/*
- * PPI — Programmable peripheral interconnect
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=4_1_0_5_14
- *
- */
 
 NRF_PPI_Type NRF_PPI_regs; ///< The PPI registers
 
