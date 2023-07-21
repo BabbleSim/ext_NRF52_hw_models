@@ -262,7 +262,6 @@ void nrf_radio_tasks_TXEN() {
         radio_state);
     return;
   }
-  TIFS_state = TIFS_DISABLE;
   radio_state = RAD_TXRU;
   NRF_RADIO_regs.STATE = RAD_TXRU;
 
@@ -300,7 +299,9 @@ static void abort_if_needed(){
 
 void nrf_radio_tasks_START () {
   if ( radio_state == RAD_TXIDLE ) {
-    start_Tx();
+    bs_time_t Tx_start_time = tm_get_abs_time() + nrfra_timings_get_TX_chain_delay();
+    radio_state = RAD_TXSTARTING;
+    nrfra_set_Timer_RADIO(Tx_start_time);
   } else if ( radio_state == RAD_RXIDLE ) {
     start_Rx();
   } else {
@@ -495,6 +496,7 @@ void nrf_radio_fake_task_TRXEN_TIFS(){
 void maybe_prepare_TIFS(bool Tx_Not_Rx){
   bs_time_t delta;
   if ( !nrfra_is_HW_TIFS_enabled() ) {
+    TIFS_state = TIFS_DISABLE;
     return;
   }
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ){
@@ -509,7 +511,7 @@ void maybe_prepare_TIFS(bool Tx_Not_Rx){
     delta = NRF_RADIO_regs.TIFS - nrfra_timings_get_Rx_chain_delay() - nrfra_timings_get_TX_chain_delay() - nrfra_timings_get_rampup_time(1, 1) + 1;
   }
   Timer_TIFS = tm_get_hw_time() + delta;
-  TIFS_state = TIFS_WAITING_FOR_DISABLE;
+  TIFS_state = TIFS_WAITING_FOR_DISABLE; /* In Timer_TIFS we will trigger a TxEN or RxEN */
 }
 
 /**
@@ -531,6 +533,9 @@ void nrf_radio_timer_triggered(){
     nrfra_set_Timer_RADIO(TIME_NEVER);
     nrf_radio_signal_READY();
     nrf_radio_signal_RXREADY();
+  } else if ( radio_state == RAD_TXSTARTING ){
+    nrfra_set_Timer_RADIO(TIME_NEVER);
+    start_Tx();
   } else if ( radio_state == RAD_TX ){
     if ( radio_sub_state == TX_WAIT_FOR_ADDRESS_END ){
       radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
@@ -768,7 +773,7 @@ static void start_Tx(){
   int ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf,  &tx_status.tx_resp);
   handle_Tx_response(ret);
 
-  tx_status.ADDRESS_end_time = tm_get_hw_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us);
+  tx_status.ADDRESS_end_time = tm_get_hw_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us) - nrfra_timings_get_TX_chain_delay();
   tx_status.PAYLOAD_end_time = tx_status.ADDRESS_end_time + (bs_time_t)(8*(header_len + payload_len)/bits_per_us);
   tx_status.CRC_end_time = tx_status.PAYLOAD_end_time + (bs_time_t)(crc_len*8/bits_per_us);
 

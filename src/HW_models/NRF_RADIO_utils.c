@@ -170,7 +170,8 @@ int nrfra_is_HW_TIFS_enabled() {
   if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
       && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
           || ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) )
-  ){
+      && ( (NRF_RADIO_regs.MODECNF0 & RADIO_MODECNF0_RU_Msk) == 0) )
+  {
     return 1;
   }
   return 0;
@@ -305,7 +306,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->packet_size  = packet_size; //Not including preamble or address
 
   {
-    bs_time_t tx_start_time = tm_get_abs_time() + nrfra_timings_get_TX_chain_delay();
+    bs_time_t tx_start_time = tm_get_abs_time();
     tx_req->start_tx_time = hwll_phy_time_from_dev(tx_start_time);
     tx_req->start_packet_time = tx_req->start_tx_time ;
     tx_req->end_tx_time = tx_req->start_tx_time + packet_duration;

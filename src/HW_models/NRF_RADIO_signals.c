@@ -15,6 +15,7 @@
  */
 
 #include "NRF_RADIO.h"
+#include "NRF_RADIO_utils.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
@@ -83,12 +84,26 @@ void nrf_radio_signal_DISABLED(){
   NRF_RADIO_regs.EVENTS_DISABLED = 1;
   nrf_ppi_event(RADIO_EVENTS_DISABLED);
 
-  //These 2 are fake tasks meant to start a HW timer for the TIFS
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) {
-    nrf_radio_fake_task_TRXEN_TIFS();
-  }
-  if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk ) {
-    nrf_radio_fake_task_TRXEN_TIFS();
+  /*
+   * Everything indicates that, when the HW TIFS is enabled
+   * what happens is that these DISABLED_[TR]XEN shorts are
+   * effectively disabled and the tasks_[TR]XEN is instead
+   * triggered when a HW counter/timer triggers a bit later
+   */
+  if (nrfra_is_HW_TIFS_enabled()) {
+     /* This is a fake task meant to start a HW timer for the TIFS
+      * which has effect only if the TIFS was enabled.
+      * In that case, the TXEN or RXEN will be triggered in a small
+      * while (as per the TIFS configuration/Timer_TIFS), instead of right now */
+      nrf_radio_fake_task_TRXEN_TIFS();
+  } else {
+    /* Otherwise the normal TXEN/RXEN shortcuts apply */
+    if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) {
+      nrf_radio_tasks_TXEN();
+    }
+    if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk ) {
+      nrf_radio_tasks_RXEN();
+    }
   }
 
   if ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RSSISTOP_Msk ) {
