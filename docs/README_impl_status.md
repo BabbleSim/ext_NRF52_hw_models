@@ -65,8 +65,8 @@ Currently these models aim at modelling the peripherals of a nRF52833 SOC at var
     * See [NRF_TEMP.c](../src/HW_models/NRF_TEMP.c)
 * &#x10102; **TWI** — I2C compatible two-wire interface
     * Not modelled yet
-* &#x2713; **TIMER** — Timer/counter
-    * See [NRF_TIMER.c](../src/HW_models/NRF_TIMER.c)
+* &#x2714; **TIMER** — Timer/counter
+    * Complete
 * &#x10102; **TWIM** — I2C compatible two-wire interface master with EasyDMA
     * Not modelled yet
 * &#x10102; **TWIS** — I2C compatible two-wire interface slave with EasyDMA

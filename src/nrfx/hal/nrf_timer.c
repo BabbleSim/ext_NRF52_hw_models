@@ -83,13 +83,3 @@ void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
     p_reg->INTENCLR = mask;
     nrf_timer_regw_sideeffects_INTENCLR(i);
 }
-
-void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
-                        nrf_timer_mode_t mode)
-{
-    if (mode == NRF_TIMER_MODE_COUNTER) {
-      bs_trace_warning_line_time("Counter mode is not fully supported\n");
-    }
-    p_reg->MODE = (p_reg->MODE & ~TIMER_MODE_MODE_Msk) |
-                  ((mode << TIMER_MODE_MODE_Pos) & TIMER_MODE_MODE_Msk);
-}
