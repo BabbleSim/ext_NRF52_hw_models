@@ -22,6 +22,7 @@
 #include "NRF_HW_model_top.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
+#include "bs_compat.h"
 
 bs_time_t Timer_GPIO_input = TIME_NEVER;
 
@@ -105,6 +106,7 @@ static void nrf_gpio_init_output_file(void)
 		return;
 	}
 
+	_bs_create_folders_in_path(gpio_out_file_path);
 	output_file_ptr = bs_fopen(gpio_out_file_path, "w");
 	fprintf(output_file_ptr, "time(microsecond),port,pin,level\n");
 }
