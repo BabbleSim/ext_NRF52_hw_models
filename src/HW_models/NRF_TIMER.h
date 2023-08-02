@@ -80,6 +80,8 @@ void nrf_timer_regw_sideeffects_TASKS_CAPTURE(int t, int cc_n);
 void nrf_timer_regw_sideeffects_INTENSET(int t);
 void nrf_timer_regw_sideeffects_INTENCLR(int t);
 void nrf_timer_regw_sideeffects_CC(int t, int cc_n);
+/* Side-effecting function when any event register is written: */
+void nrf_timer_regw_sideeffects_EVENTS_all(int t);
 
 #ifdef __cplusplus
 }

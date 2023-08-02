@@ -388,6 +388,10 @@ void nrf_timer_regw_sideeffects_TASKS_COUNT(int t){
   }
 }
 
+void nrf_timer_regw_sideeffects_EVENTS_all(int t){
+  nrf_timer_eval_interrupts(t);
+}
+
 void nrf_timer_regw_sideeffects_INTENSET(int t){
   if ( NRF_TIMER_regs[t].INTENSET ){
     TIMER_INTEN[t] |= NRF_TIMER_regs[t].INTENSET;

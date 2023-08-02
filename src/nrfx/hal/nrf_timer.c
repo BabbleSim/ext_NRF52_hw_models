@@ -5,6 +5,8 @@
  *
  * Note that the function prototypes are taken from the NRFx HAL
  */
+
+#include <stdint.h>
 #include "hal/nrf_timer.h"
 #include "bs_tracing.h"
 #include "NRF_TIMER.h"
@@ -67,6 +69,15 @@ void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
                              (int) task);
   }
 }
+
+void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
+                           nrf_timer_event_t event)
+{
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
+    int t = timer_number_from_ptr(p_reg);
+    nrf_timer_regw_sideeffects_EVENTS_all(t);
+}
+
 
 void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
                           uint32_t         mask)
