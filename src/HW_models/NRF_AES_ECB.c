@@ -1,12 +1,13 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /*
  * AES electronic codebook mode encryption
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=4_1_0_5_5
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=5_1_0_5_5
  */
 
 #include "NRF_AES_ECB.h"
@@ -14,13 +15,14 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
-bs_time_t Timer_ECB = TIME_NEVER; /* Time when the ECB will finish */
+static bs_time_t Timer_ECB = TIME_NEVER; /* Time when the ECB will finish */
 
 NRF_ECB_Type NRF_ECB_regs;
 
@@ -36,16 +38,14 @@ typedef struct {
 	uint8_t CIPHERTEXT[16]; /* 16 byte AES ciphertext output block */
 } ecbdata_t;
 
-void nrf_aes_ecb_init(){
+static void nrf_aes_ecb_init(){
 	memset(&NRF_ECB_regs, 0, sizeof(NRF_ECB_regs));
 	Timer_ECB = TIME_NEVER;
 	ECB_INTEN = 0;
 	ECB_Running = false;
 }
 
-void nrf_aes_ecb_clean_up(){
-
-}
+NSI_TASK(nrf_aes_ecb_init, HW_INIT, 100);
 
 /*
  * Cheat interface to adjust the time in microseconds it takes
@@ -89,14 +89,14 @@ void nrf_ecb_TASK_STOPECB(){
 
 	ECB_Running = false;
 	Timer_ECB = TIME_NEVER;
-	nrf_hw_find_next_timer_to_trigger();
+	nsi_hws_find_next_event();
 	signal_ERRORECB();
 }
 
 void nrf_ecb_TASK_STARTECB(){
 	ECB_Running = true;
-	Timer_ECB = tm_get_hw_time() + ECB_t_ECB;
-	nrf_hw_find_next_timer_to_trigger();
+	Timer_ECB = nsi_hws_get_time() + ECB_t_ECB;
+	nsi_hws_find_next_event();
 }
 
 void nrf_ecb_regw_sideeffects_INTENSET(){
@@ -128,11 +128,11 @@ void nrf_ecb_regw_sideeffects_TASKS_STOPECB(){
 	}
 }
 
-void nrf_ecb_timer_triggered(){
+static void nrf_ecb_timer_triggered(){
 
 	ECB_Running = false;
 	Timer_ECB = TIME_NEVER;
-	nrf_hw_find_next_timer_to_trigger();
+	nsi_hws_find_next_event();
 
 	ecbdata_t *ecbptr = (ecbdata_t *)NRF_ECB_regs.ECBDATAPTR;
 
@@ -147,3 +147,5 @@ void nrf_ecb_timer_triggered(){
 		signal_ENDECB();
 	}
 }
+
+NSI_HW_EVENT(Timer_ECB, nrf_ecb_timer_triggered, 50);

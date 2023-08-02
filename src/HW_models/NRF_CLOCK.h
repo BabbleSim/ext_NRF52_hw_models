@@ -13,9 +13,6 @@ extern "C"{
 #endif
 
 extern NRF_CLOCK_Type NRF_CLOCK_regs;
-void nrf_clock_init(void);
-void nrf_clock_clean_up(void);
-void nrf_clock_timer_triggered(void);
 void nrf_clock_TASKS_LFCLKSTART(void);
 void nrf_clock_TASKS_LFCLKSTOP(void);
 void nrf_clock_TASKS_HFCLKSTART(void);

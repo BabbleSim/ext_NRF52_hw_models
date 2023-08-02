@@ -16,8 +16,6 @@ extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 
 #define N_GPIOTE_CHANNELS (sizeof(NRF_GPIOTE_regs.CONFIG)/sizeof(NRF_GPIOTE_regs.CONFIG[0]))
 
-void nrf_gpiote_init();
-void nrf_gpiote_clean_up();
 void nrf_gpiote_port_event_raise(unsigned int port);
 
 void nrf_gpiote_regw_sideeffects_TASKS_OUT(unsigned int n);

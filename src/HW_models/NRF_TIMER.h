@@ -13,10 +13,6 @@
 extern "C"{
 #endif
 
-void nrf_hw_model_timer_init(void);
-void nrf_hw_model_timer_clean_up(void);
-void nrf_hw_model_timer_timer_triggered(void);
-
 extern NRF_TIMER_Type NRF_TIMER_regs[];
 
 void nrf_timer0_TASK_CAPTURE_0(void);

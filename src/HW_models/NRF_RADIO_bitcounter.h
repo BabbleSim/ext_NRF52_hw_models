@@ -13,8 +13,6 @@
 extern "C"{
 #endif
 
-void nrf_radio_bitcounter_reset();
-void nrf_radio_bitcounter_cleanup();
 void nrf_radio_stop_bit_counter();
 
 #ifdef __cplusplus

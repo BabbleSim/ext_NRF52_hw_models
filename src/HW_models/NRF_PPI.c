@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,8 +20,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
 #include "NRF_AAR.h"
 #include "NRF_AES_CCM.h"
 #include "NRF_GPIOTE.h"
@@ -33,6 +32,7 @@
 #include "NRF_EGU.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
+#include "nsi_tasks.h"
 
 NRF_PPI_Type NRF_PPI_regs; ///< The PPI registers
 
@@ -628,7 +628,7 @@ volatile static struct {
 /**
  * Initialize the PPI model
  */
-void nrf_ppi_init(void) {
+static void nrf_ppi_init(void) {
   memset(&NRF_PPI_regs, 0, sizeof(NRF_PPI_regs));
   memset(ppi_ch_tasks, 0, sizeof(ppi_ch_tasks));
   memset(ppi_evt_to_ch, 0, sizeof(ppi_evt_to_ch));
@@ -637,15 +637,19 @@ void nrf_ppi_init(void) {
   tasks_queue.size = TASK_QUEUE_ALLOC_SIZE;
 }
 
+NSI_TASK(nrf_ppi_init, HW_INIT, 50);
+
 /**
  * Cleanup the PPI model before exiting the program
  */
-void nrf_ppi_clean_up(void) {
+static void nrf_ppi_clean_up(void) {
   if (tasks_queue.q) {
     free(tasks_queue.q);
     tasks_queue.q = NULL;
   }
 }
+
+NSI_TASK(nrf_ppi_clean_up, ON_EXIT_PRE, 50);
 
 static void nrf_ppi_enqueue_task(dest_f_t task) {
   int i;

@@ -26,13 +26,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-
 #include "NRF_PPI.h"
 #include "NRF_CLOCK.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
-#include "time_machine_if.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 #define N_RTC 3
 #define N_CC 4
@@ -47,7 +47,7 @@ NRF_RTC_Type NRF_RTC_regs[N_RTC];
 static bool RTC_Running[N_RTC] = {false};
 static uint32_t RTC_INTEN[N_RTC] = {0};
 
-bs_time_t Timer_RTC = TIME_NEVER;
+static bs_time_t Timer_RTC = TIME_NEVER;
 static bs_time_t cc_timers[N_RTC][N_CC] = {{TIME_NEVER}}; //when each CC will match (in microseconds)
 static bs_time_t overflow_timer[N_RTC] = {TIME_NEVER}; //when the timer will overflow (in microseconds)
 
@@ -92,7 +92,7 @@ static uint64_t us_time_to_sub_us_time(bs_time_t us_time)
 
 static uint64_t get_hw_time_sub_us()
 {
-  bs_time_t now = tm_get_hw_time();
+  bs_time_t now = nsi_hws_get_time();
 
   if (now > sub_us_time_to_us_time(TIME_NEVER)) {
     bs_trace_error_time_line("Bummer, the RTC model only supports running for 1142 years\n");
@@ -191,7 +191,7 @@ static void update_master_timer() {
       Timer_RTC = overflow_timer[rtc];
     }
   }
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 /**
@@ -360,8 +360,7 @@ static void handle_overflow_event(int rtc)
   }
 }
 
-
-void nrf_rtc_timer_triggered() {
+static void nrf_rtc_timer_triggered(void) {
   for ( int rtc = 0; rtc < N_RTC-1/*the 3rd rtc does not have an int*/ ; rtc++ ){
     if ( RTC_Running[rtc] == false ) {
       continue;
@@ -377,6 +376,8 @@ void nrf_rtc_timer_triggered() {
   update_master_timer();
 }
 
+NSI_HW_EVENT(Timer_RTC, nrf_rtc_timer_triggered, 50);
+
 /**
  * Check if an EVTEN or INTEN has the tick event set
  */
@@ -386,7 +387,7 @@ static void check_not_supported_func(uint32_t i) {
   }
 }
 
-void nrf_rtc_init() {
+static void nrf_rtc_init(void) {
   memset(NRF_RTC_regs, 0, sizeof(NRF_RTC_regs));
   for (int i = 0; i < N_RTC ; i++) {
     RTC_Running[i] = false;
@@ -403,11 +404,9 @@ void nrf_rtc_init() {
   Timer_RTC = TIME_NEVER;
 }
 
-void nrf_rtc_clean_up() {
+NSI_TASK(nrf_rtc_init, HW_INIT, 100);
 
-}
-
-void nrf_rtc_notify_first_lf_tick() {
+void nrf_rtc_notify_first_lf_tick(void) {
   first_lf_tick_time_sub_us = get_hw_time_sub_us();
   bs_trace_raw_time(9, "RTC: First lf tick\n");
 }

@@ -7,7 +7,6 @@
 #define _NRF_HW_MODEL_BS_COMPAT_H
 
 #include <string.h>
-#include "bs_oswrap.h"
 
 #ifdef __cplusplus
 extern "C"{

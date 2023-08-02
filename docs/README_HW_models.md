@@ -26,13 +26,8 @@ Overall these models have a time granularity of 1us.
 ## Implementation specification
 
 Overall these models are "event driven". There is several ways
-of building these kind of models, but for simplicity, speed, and to not need to
-rely on any kind of library or 3rd party engine, these models are built with a
-very nimble engine provided partly by the models themselves, and partly by the
-nrf52_bsim "time machine".<br>
-The reason for this division is due to the nrf52_bsim being
-the overall scheduler, which initializes both models and "CPU", and is in
-charge of when each should run.<br>
+of building these kind of models, but for simplicity, these models are built
+using a very nimble engine provided by the native simulator, the "hw scheduler".
 
 ### About the event scheduling
 
@@ -50,32 +45,24 @@ Such processes will be modelled in a bit more complex way:
   * The process model may use one or several "events"/timers.
   * When needed these timers will be set at a point in the future where some
     action needs to be performed.
-  * Whenever that time is reached, an scheduler will call a function in that
+  * Whenever that time is reached, the HW scheduler will call a function in that
     model tasked with continuing executing that task/process.
 
 In this model, all of these events|timers types and their callbacks are known
-in design/compile time.
+in compile time.
 Meaning, there is no dynamic registration of events types.<br>
 Normally each peripheral model will have 1 of such event timers, and it will
 be up to the peripheral model to schedule several subevents using only that
 one timer and callback if needed.
 
-The HW models top level, `NRF_HW_model_top`, collects all these events and
-exposes only 1 timer (with 1 callback) to the overall scheduler provided by
-the nrf52_bsim.
+Whenever a HW model updates its event timer, it will call a function in the HW scheduler.
 
-Whenever a HW model updates its timer, it will call a function in the top level
-to update that top level timer if needed.
-
-The overall scheduler provided by the nrf52_bsim, will advance simulated time
-when needed, and call into the top level HW models "event|task runner"
-(`nrf_hw_some_timer_reached()`) whenever its timer time is reached.
-This will in turn call whichever HW submodule task function was scheduled for
-this moment.
+The overall HW scheduler provided by the native_simulator, will advance simulated time
+when needed, and call into the corresponding HW submodule "event|task runner"
+whenever its event time is reached.
 
 Note that several HW submodules may be scheduled to run in the same µs.
 In this case, they will be handled in different "delta cycles" in that same µs.
-, that is, in different consecutive calls to `nrf_hw_some_timer_reached()`.
 Each timer|event has a given priority, and therefore will always be called
 in the same order relative to other HW events which may be schedule in the
 same µs.<br>
@@ -83,6 +70,8 @@ Note also, that any HW submodule may schedule a new event to be called in the
 same µs in which it is running. This can be done for any purpose,
 like for example to deffer a sideeffect of writing to a register from a SW
 thread into the HW models thread.
+When they do so, their "event|task runner" will be called right after in the
+next delta cycle.
 
 ### The SW registers IF
 
@@ -130,28 +119,37 @@ The files are named `NRF_<PERIPHERAL>.{c|h}`.
 Mostly all these models have the following functions:
 
 #### Interface:
+
+These models use:
+
+ * The native simulator HW scheduler to register the events timers and callbacks
+ * The native simulator "tasks" interface, to register their initialization and cleanup functions
+   to be called during the HW initialization and program exit.
+
+Overall, they follow a pattern where each peripheral has these types of functions:
+
 ```
-nrf_<periperal>_init()            : Initialize the model
-nrf_<periperal>_cleanup()         : Free any memory used by the model
+nrf_<periperal>_init()            : To initialize the model
+nrf_<periperal>_cleanup()         : To free any resources used by the model
 nrf_<periperal>_<TASK name>()     : Perform the actions triggered by <TASK>
 nrf_<periperal>_regw_sideeffects_<register name>()
                                   : Trigger any possible sideeffect from writing
                                     to that regiter
 Timer_<peripheral> &
 nrf_<periperal>_timer_triggered() : Models which take time to perform their work
-                                    Use a registered timer. When that timer is
-                                    reached, this function is called to perform
+                                    Use a registered event. When that event timer
+                                    is reached, this function is called to perform
                                     any neccessary step, including update that
-                                    timer.
+                                    event timer.
 ```
-#### Internal/static:
+#### Internal:
 ```
-signal_<event register name>() : Signal that <event> has just happened
+signal_<event register name>() : Signal that <event> has just happened,
+                                 handle shortcuts, and raise interrupts.
 
 ```
 The tasks, registers and event names should match the register interface
 specified in the linked documentation.
-
 
 ## Integrating these models in another system
 
@@ -164,31 +162,34 @@ As described before, overall the models are "event driven":
 They rely on an overall scheduler triggering (calling) them in
 the appropriate times.
 
-In the case of Zephyr's nrf52_bsim, this overall scheduler is provided by
-the nrf52_bsim "time machine". The interface the models expect from this
-is described in [`time_machine_if.h`](../src/HW_models/time_machine_if.h)
+By default this overall scheduler is provided by the native simulator
+HW scheduler.
 
-The top level [`NRF_HW_model_top.c`](../src/HW_models/NRF_HW_model_top.c)
-exposes one event timer: `nrf_hw_next_timer_to_trigger`.
-This timer represents, in microseconds, when the models need to perform
+The models register their events, their timers, callbacks and priorities with
+`NSI_HW_EVENT(timer, callback, priority)`.
+When two events times coincide, the one with the highest priority should be run first,
+and when two have the same priority, it does not matter which is run first, while
+they are run in the same order consistently.
+
+The events timers represent, in microseconds, when the models need to perform
 the next action.
 
 It is the responsability of that overall scheduler to ensure the HW models
-top level scheduling function (`nrf_hw_some_timer_reached()`) is called
-whenever that time is reached.
+are called whenever their time is reached (and not later).
 
-This timer may be changed after each execution of the models, or whenever
+These event timers may be changed after each execution of the models, or whenever
 a HW register is written.
-When the models change this timer, they will call
-`tm_find_next_timer_to_trigger()` to notify that overall scheduler of the
-change.
+When the models change this timer, they will call `nsi_hws_find_next_event()` to
+notify that overall scheduler of the change.
 
-The models are initalized by calling first `nrf_hw_pre_init()`.
-Later `nrf_hw_initialize()` shall be called with the command line selected
-options.<br>
-No other HW model function can be called before these two.<br>
-`nrf_hw_models_free_all()` shall be called to clean up after the simulation
-is done: to deallocate and close any resource the models may be using.
+The models are initalized by calling their registered initialization functions
+(`NSI_TASK(*, HW_INIT, *);`)
+Similarly, on program exit, the models cleanup functions registered
+with `NSI_TASK(*, ON_EXIT_*, *);` should be called, to free any system resources.
+
+Some of these models will also require being called very early during the process
+execution to register command line arguments.
+These are registered with `NSI_TASK(*, PRE_BOOT_1, *);`
 
 ### Models interface towards a CPU model:
 
@@ -209,12 +210,12 @@ ensured only one thread calls into these HW models at a time.
 
 ### Command line intercace arguments
 
-These models command line arguments/options are described in
-[`NRF_hw_args.h`](../src/HW_models/NRF_hw_args.h)
+These models register their own command line arguments/options using
+babblesim's command line argument utilities.
+The integration program should support this.
 
 The way to describe the command line arguments follows Babblesim's
 `libUtilv1` command line parsing convention.
 
 You can check the nrf52_bsim wrapping code for an insight on how
-you can set them.
-
+you can use these component.

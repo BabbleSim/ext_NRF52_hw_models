@@ -7,7 +7,6 @@
 #include "bs_tracing.h"
 #include "bs_pc_2G4.h"
 #include "NRF_HWLowL.h"
-#include "time_machine_if.h"
 #include "xo_if.h"
 
 /*
@@ -79,6 +78,7 @@ void hwll_sync_time_with_phy(bs_time_t d_time) {
     hwll_disconnect_phy_and_exit();
   }
 }
+
 /**
  * Wait until the Phy reaches a given *Phy* simulated time
  *

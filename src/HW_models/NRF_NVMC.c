@@ -54,16 +54,17 @@
 #include <stdlib.h>
 #include "bs_tracing.h"
 #include "bs_cmd_line.h"
+#include "bs_dynargs.h"
 #include "bs_oswrap.h"
 #include "bs_compat.h"
 #include "NRF_NVMC.h"
-#include "NRF_HW_model_top.h"
-#include "time_machine_if.h"
-#include "weak_stubs.h"
+#include "nsi_hw_scheduler.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 NRF_UICR_Type *NRF_UICR_regs_p;
 NRF_NVMC_Type NRF_NVMC_regs = {0};
-bs_time_t Timer_NVMC = TIME_NEVER; //Time when the next flash operation will be completed
+static bs_time_t Timer_NVMC = TIME_NEVER; //Time when the next flash operation will be completed
 
 typedef struct {
   uint8_t *storage;
@@ -102,16 +103,11 @@ struct nvmc_args_t {
 
 static void nvmc_initialize_data_storage();
 static void nvmc_clear_storage();
-static void nvmc_register_cmd_args();
-
-void nrfhw_nvmc_uicr_pre_init(void){
-  nvmc_register_cmd_args();
-}
 
 /**
  * Initialize the NVMC and UICR models
  */
-void nrfhw_nvmc_uicr_init(){
+static void nrfhw_nvmc_uicr_init(){
   memset(&NRF_NVMC_regs, 0x00, sizeof(NRF_NVMC_regs));
   NRF_NVMC_regs.READY = 1;
   NRF_NVMC_regs.READYNEXT = 1;
@@ -119,7 +115,7 @@ void nrfhw_nvmc_uicr_init(){
 
   flash_op = flash_idle;
   Timer_NVMC = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 
   flash_st.file_path      = nvmc_args.flash_file;
   flash_st.erase_at_start = nvmc_args.flash_erase;
@@ -157,13 +153,17 @@ void nrfhw_nvmc_uicr_init(){
   }
 }
 
+NSI_TASK(nrfhw_nvmc_uicr_init, HW_INIT, 100);
+
 /**
  * Clean up the NVMC and UICR model before program exit
  */
-void nrfhw_nvmc_uicr_clean_up(){
+static void nrfhw_nvmc_uicr_clean_up(){
   nvmc_clear_storage(&flash_st);
   nvmc_clear_storage(&uicr_st);
 }
+
+NSI_TASK(nrfhw_nvmc_uicr_clean_up, ON_EXIT_PRE, 100);
 
 /*
  * Complete the actual erase of a flash page
@@ -208,7 +208,7 @@ static void nrfhw_nvmc_complete_erase_all(void){
 /**
  * Time has come when the programmed flash operation has finished
  */
-void nrfhw_nvmc_timer_triggered(void){
+static void nrfhw_nvmc_timer_triggered(void){
 
   switch (flash_op) {
     case flash_write:
@@ -238,14 +238,16 @@ void nrfhw_nvmc_timer_triggered(void){
   NRF_NVMC_regs.READYNEXT = 1;
 
   Timer_NVMC = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
+
+NSI_HW_EVENT(Timer_NVMC, nrfhw_nvmc_timer_triggered, 50);
 
 bs_time_t nrfhw_nvmc_time_to_ready(void) {
   if (NRF_NVMC_regs.READY) {
     return 0;
   } else {
-    return Timer_NVMC - tm_get_hw_time();
+    return Timer_NVMC - nsi_hws_get_time();
   }
 }
 
@@ -304,8 +306,8 @@ static void nrfhw_nvmc_erase_page(uint32_t address){
   NRF_NVMC_regs.READY = 0;
   NRF_NVMC_regs.READYNEXT = 0;
   erase_address = address;
-  Timer_NVMC = tm_get_hw_time() + flash_t_erasepage;
-  nrf_hw_find_next_timer_to_trigger();
+  Timer_NVMC = nsi_hws_get_time() + flash_t_erasepage;
+  nsi_hws_find_next_event();
 }
 
 /* Note ERASEPCR1 is an alias to ERASEPAGE (same register) */
@@ -327,8 +329,8 @@ void nrfhw_nvmc_regw_sideeffects_ERASEUICR(){
     flash_op = flash_erase_uicr;
     NRF_NVMC_regs.READY = 0;
     NRF_NVMC_regs.READYNEXT = 0;
-    Timer_NVMC = tm_get_hw_time() + flash_t_erasepage;
-    nrf_hw_find_next_timer_to_trigger();
+    Timer_NVMC = nsi_hws_get_time() + flash_t_erasepage;
+    nsi_hws_find_next_event();
   }
 }
 
@@ -342,8 +344,8 @@ void nrfhw_nvmc_regw_sideeffects_ERASEALL(){
     flash_op = flash_erase_all;
     NRF_NVMC_regs.READY = 0;
     NRF_NVMC_regs.READYNEXT = 0;
-    Timer_NVMC = tm_get_hw_time() + flash_t_eraseall;
-    nrf_hw_find_next_timer_to_trigger();
+    Timer_NVMC = nsi_hws_get_time() + flash_t_eraseall;
+    nsi_hws_find_next_event();
   }
 }
 
@@ -361,8 +363,8 @@ void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL(){
   if (page_erased[erase_address/FLASH_PAGE_SIZE] == false) {
     time_under_erase[erase_address/FLASH_PAGE_SIZE] += duration;
   }
-  Timer_NVMC = tm_get_hw_time() + duration;
-  nrf_hw_find_next_timer_to_trigger();
+  Timer_NVMC = nsi_hws_get_time() + duration;
+  nsi_hws_find_next_event();
 }
 
 static bool addr_in_uicr(uint32_t address){
@@ -406,8 +408,8 @@ void nrfhw_nmvc_write_word(uint32_t address, uint32_t value){
   NRF_NVMC_regs.READY = 0;
   NRF_NVMC_regs.READYNEXT = 0;
 
-  Timer_NVMC = tm_get_hw_time() + flash_t_write;
-  nrf_hw_find_next_timer_to_trigger();
+  Timer_NVMC = nsi_hws_get_time() + flash_t_write;
+  nsi_hws_find_next_event();
 }
 
 /**
@@ -675,3 +677,5 @@ static void nvmc_register_cmd_args(void){
 
   bs_add_extra_dynargs(args_struct_toadd);
 }
+
+NSI_TASK(nvmc_register_cmd_args, PRE_BOOT_1, 100);

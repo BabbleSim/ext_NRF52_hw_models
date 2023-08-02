@@ -13,8 +13,6 @@
 extern "C" {
 #endif
 
-void hw_irq_ctrl_init(void);
-void hw_irq_ctrl_cleanup(void);
 void hw_irq_ctrl_raise_im(uint32_t irq);
 uint64_t hw_irq_ctrl_get_irq_status();
 void hw_irq_ctrl_clear_all_irqs();
@@ -25,7 +23,6 @@ uint64_t hw_irq_ctrl_get_irq_mask();
 void hw_irq_ctrl_enable_irq(unsigned int irq);
 void hw_irq_ctrl_disable_irq(unsigned int irq);
 int hw_irq_ctrl_is_irq_enabled(unsigned int irq);
-void hw_irq_ctrl_timer_triggered();
 void hw_irq_ctrl_set_irq(unsigned int irq);
 void hw_irq_ctrl_raise_level_irq_line(unsigned int irq);
 void hw_irq_ctrl_lower_level_irq_line(unsigned int irq);

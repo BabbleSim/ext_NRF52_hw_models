@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2018 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +17,14 @@
  * limitations under the License.
  */
 
+#include <stdbool.h>
 #include <dlfcn.h>
 #include <string.h>
 #include "bs_types.h"
 #include "bs_tracing.h"
+#include "bs_cmd_line.h"
+#include "bs_dynargs.h"
+#include "nsi_tasks.h"
 
 static bool Real_encryption_enabled = false;
 static void *LibCryptoHandle = NULL;
@@ -56,8 +61,28 @@ static blecrypt_packet_encrypt_f blecrypt_packet_encrypt;
 static blecrypt_packet_decrypt_f blecrypt_packet_decrypt;
 static blecrypt_aes_128_f        blecrypt_aes_128;
 
-void BLECrypt_if_enable_real_encryption(bool mode) {
-  if ( mode ) { //if the user tries to enable it
+static bool BLECrypt_if_args_useRealAES;
+
+static void BLECrypt_if_register_cmd_args(void) {
+  static bs_args_struct_t args_struct_toadd[] = {
+  {
+    .option = "RealEncryption",
+    .name = "realAES",
+    .type = 'b',
+    .dest = (void*)&BLECrypt_if_args_useRealAES,
+    .descript = "(0)/1 Use the real AES encryption for the LL or just send everything in "
+                "plain text (default) (requires the ext_libCryptov1 component)"
+  },
+  ARG_TABLE_ENDMARKER
+  };
+
+  bs_add_extra_dynargs(args_struct_toadd);
+}
+
+NSI_TASK(BLECrypt_if_register_cmd_args, PRE_BOOT_1, 90);
+
+static void BLECrypt_if_enable_real_encryption() {
+  if ( BLECrypt_if_args_useRealAES ) { //if the user tried to enable it
     //Attempt to load libCrypto
     char lib_name[128];
     char *error;
@@ -97,7 +122,9 @@ void BLECrypt_if_enable_real_encryption(bool mode) {
   }
 }
 
-void BLECrypt_if_free(){
+NSI_TASK(BLECrypt_if_enable_real_encryption, HW_INIT, 100);
+
+static void BLECrypt_if_free(){
   if ( LibCryptoHandle != NULL ){
     //#define DONTCLOSELIBRARIES
 #ifndef DONTCLOSELIBRARIES /*To be able to profile time spent in libraries in callgrind*/
@@ -106,6 +133,8 @@ void BLECrypt_if_free(){
 #endif
   }
 }
+
+NSI_TASK(BLECrypt_if_free, ON_EXIT_POST, 100);
 
 void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte of packet header
     const uint8_t* unecrypted_payload,      // Packet payload to be encrypted

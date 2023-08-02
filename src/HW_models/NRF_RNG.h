@@ -12,16 +12,13 @@
 extern "C"{
 #endif
 
-void nrf_rng_init();
-void nrf_rng_clean_up();
 void nrf_rng_regw_sideeffects();
-void nrf_rng_regw_sideeffects_TASK_START();
-void nrf_rng_regw_sideeffects_TASK_STOP();
-void nrf_rng_regw_sideeffects_INTENSET();
-void nrf_rng_regw_sideeffects_INTENCLEAR();
-void nrf_rng_timer_triggered();
-void nrf_rng_task_start();
-void nrf_rng_task_stop();
+void nrf_rng_regw_sideeffects_TASK_START(void);
+void nrf_rng_regw_sideeffects_TASK_STOP(void);
+void nrf_rng_regw_sideeffects_INTENSET(void);
+void nrf_rng_regw_sideeffects_INTENCLEAR(void);
+void nrf_rng_task_start(void);
+void nrf_rng_task_stop(void);
 
 extern NRF_RNG_Type NRF_RNG_regs;
 

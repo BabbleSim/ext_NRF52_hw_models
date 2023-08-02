@@ -13,10 +13,8 @@ extern "C"{
 #endif
 
 extern NRF_RTC_Type NRF_RTC_regs[];
-void nrf_rtc_init();
-void nrf_rtc_clean_up();
+
 void nrf_rtc_LF_tick();
-void nrf_rtc_timer_triggered();
 void nrf_rtc_update_COUNTER(int rtc);
 void nrf_rtc_regw_sideeffect_TASKS_START(int i);
 void nrf_rtc_regw_sideeffect_TASKS_STOP(int i);

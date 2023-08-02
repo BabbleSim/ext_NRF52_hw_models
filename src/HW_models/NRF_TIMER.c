@@ -28,12 +28,13 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "time_machine_if.h"
 #include "NRF_TIMER.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 #define N_TIMERS 5
 #define N_MAX_CC 6
@@ -50,14 +51,14 @@ static int Timer_n_CCs[N_TIMERS] = N_TIMER_CC_REGS;
 static bs_time_t Timer_counter_startT[N_TIMERS] = {TIME_NEVER}; //Time when the timer was started (only for timer mode)
 static uint32_t Counter[N_TIMERS] = {0}; //Internal count value. Used in count mode, and in Timer mode during stops.
 
-bs_time_t Timer_TIMERs = TIME_NEVER;
+static bs_time_t Timer_TIMERs = TIME_NEVER;
 /* In timer mode: When each compare match is expected to happen: */
 static bs_time_t CC_timers[N_TIMERS][N_MAX_CC] = {{TIME_NEVER}};
 
 /**
  * Initialize the TIMER model
  */
-void nrf_hw_model_timer_init(void) {
+static void nrf_hw_model_timer_init(void) {
   memset(NRF_TIMER_regs, 0, sizeof(NRF_TIMER_regs));
   for (int t = 0; t < N_TIMERS ; t++ ){
     TIMER_INTEN[t] = 0;
@@ -71,12 +72,7 @@ void nrf_hw_model_timer_init(void) {
   Timer_TIMERs = TIME_NEVER;
 }
 
-/**
- * Clean up the TIMER model before program exit
- */
-void nrf_hw_model_timer_clean_up(void) {
-
-}
+NSI_TASK(nrf_hw_model_timer_init, HW_INIT, 100);
 
 /**
  * Convert a time delta in us to the equivalent count accounting for the PRESCALER
@@ -140,7 +136,7 @@ static void update_master_timer(void) {
       }
     }
   }
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 /**
@@ -151,7 +147,7 @@ static void update_cc_timer(int t, int cc){
   if ( ( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
     bs_time_t next_match = Timer_counter_startT[t]
                            + counter_to_time(NRF_TIMER_regs[t].CC[cc], t);
-    while ( next_match <= tm_get_hw_time() ){
+    while ( next_match <= nsi_hws_get_time() ){
       next_match += time_of_1_counter_wrap(t);
     }
     CC_timers[t][cc] = next_match;
@@ -227,7 +223,7 @@ void nrf_timer_TASK_START(int t){
   if ( Timer_running[t] == false ) {
     Timer_running[t] = true;
     if ( NRF_TIMER_regs[t].MODE == 0 ){ //Timer mode
-      Timer_counter_startT[t] = tm_get_hw_time() - counter_to_time(Counter[t], t); //If the counter is not zero at start, is like if the counter was started earlier
+      Timer_counter_startT[t] = nsi_hws_get_time() - counter_to_time(Counter[t], t); //If the counter is not zero at start, is like if the counter was started earlier
       update_all_cc_timers(t);
       update_master_timer();
     }
@@ -239,7 +235,7 @@ void nrf_timer_TASK_STOP(int t){
   if (Timer_running[t] == true) {
     Timer_running[t] = false;
     if ( NRF_TIMER_regs[t].MODE == 0 ){ //Timer mode
-      Counter[t] = time_to_counter(tm_get_hw_time() - Timer_counter_startT[t], t); //we save the value when the counter was stoped in case it is started again without clearing it
+      Counter[t] = time_to_counter(nsi_hws_get_time() - Timer_counter_startT[t], t); //we save the value when the counter was stoped in case it is started again without clearing it
     }
     for (int cc = 0 ; cc < Timer_n_CCs[t] ; cc++){
       CC_timers[t][cc] = TIME_NEVER;
@@ -280,7 +276,7 @@ void nrf_timer_TASK_CAPTURE(int t, int cc_n){
                                      "trigered on a timer which was never "
                                      "started => you get garbage\n", t, cc_n);
     }
-    bs_time_t Elapsed = tm_get_hw_time() - Timer_counter_startT[t];
+    bs_time_t Elapsed = nsi_hws_get_time() - Timer_counter_startT[t];
     NRF_TIMER_regs[t].CC[cc_n] = time_to_counter(Elapsed,t) & mask_from_bitmode(t);
 
     //The new CC causes a new possible CC match time:
@@ -293,7 +289,7 @@ void nrf_timer_TASK_CLEAR(int t) {
   Counter[t] = 0;
   if (NRF_TIMER_regs[t].MODE == 0) {
     //Timer mode:
-    Timer_counter_startT[t] = tm_get_hw_time();
+    Timer_counter_startT[t] = nsi_hws_get_time();
     update_all_cc_timers(t);
     update_master_timer();
   }
@@ -422,7 +418,7 @@ void nrf_timer_regw_sideeffects_CC(int t, int cc_n){
   }
 }
 
-void nrf_hw_model_timer_timer_triggered(void) {
+static void nrf_hw_model_timer_timer_triggered(void) {
   unsigned int t, cc;
   struct {
     unsigned int t[N_TIMERS*N_MAX_CC];
@@ -453,6 +449,8 @@ void nrf_hw_model_timer_timer_triggered(void) {
   }
   update_master_timer();
 }
+
+NSI_HW_EVENT(Timer_TIMERs, nrf_hw_model_timer_timer_triggered, 50);
 
 void nrf_timer0_TASK_START() { nrf_timer_TASK_START(0); }
 void nrf_timer1_TASK_START() { nrf_timer_TASK_START(1); }

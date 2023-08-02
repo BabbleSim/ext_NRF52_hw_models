@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 void trivial_xo_set_clock_drift(double cdrift);
-void trivial_xo_set_toffset(bs_time_t args_tOffset);
+void xo_model_set_toffset(double args_tOffset);
 
 #ifdef __cplusplus
 }

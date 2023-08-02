@@ -15,14 +15,11 @@ extern "C"{
 
 extern NRF_EGU_Type NRF_EGU_regs[];
 
-void nrf_egu_init();
-void nrf_egu_clean_up();
-void nrf_egu_regw_sideeffects_TASK_TRIGGER(uint inst, uint task_nbr);
-void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(int inst, uint event_nbr);
+void nrf_egu_regw_sideeffects_TASK_TRIGGER(unsigned int inst, unsigned int task_nbr);
+void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(int inst, unsigned int event_nbr);
 void nrf_egu_regw_sideeffect_INTENSET(int inst);
 void nrf_egu_regw_sideeffect_INTENCLR(int inst);
 void nrf_egu_regw_sideeffect_INTEN(int inst);
-
 
 /*
  * Trampolines to automatically call from the PPI

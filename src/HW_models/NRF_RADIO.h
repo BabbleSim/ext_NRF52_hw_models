@@ -14,11 +14,6 @@ extern "C"{
 
 extern NRF_RADIO_Type NRF_RADIO_regs;
 
-void nrf_radio_init();
-void nrf_radio_clean_up();
-void nrf_radio_timer_triggered();
-void nrf_radio_timer_abort_reeval_triggered();
-
 void nrf_radio_tasks_TXEN();
 void nrf_radio_tasks_RXEN();
 void nrf_radio_tasks_START();
@@ -32,8 +27,6 @@ void nrf_radio_tasks_RSSISTART();
 void nrf_radio_tasks_RSSISTOP();
 void nrf_radio_tasks_BCSTART();
 void nrf_radio_tasks_BCSTOP();
-
-void nrf_radio_bitcounter_timer_triggered();
 
 void nrf_radio_regw_sideeffects_BCC();
 void nrf_radio_regw_sideeffects_POWER();

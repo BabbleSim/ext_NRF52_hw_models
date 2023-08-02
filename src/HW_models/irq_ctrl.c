@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,13 +13,16 @@
  */
 
 #include <stdint.h>
+#include "nsi_internal.h"
+#include "nsi_cpu_if.h"
 #include "bs_types.h"
 #include "bs_tracing.h"
 #include "irq_ctrl.h"
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
-bs_time_t Timer_irq_ctrl = TIME_NEVER;
+static bs_time_t Timer_irq_ctrl = TIME_NEVER;
 
 static uint64_t irq_lines; /*Level of interrupt lines from peripherals*/
 static uint64_t irq_status;  /*pended and not masked interrupts*/
@@ -47,29 +51,19 @@ static uint8_t irq_prio[NRF_HW_NBR_IRQs]; /*Priority of each interrupt*/
 
 static int currently_running_prio = 256; /*255 is the lowest prio interrupt*/
 
-/*
- * These functions are provided by the board
- */
-extern void posix_interrupt_raised(void);
-extern void posix_irq_handler_im_from_sw(void);
-
-
-void hw_irq_ctrl_init(void)
+static void hw_irq_ctrl_init(void)
 {
-	irq_mask = 0; /*Let's assume all interrupts are disable at boot*/
-	irq_premask = 0;
+	irq_mask = 0U; /* Let's assume all interrupts are disable at boot */
+	irq_premask = 0U;
 	irqs_locked = false;
 	lock_ignore = false;
 
 	for (int i = 0 ; i < NRF_HW_NBR_IRQs; i++) {
-		irq_prio[i] = 255;
+		irq_prio[i] = 255U;
 	}
 }
 
-void hw_irq_ctrl_cleanup(void)
-{
-	/*Nothing to be done*/
-}
+NSI_TASK(hw_irq_ctrl_init, HW_INIT, 100);
 
 void hw_irq_ctrl_set_cur_prio(int new)
 {
@@ -107,8 +101,8 @@ int hw_irq_ctrl_get_highest_prio_irq(void)
 	int winner = -1;
 	int winner_prio = 256;
 
-	while (irq_status != 0) {
-		int irq_nbr = __builtin_ffs(irq_status) - 1;
+	while (irq_status != 0U) {
+		int irq_nbr = nsi_find_lsb_set(irq_status) - 1;
 
 		irq_status &= ~((uint64_t) 1 << irq_nbr);
 		if ((winner_prio > (int)irq_prio[irq_nbr])
@@ -137,8 +131,8 @@ uint32_t hw_irq_ctrl_change_lock(uint32_t new_lock)
 	irqs_locked = new_lock;
 
 	if ((previous_lock == true) && (new_lock == false)) {
-		if (irq_status != 0) {
-			posix_irq_handler_im_from_sw();
+		if (irq_status != 0U) {
+			nsif_cpu0_irq_raised_from_sw();
 		}
 	}
 	return previous_lock;
@@ -151,14 +145,14 @@ uint64_t hw_irq_ctrl_get_irq_status(void)
 
 void hw_irq_ctrl_clear_all_enabled_irqs(void)
 {
-	irq_status  = 0;
+	irq_status  = 0U;
 	irq_premask &= ~irq_mask;
 }
 
 void hw_irq_ctrl_clear_all_irqs(void)
 {
-	irq_status  = 0;
-	irq_premask = 0;
+	irq_status  = 0U;
+	irq_premask = 0U;
 }
 
 void hw_irq_ctrl_disable_irq(unsigned int irq)
@@ -235,7 +229,7 @@ static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
 	if ( irq < NRF_HW_NBR_IRQs ) {
 		irq_premask |= ((uint64_t)1<<irq);
 
-		if (irq_mask & ((uint64_t)1<<irq)) {
+		if (irq_mask & ((uint64_t)1 << irq)) {
 			irq_status |= ((uint64_t)1<<irq);
 		}
 	} else if (irq == PHONY_HARD_IRQ) {
@@ -263,8 +257,8 @@ void hw_irq_ctrl_set_irq(unsigned int irq)
 		 * instruction and the CPU is allowed to awake just with the irq
 		 * being marked as pending
 		 */
-	    Timer_irq_ctrl = tm_get_hw_time();
-	    nrf_hw_find_next_timer_to_trigger();
+		Timer_irq_ctrl = nsi_hws_get_time();
+		nsi_hws_find_next_event();
 	}
 }
 
@@ -317,7 +311,7 @@ static void irq_raising_from_hw_now(void)
 	 */
 	if ((irqs_locked == false) || (lock_ignore)) {
 		lock_ignore = false;
-		posix_interrupt_raised();
+		nsif_cpu0_irq_raised();
 	}
 }
 
@@ -344,19 +338,21 @@ void hw_irq_ctrl_raise_im_from_sw(unsigned int irq)
 	hw_irq_ctrl_irq_raise_prefix(irq);
 
 	if (irqs_locked == false) {
-		posix_irq_handler_im_from_sw();
+		nsif_cpu0_irq_raised_from_sw();
 	}
 }
 
 /*
  * Event timer handler for the IRQ controller HW model
  */
-void hw_irq_ctrl_timer_triggered(void)
+static void hw_irq_ctrl_timer_triggered(void)
 {
   Timer_irq_ctrl = TIME_NEVER;
   irq_raising_from_hw_now();
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
+
+NSI_HW_EVENT(Timer_irq_ctrl, hw_irq_ctrl_timer_triggered, 2 /* Purposedly the 3rd */);
 
 const char *hw_irq_ctrl_get_name(unsigned int irq)
 {

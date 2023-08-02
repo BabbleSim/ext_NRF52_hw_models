@@ -35,9 +35,6 @@ extern NRF_GPIO_Type *NRF_P1_regs;
 typedef void (*nrf_gpio_input_callback_t)(unsigned int port, unsigned int n, bool value);
 
 
-void nrf_gpio_init();
-void nrf_gpio_clean_up();
-
 unsigned int nrf_gpio_get_number_pins_in_port(int port);
 
 void nrf_gpio_test_register_in_callback(nrf_gpio_input_callback_t fptr);

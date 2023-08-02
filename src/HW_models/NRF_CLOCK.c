@@ -40,18 +40,19 @@
 #include "NRF_CLOCK.h"
 #include <string.h>
 #include <stdint.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "bs_utils.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 NRF_CLOCK_Type NRF_CLOCK_regs;
 static uint32_t CLOCK_INTEN = 0; //interrupt enable
 
-bs_time_t Timer_CLOCK = TIME_NEVER;
+static bs_time_t Timer_CLOCK = TIME_NEVER;
 
 static bs_time_t Timer_CLOCK_LF = TIME_NEVER;
 static bs_time_t Timer_CLOCK_HF = TIME_NEVER;
@@ -69,10 +70,10 @@ static void nrf_clock_update_master_timer(void) {
   bs_time_t t2 = BS_MIN(Timer_LF_cal, Timer_caltimer);
   Timer_CLOCK = BS_MIN(t1, t2);
 
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
-void nrf_clock_init(void) {
+static void nrf_clock_init(void) {
   memset(&NRF_CLOCK_regs, 0, sizeof(NRF_CLOCK_regs));
   NRF_CLOCK_regs.HFXODEBOUNCE = 0x00000010;
 
@@ -86,9 +87,7 @@ void nrf_clock_init(void) {
   Timer_caltimer = TIME_NEVER;
 }
 
-void nrf_clock_clean_up(void) {
-
-}
+NSI_TASK(nrf_clock_init, HW_INIT, 100);
 
 static void nrf_clock_eval_interrupt(void) {
   static bool clock_int_line; /* Is the CLOCK currently driving its interrupt line high */
@@ -138,7 +137,7 @@ void nrf_clock_TASKS_LFCLKSTART(void) {
   NRF_CLOCK_regs.LFCLKRUN = CLOCK_LFCLKRUN_STATUS_Msk;
   LF_Clock_state = Starting;
 
-  Timer_CLOCK_LF = tm_get_hw_time(); //we assume the clock is ready in 1 delta
+  Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
   nrf_clock_update_master_timer();
 }
 
@@ -152,7 +151,7 @@ void nrf_clock_TASKS_LFCLKSTOP(void) {
   if ((LF_Clock_state == Started) || (LF_Clock_state == Starting)) {
     NRF_CLOCK_regs.LFCLKRUN = 0;
     LF_Clock_state = Stopping;
-    Timer_CLOCK_LF = tm_get_hw_time(); //we assume the clock is stopped in 1 delta
+    Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
     nrf_clock_update_master_timer();
   }
 }
@@ -161,7 +160,7 @@ void nrf_clock_TASKS_HFCLKSTART(void) {
   if ( ( HF_Clock_state == Stopped ) || ( HF_Clock_state == Stopping ) ) {
     HF_Clock_state = Starting;
     NRF_CLOCK_regs.HFCLKRUN = CLOCK_HFCLKRUN_STATUS_Msk;
-    Timer_CLOCK_HF = tm_get_hw_time(); //we assume the clock is ready in 1 delta
+    Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
     nrf_clock_update_master_timer();
   }
 }
@@ -170,7 +169,7 @@ void nrf_clock_TASKS_HFCLKSTOP(void) {
   if ( ( HF_Clock_state == Started ) || ( HF_Clock_state == Starting ) ) {
     NRF_CLOCK_regs.HFCLKRUN = 0;
     HF_Clock_state = Stopping;
-    Timer_CLOCK_HF = tm_get_hw_time(); //we assume the clock is stopped in 1 delta
+    Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
     nrf_clock_update_master_timer();
   }
 }
@@ -183,7 +182,7 @@ void nrf_clock_TASKS_CAL(void) {
   } /* LCOV_EXCL_STOP */
 
   LF_cal_state = Started; //We don't check for re-triggers, as we are going to be done right away
-  Timer_LF_cal = tm_get_hw_time(); //we assume the calibration is done in 1 delta
+  Timer_LF_cal = nsi_hws_get_time(); //we assume the calibration is done in 1 delta
   nrf_clock_update_master_timer();
 }
 
@@ -194,7 +193,7 @@ void nrf_clock_TASKS_CTSTART(void) {
                           "Timeout is not affected.\n", __func__);
   } else {  /* LCOV_EXCL_STOP */
     caltimer_state = Started;
-    Timer_caltimer = tm_get_hw_time() + (bs_time_t)NRF_CLOCK_regs.CTIV * 250000;
+    Timer_caltimer = nsi_hws_get_time() + (bs_time_t)NRF_CLOCK_regs.CTIV * 250000;
     nrf_clock_update_master_timer();
   }
   nrf_clock_event_CTSTARTED();
@@ -318,7 +317,7 @@ void nrf_clock_caltimer_triggered(void) {
   nrf_clock_event_CTTO();
 }
 
-void nrf_clock_timer_triggered(void) {
+static void nrf_clock_timer_triggered(void) {
   if (Timer_CLOCK == Timer_CLOCK_HF) {
     nrf_clock_HFTimer_triggered();
   } else if (Timer_CLOCK == Timer_CLOCK_LF) {
@@ -331,3 +330,5 @@ void nrf_clock_timer_triggered(void) {
     bs_trace_error_time_line("%s programming error\n", __func__);
   } /* LCOV_EXCL_STOP */
 }
+
+NSI_HW_EVENT(Timer_CLOCK, nrf_clock_timer_triggered, 50);

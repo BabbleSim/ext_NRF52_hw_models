@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,9 +12,6 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-void nrf_ficr_init();
-void nrf_ficr_clean_up();
 
 #ifdef __cplusplus
 }

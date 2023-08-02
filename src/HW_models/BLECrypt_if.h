@@ -26,10 +26,6 @@
 extern "C" {
 #endif
 
-void BLECrypt_if_enable_real_encryption(bool mode);
-
-void BLECrypt_if_free();
-
 void BLECrypt_if_encrypt_packet(uint8_t packet_first_header_byte, // First byte of packet header
     const uint8_t* unecrypted_payload,      // Packet payload to be encrypted
     uint8_t* encrypted_payload,  //encrypted payload (and MIC if generate_mic==1)

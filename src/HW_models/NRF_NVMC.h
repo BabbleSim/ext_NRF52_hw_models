@@ -7,7 +7,6 @@
 #define _NRF_HW_MODEL_NVMC_H
 
 #include "nrfx.h"
-#include "NRF_hw_args.h"
 #include "bs_types.h"
 
 #ifdef __cplusplus
@@ -23,10 +22,6 @@ extern "C"{
 
 extern NRF_NVMC_Type NRF_NVMC_regs;
 
-void nrfhw_nvmc_uicr_pre_init(void);
-void nrfhw_nvmc_uicr_init(void);
-void nrfhw_nvmc_uicr_clean_up(void);
-void nrfhw_nvmc_timer_triggered(void);
 void nrfhw_nvmc_regw_sideeffects_ERASEPAGE();
 void nrf_nvmc_regw_sideeffects_ERASEPCR0();
 void nrfhw_nvmc_regw_sideeffects_ERASEUICR();

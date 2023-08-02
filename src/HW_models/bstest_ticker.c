@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -9,11 +10,12 @@
  */
 
 #include "bs_types.h"
-#include "time_machine_if.h"
 #include "irq_ctrl.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_tasks.h"
+#include "nsi_hw_scheduler.h"
+#include "nsi_hws_models_if.h"
 
-bs_time_t Timer_event_fw_test_ticker = TIME_NEVER;
+static bs_time_t Timer_event_fw_test_ticker = TIME_NEVER;
 
 static uint8_t awake_cpu_asap = 0;
 static bs_time_t Timer_event_fw_test_ticker_internal = TIME_NEVER;
@@ -21,12 +23,12 @@ static bs_time_t fw_test_ticker_tick_period = TIME_NEVER;
 
 static void bst_ticker_find_next_time(){
   if ( awake_cpu_asap == 1){
-    Timer_event_fw_test_ticker = tm_get_hw_time(); //We will awake it in this same microsecond
+    Timer_event_fw_test_ticker = nsi_hws_get_time(); //We will awake it in this same microsecond
   } else {
     Timer_event_fw_test_ticker = Timer_event_fw_test_ticker_internal;
   }
 
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 /**
@@ -35,7 +37,7 @@ static void bst_ticker_find_next_time(){
  */
 void bst_ticker_set_period(bs_time_t tick_period){
   fw_test_ticker_tick_period = tick_period;
-  Timer_event_fw_test_ticker_internal = tick_period + tm_get_hw_time();
+  Timer_event_fw_test_ticker_internal = tick_period + nsi_hws_get_time();
   bst_ticker_find_next_time();
 }
 
@@ -43,7 +45,7 @@ void bst_ticker_set_period(bs_time_t tick_period){
  * Set the next time the FW test ticker will trigger at <absolute_time> us
  */
 void bst_ticker_set_next_tick_absolute(bs_time_t absolute_time){
-  Timer_event_fw_test_ticker_internal = tm_abs_time_to_hw_time(absolute_time);
+  Timer_event_fw_test_ticker_internal = absolute_time;
   bst_ticker_find_next_time();
 }
 
@@ -52,11 +54,13 @@ void bst_ticker_set_next_tick_absolute(bs_time_t absolute_time){
  * at <delta_time> us + current Hw time
  */
 void bst_ticker_set_next_tick_delta(bs_time_t delta_time){
-  Timer_event_fw_test_ticker_internal = delta_time + tm_get_hw_time();
+  Timer_event_fw_test_ticker_internal = delta_time + nsi_hws_get_time();
   bst_ticker_find_next_time();
 }
 
-void bst_ticker_triggered(bs_time_t HW_time){
+static void bst_ticker_triggered(void) {
+  bs_time_t HW_time = nsi_hws_get_time();
+
   if ( awake_cpu_asap == 1 ) {
     awake_cpu_asap = 0;
     hw_irq_ctrl_raise_im(PHONY_HARD_IRQ);
@@ -66,11 +70,13 @@ void bst_ticker_triggered(bs_time_t HW_time){
     } else {
       Timer_event_fw_test_ticker_internal = TIME_NEVER;
     }
-    extern void bst_tick(bs_time_t time);
-    bst_tick(HW_time);
+    extern void nsif_cpu0_bst_tick(uint64_t time);
+    nsif_cpu0_bst_tick(HW_time);
   }
   bst_ticker_find_next_time();
 }
+
+NSI_HW_EVENT(Timer_event_fw_test_ticker, bst_ticker_triggered, 1 /* Purposedly the second */);
 
 /**
  * Awake the MCU as soon as possible (in this same microsecond, in a following delta)

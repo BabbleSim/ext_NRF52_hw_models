@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,19 +13,10 @@
 
 #include "bs_types.h"
 #include "irq_ctrl.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
+#include "nsi_hws_models_if.h"
 
-bs_time_t Timer_fake_timer = TIME_NEVER;
-
-void fake_timer_init()
-{
-	Timer_fake_timer = TIME_NEVER;
-}
-
-void fake_timer_cleanup(void)
-{
-
-}
+static bs_time_t Timer_fake_timer = TIME_NEVER;
 
 /**
  * The timer HW will awake the CPU (without an interrupt) at least when <time>
@@ -38,13 +30,15 @@ void fake_timer_wake_in_time(bs_time_t time)
 {
 	if (Timer_fake_timer > time) {
 		Timer_fake_timer = time;
-		nrf_hw_find_next_timer_to_trigger();
+		nsi_hws_find_next_event();
 	}
 }
 
-void fake_timer_triggered(void)
+static void fake_timer_triggered(void)
 {
 	Timer_fake_timer = TIME_NEVER;
-	nrf_hw_find_next_timer_to_trigger();
+	nsi_hws_find_next_event();
 	hw_irq_ctrl_set_irq(PHONY_HARD_IRQ);
 }
+
+NSI_HW_EVENT(Timer_fake_timer, fake_timer_triggered, 0 /* Purposely the first */);

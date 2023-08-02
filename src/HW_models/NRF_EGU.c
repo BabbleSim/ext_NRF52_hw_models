@@ -6,7 +6,7 @@
 
 /*
  * EGU — Event generator unit
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=4_1_0_5_6
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=5_1_0_5_6
  */
 
 #include <string.h>
@@ -14,6 +14,7 @@
 #include "irq_ctrl.h"
 #include "NRF_EGU.h"
 #include "NRF_PPI.h"
+#include "nsi_tasks.h"
 
 #define N_EGU 6
 #define N_EGU_EVENTS 16
@@ -23,17 +24,12 @@ static bool egu_int_line[N_EGU] = {false}; //Is the EGU currently driving this i
 /**
  * Initialize the EGU model
  */
-void nrf_egu_init(){
+static void nrf_egu_init(void) {
   memset(NRF_EGU_regs, 0, sizeof(NRF_EGU_Type)*N_EGU);
   memset(egu_int_line, 0, sizeof(egu_int_line));
 }
 
-/**
- * Clean up the EGU model before program exit
- */
-void nrf_egu_clean_up(){
-  /* Intentionally empty */
-}
+NSI_TASK(nrf_egu_init, HW_INIT, 100);
 
 /**
  * Check if the interrupt line for EGU instance needs to be raised or lowered

@@ -14,17 +14,12 @@ extern "C"{
 
 extern NRF_AAR_Type NRF_AAR_regs;
 
-void nrf_aar_init();
-void nrf_aar_clean_up();
-
 void nrf_aar_TASK_START();
 void nrf_aar_TASK_STOP() ;
 void nrf_aar_regw_sideeffects_INTENSET();
 void nrf_aar_regw_sideeffects_INTENCLR();
 void nrf_aar_regw_sideeffects_TASKS_START();
 void nrf_aar_regw_sideeffects_TASKS_STOP();
-
-void nrf_aar_timer_triggered();
 
 #ifdef __cplusplus
 }

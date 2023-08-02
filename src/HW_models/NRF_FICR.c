@@ -1,12 +1,13 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /*
  * Factory information configuration registers
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ficr.html?cp=4_1_0_3_3
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ficr.html?cp=5_1_0_3_3
  */
 
 /*
@@ -20,17 +21,18 @@
 #include "NRF_NVMC.h"
 #include <string.h>
 #include "bs_rand_main.h"
+#include "nsi_tasks.h"
 #include "weak_stubs.h"
 
 NRF_FICR_Type NRF_FICR_regs;
 
-void nrf_ficr_init(){
+static void nrf_ficr_init(void) {
   memset(&NRF_FICR_regs, 0xFF, sizeof(NRF_FICR_regs));
 
   NRF_FICR_regs.CODEPAGESIZE = FLASH_PAGE_SIZE;
   NRF_FICR_regs.CODESIZE     = FLASH_N_PAGES;
 
-  NRF_FICR_regs.DEVICEID[0] = (bs_random_uint32() & 0xFFFFFF00) + get_device_nbr();
+  NRF_FICR_regs.DEVICEID[0] = (bs_random_uint32() & 0xFFFFFF00) + bsim_args_get_global_device_nbr();
   NRF_FICR_regs.DEVICEID[1] = bs_random_uint32();
   NRF_FICR_regs.DEVICEADDRTYPE = 0;
   NRF_FICR_regs.DEVICEADDR[0] = bs_random_uint32();
@@ -48,6 +50,4 @@ void nrf_ficr_init(){
   NRF_FICR_regs.PRODTEST[2] = 0xBB42319F;
 }
 
-void nrf_ficr_clean_up(){
-
-}
+NSI_TASK(nrf_ficr_init, HW_INIT, 100);

@@ -15,9 +15,6 @@ extern "C"{
 
 extern NRF_CCM_Type NRF_CCM_regs;
 
-void nrf_aes_ccm_init();
-void nrf_aes_ccm_clean_up();
-
 void nrf_ccm_TASK_KSGEN();
 void nrf_ccm_TASK_CRYPT();
 void nrf_ccm_TASK_STOP();

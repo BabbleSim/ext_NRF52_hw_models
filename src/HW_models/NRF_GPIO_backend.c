@@ -18,17 +18,20 @@
 #include <ctype.h>
 #include "NRF_GPIO.h"
 #include "bs_types.h"
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
 #include "bs_compat.h"
+#include "bs_cmd_line.h"
+#include "bs_dynargs.h"
+#include "nsi_hws_models_if.h"
+#include "nsi_tasks.h"
 
-bs_time_t Timer_GPIO_input = TIME_NEVER;
+static bs_time_t Timer_GPIO_input = TIME_NEVER;
 
-char *gpio_in_file_path = NULL; /* Possible file for input stimuli */
-char *gpio_out_file_path = NULL; /* Possible file for dumping output toggles */
-char *gpio_conf_file_path = NULL; /* Possible file for configuration (short-circuits) */
+static char *gpio_in_file_path = NULL; /* Possible file for input stimuli */
+static char *gpio_out_file_path = NULL; /* Possible file for dumping output toggles */
+static char *gpio_conf_file_path = NULL; /* Possible file for configuration (short-circuits) */
 
 #define MAXLINESIZE 2048
 #define MAX_SHORTS 8
@@ -69,7 +72,7 @@ void nrf_gpio_backend_init(void)
 /*
  * Cleanup before exit
  */
-void nrf_gpio_backend_cleaup(void)
+static void nrf_gpio_backend_cleaup(void)
 {
 	if (output_file_ptr != NULL) {
 		fclose(output_file_ptr);
@@ -81,6 +84,41 @@ void nrf_gpio_backend_cleaup(void)
 		gpio_input_file_st.input_file_ptr = NULL;
 	}
 }
+
+NSI_TASK(nrf_gpio_backend_cleaup, ON_EXIT_PRE, 100);
+
+
+static void nrf_gpio_register_cmd_args(void){
+
+  static bs_args_struct_t args_struct_toadd[] = {
+    {
+      .option="gpio_in_file",
+      .name="path",
+      .type='s',
+      .dest=(void *)&gpio_in_file_path,
+      .descript="Optional path to a file containing GPIOs inputs activity",
+    },
+    {
+      .option="gpio_out_file",
+      .name="path",
+      .type='s',
+      .dest=(void *)&gpio_out_file_path,
+      .descript="Optional path to a file where GPIOs output activity will be saved",
+    },
+    {
+      .option="gpio_conf_file",
+      .name="path",
+      .type='s',
+      .dest=(void *)&gpio_conf_file_path,
+      .descript="Optional path to a file where the GPIOs configuration will be found.",
+    },
+    ARG_TABLE_ENDMARKER
+  };
+
+  bs_add_extra_dynargs(args_struct_toadd);
+}
+
+NSI_TASK(nrf_gpio_register_cmd_args, PRE_BOOT_1, 100);
 
 /*
  * Propagate an output change thru its external short-circuits
@@ -118,7 +156,7 @@ void nrf_gpio_backend_write_output_change(unsigned int port, unsigned int n, boo
 {
 	if (output_file_ptr != NULL){
 		fprintf(output_file_ptr, "%"PRItime",%u,%u,%u\n",
-			tm_get_abs_time(), port, n, value);
+			nsi_hws_get_time(), port, n, value);
 	}
 }
 
@@ -303,7 +341,7 @@ static void nrf_gpio_input_process_next_time(char *buf)
 		gpio_input_file_st.input_file_ptr = NULL;
 		Timer_GPIO_input = TIME_NEVER;
 	} else {
-		if (time < tm_get_abs_time()) {
+		if (time < nsi_hws_get_time()) {
 			bs_trace_error_time_line("%s: GPIO input file went back in time(%s)\n",
 						__func__, buf);
 		}
@@ -329,7 +367,7 @@ static void nrf_gpio_input_process_next_time(char *buf)
 		Timer_GPIO_input = time;
 	}
 
-	nrf_hw_find_next_timer_to_trigger();
+	nsi_hws_find_next_event();
 }
 
 /*
@@ -363,7 +401,7 @@ static void nrf_gpio_init_input_file(void)
 /*
  * Event timer handler for the GPIO input
  */
-void nrf_gpio_input_event_triggered(void)
+static void nrf_gpio_input_event_triggered(void)
 {
 	char line_buf[MAXLINESIZE];
 
@@ -374,3 +412,5 @@ void nrf_gpio_input_event_triggered(void)
 
 	nrf_gpio_input_process_next_time(line_buf);
 }
+
+NSI_HW_EVENT(Timer_GPIO_input, nrf_gpio_input_event_triggered, 50);

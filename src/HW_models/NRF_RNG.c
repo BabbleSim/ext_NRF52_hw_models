@@ -7,7 +7,7 @@
 
 /*
  * RNG — Random number generator
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=4_1_0_5_18
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=5_1_0_5_18
  *
  * Very rough model
  *
@@ -17,14 +17,15 @@
 #include "NRF_RNG.h"
 #include <string.h>
 #include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_rand_main.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 NRF_RNG_Type NRF_RNG_regs;
-bs_time_t Timer_RNG = TIME_NEVER; //Time when the next random number will be ready
+static bs_time_t Timer_RNG = TIME_NEVER; //Time when the next random number will be ready
 
 static bool RNG_hw_started = false;
 static bool RNG_INTEN = false; //interrupt enable
@@ -32,19 +33,14 @@ static bool RNG_INTEN = false; //interrupt enable
 /**
  * Initialize the RNG model
  */
-void nrf_rng_init(){
+static void nrf_rng_init(void) {
   memset(&NRF_RNG_regs, 0, sizeof(NRF_RNG_regs));
   RNG_hw_started = false;
   RNG_INTEN = false;
   Timer_RNG = TIME_NEVER;
 }
 
-/**
- * Clean up the RNG model before program exit
- */
-void nrf_rng_clean_up(){
-
-}
+NSI_TASK(nrf_rng_init, HW_INIT, 100);
 
 static void nrf_rng_schedule_next(bool first_time){
   bs_time_t delay = 0;
@@ -64,15 +60,15 @@ static void nrf_rng_schedule_next(bool first_time){
   } else {
     delay += 30;
   }
-  Timer_RNG = tm_get_hw_time() + delay;
+  Timer_RNG = nsi_hws_get_time() + delay;
 
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 /**
  * TASK_START triggered handler
  */
-void nrf_rng_task_start(){
+void nrf_rng_task_start(void) {
   if (RNG_hw_started) {
     return;
   }
@@ -84,34 +80,34 @@ void nrf_rng_task_start(){
 /**
  * TASK_STOP triggered handler
  */
-void nrf_rng_task_stop(){
+void nrf_rng_task_stop(void) {
   RNG_hw_started = false;
   Timer_RNG = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 
-void nrf_rng_regw_sideeffects_TASK_START(){
+void nrf_rng_regw_sideeffects_TASK_START(void) {
   if ( NRF_RNG_regs.TASKS_START ) {
     NRF_RNG_regs.TASKS_START = 0;
     nrf_rng_task_start();
   }
 }
 
-void nrf_rng_regw_sideeffects_TASK_STOP(){
+void nrf_rng_regw_sideeffects_TASK_STOP(void) {
   if ( NRF_RNG_regs.TASKS_STOP ) {
     NRF_RNG_regs.TASKS_STOP = 0;
     nrf_rng_task_stop();
   }
 }
 
-void nrf_rng_regw_sideeffects_INTENSET(){
+void nrf_rng_regw_sideeffects_INTENSET(void) {
   if ( NRF_RNG_regs.INTENSET ) {
     RNG_INTEN = true;
   }
 }
 
-void nrf_rng_regw_sideeffects_INTENCLEAR(){
+void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
   if ( NRF_RNG_regs.INTENCLR ) {
     RNG_INTEN = false;
     NRF_RNG_regs.INTENSET = 0;
@@ -137,7 +133,7 @@ void nrf_rng_regw_sideeffects(){
 /**
  * Time has come when a new random number is ready
  */
-void nrf_rng_timer_triggered(){
+static void nrf_rng_timer_triggered(void){
 
   NRF_RNG_regs.VALUE = bs_random_uint32();
   //A proper random number even if CONFIG is not set to correct the bias
@@ -155,3 +151,5 @@ void nrf_rng_timer_triggered(){
     //Note: there is no real need to delay the interrupt a delta
   }
 }
+
+NSI_HW_EVENT(Timer_RNG, nrf_rng_timer_triggered, 50);

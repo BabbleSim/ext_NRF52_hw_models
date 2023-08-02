@@ -21,6 +21,7 @@
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
+#include "nsi_tasks.h"
 
 NRF_GPIOTE_Type NRF_GPIOTE_regs = {0};
 
@@ -42,16 +43,11 @@ static struct gpiote_ch_status_t {
 /**
  * Initialize the GPIOs model
  */
-void nrf_gpiote_init() {
+static void nrf_gpiote_init(void) {
 	memset(&NRF_GPIOTE_regs, 0, sizeof(NRF_GPIOTE_regs));
 }
 
-/**
- * Clean up the GPIOs model before program exit
- */
-void nrf_gpiote_clean_up() {
-
-}
+NSI_TASK(nrf_gpiote_init, HW_INIT, 100);
 
 static void nrf_gpiote_events_port();
 

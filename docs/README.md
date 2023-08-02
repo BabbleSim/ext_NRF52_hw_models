@@ -1,6 +1,6 @@
-# Models of the nRF52xxx HW peripherals
+# Models of the nRF5xxxx SOCs HW peripherals
 
-This repo contains models of the nRF52 HW peripherals and some replacement nrfx
+This repo contains models of the nRF5x HW peripherals and some replacement nrfx
 HAL functions. When used in combination with the real nrfx, these should enable code
 meant for the nrfx to run without needing further changes.
 This includes Zephyr SW.
@@ -9,9 +9,16 @@ Where relevant
 [differences](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
 exist, these models try to align with an
 [nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1).
+Though it is the intention that models of other nordic SOCs will be included in the future.
+
+These models library is intended to be used as an extension to the
+[native simulator](https://github.com/BabbleSim/native_simulator/).
+If you want to integrate them in another way, please check the section
+"Using these models without the native simulator" below.
 
 When compiling this component using the provided Makefile (not with Zephyr's build system),
-the environment variable `NRFX_BASE` must be set to the path where a nrfx has been cloned. 
+the environment variable `NRFX_BASE` and `NATIVE_SIM_PATH` must be set.
+`NRFX_BASE` must point to the path where a nrfx has been cloned.
 The nrfx must be at least version 2.3.0.
 So for example, if the nrfx has been cloned as:
 
@@ -27,8 +34,12 @@ export NRFX_BASE=/some_path/nrfx/
 
 See the [nrfx/hal/README.md](../src/nrfx/hal/README.md) for more details.
 
+`NATIVE_SIM_PATH` must point to the folder where the native simulator has been cloned.
+
 These models can be used directly with
 [Zephyr's nrf52_bsim target](https://docs.zephyrproject.org/latest/boards/posix/nrf52_bsim/doc/index.html).
+In that case, the Zephyr's versions of the nrfx HAL and the native simulator will be used by
+default.
 
 The NRF_RADIO peripheral model uses [BabbleSim](http://babblesim.github.io)
 for the radio environment simulation.
@@ -76,3 +87,17 @@ most of the time if the CMSIS-Core APIs are used instead of direct register
 accesses, and where these APIs do not provide the necessary functionality,
 changes to the embedded code would be needed with high likelyhood to trigger
 sideeffects or so.
+
+## Using these models without the native simulator
+
+These models are designed as an extension to the native simulator core/common components.
+It is in principle still possible to use them without the native simulator, but it will
+require more work/adaptation than with the previous version of these models.
+Therefore you may want to consider to:
+
+* Use the [previous version](https://github.com/BabbleSim/ext_NRF52_hw_models),
+  which did not require the native simulator.
+* Or to use these newer models, providing a shim/adaptation between the native simulator
+  interfaces the models expect and your execution framework. If so, check the
+  "Integrating these models in another system" section of the
+  [HW models README](README_HW_models.md)

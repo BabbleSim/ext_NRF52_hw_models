@@ -30,18 +30,35 @@ if(CONFIG_BOARD_NRF52_BSIM)
     src/nrfx/nrfx_replacements
   )
 
+  # The nrfx HAL is built in the context of the embedded software
   zephyr_library()
-  zephyr_library_compile_definitions(NO_POSIX_CHEATS)
-
-  file(GLOB_RECURSE HW_MODEL_SRCS . src/*.c)
-  zephyr_library_sources(${HW_MODEL_SRCS})
+  file(GLOB_RECURSE HAL_SRCS . src/nrfx/*.c)
+  zephyr_library_sources(${HAL_SRCS})
 
   zephyr_library_include_directories(
     $ENV{BSIM_COMPONENTS_PATH}/libUtilv1/src/
-    $ENV{BSIM_COMPONENTS_PATH}/libPhyComv1/src/
-    $ENV{BSIM_COMPONENTS_PATH}/ext_2G4_libPhyComv1/src/
-    $ENV{BSIM_COMPONENTS_PATH}/libRandv2/src/
     src/HW_models/
+  )
+
+  # The HW models are built in the runner context, so they have access to the host OS
+  file(GLOB_RECURSE HW_MODEL_SRCS . src/HW_models/*.c)
+  target_sources(native_simulator INTERFACE ${HW_MODEL_SRCS})
+
+  target_compile_options(native_simulator BEFORE INTERFACE 
+    -I${NSI_DIR}/common/src/include
+    -I${NSI_DIR}/common/src/
+    -I$ENV{BSIM_COMPONENTS_PATH}/libUtilv1/src/
+    -I$ENV{BSIM_COMPONENTS_PATH}/libPhyComv1/src/
+    -I$ENV{BSIM_COMPONENTS_PATH}/ext_2G4_libPhyComv1/src/
+    -I$ENV{BSIM_COMPONENTS_PATH}/libRandv2/src/
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/HW_models/
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx_config
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/mdk_replacements
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/nrfx_replacements
+    -I${NRFX_DIR}
+    -I${NRFX_DIR}/mdk
+    -DNRF52833_XXAA
+    -std=gnu11 #The nrfx hal uses non standard features which will cause warnings otherwise
   )
 
 endif()

@@ -13,9 +13,6 @@
 extern "C"{
 #endif
 
-//Interface towards the time_machine:
-void bst_ticker_triggered(bs_time_t Now);
-
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,30 +13,30 @@
 #include "NRF_AAR.h"
 #include <string.h>
 #include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include <stdint.h>
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
-bs_time_t Timer_AAR = TIME_NEVER; /* Time when the AAR will finish */
+static bs_time_t Timer_AAR = TIME_NEVER; /* Time when the AAR will finish */
 
 NRF_AAR_Type NRF_AAR_regs;
 static uint32_t AAR_INTEN = 0; //interrupt enable
 static bool AAR_Running;
 static int matching_irk;
 
-void nrf_aar_init(){
+static void nrf_aar_init(void) {
   memset(&NRF_AAR_regs, 0, sizeof(NRF_AAR_regs));
   AAR_INTEN = 0;
   Timer_AAR = TIME_NEVER;
   AAR_Running = false;
 }
 
-void nrf_aar_clean_up(){
-
-}
+NSI_TASK(nrf_aar_init, HW_INIT, 100);
 
 static int nrf_aar_resolve(int *good_irk);
 
@@ -76,8 +77,8 @@ void nrf_aar_TASK_START(){
   AAR_Running = true;
   n_irks = nrf_aar_resolve(&matching_irk);
 
-  Timer_AAR = tm_get_hw_time() + 1 + 6 * n_irks; /*AAR delay*/
-  nrf_hw_find_next_timer_to_trigger();
+  Timer_AAR = nsi_hws_get_time() + 1 + 6 * n_irks; /*AAR delay*/
+  nsi_hws_find_next_event();
 }
 
 void nrf_aar_TASK_STOP(){
@@ -87,7 +88,7 @@ void nrf_aar_TASK_STOP(){
 
   AAR_Running = false;
   Timer_AAR = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
   signal_EVENTS_END();
   //Does this actually signal an END?
   //and only an END?
@@ -122,10 +123,10 @@ void nrf_aar_regw_sideeffects_TASKS_STOP(){
   }
 }
 
-void nrf_aar_timer_triggered(){
+static void nrf_aar_timer_triggered(void) {
   AAR_Running = false;
   Timer_AAR = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 
   if (matching_irk != -1) {
     NRF_AAR_regs.STATUS = matching_irk;
@@ -135,6 +136,8 @@ void nrf_aar_timer_triggered(){
   }
   signal_EVENTS_END();
 }
+
+NSI_HW_EVENT(Timer_AAR, nrf_aar_timer_triggered, 50);
 
 /**
  * Try to resolve the address

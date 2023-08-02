@@ -14,8 +14,8 @@
 #include "bs_pc_2G4_utils.h"
 #include "NRF_RADIO.h"
 #include "NRF_HWLowL.h"
-#include "time_machine_if.h"
 #include "NRF_RADIO_timings.h"
+#include "nsi_hw_scheduler.h"
 
 static void nrfra_check_crc_conf_ble(void) {
   if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
@@ -258,7 +258,7 @@ void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
   rx_req->forced_packet_duration = UINT32_MAX; //we follow the transmitted packet (assuming no length errors by now)
 
   //attempt to receive
-  rx_req->start_time  = hwll_phy_time_from_dev(tm_get_abs_time());
+  rx_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time());
 
   rx_req->resp_type = 0;
 }
@@ -306,7 +306,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->packet_size  = packet_size; //Not including preamble or address
 
   {
-    bs_time_t tx_start_time = tm_get_abs_time();
+    bs_time_t tx_start_time = nsi_hws_get_time();
     tx_req->start_tx_time = hwll_phy_time_from_dev(tx_start_time);
     tx_req->start_packet_time = tx_req->start_tx_time ;
     tx_req->end_tx_time = tx_req->start_tx_time + packet_duration;
@@ -323,7 +323,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
  */
 void nrfra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
 
-  cca_req->start_time  = hwll_phy_time_from_dev(tm_get_abs_time()); //We start right now
+  cca_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time()); //We start right now
   cca_req->antenna_gain = 0;
 
   uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;

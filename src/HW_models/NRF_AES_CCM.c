@@ -1,12 +1,13 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /*
  * CCM — AES CCM mode encryption
- * https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf52833%2Fccm.html&cp=4_1_0_5_3
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ccm.html?cp=5_1_0_5_3
  *
  * Notes:
  *
@@ -34,18 +35,18 @@
 #include "NRF_AES_CCM.h"
 #include <string.h>
 #include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
+#include "nsi_tasks.h"
 
 NRF_CCM_Type NRF_CCM_regs;
 static uint32_t CCM_INTEN; //interrupt enable
 static bool decryption_ongoing;
 
-void nrf_aes_ccm_init(){
+static void nrf_aes_ccm_init(){
   memset(&NRF_CCM_regs, 0, sizeof(NRF_CCM_regs));
   NRF_CCM_regs.MODE = 0x01;
   NRF_CCM_regs.HEADERMASK= 0xE3;
@@ -54,10 +55,7 @@ void nrf_aes_ccm_init(){
   decryption_ongoing = false;
 }
 
-void nrf_aes_ccm_clean_up(){
-
-}
-
+NSI_TASK(nrf_aes_ccm_init, HW_INIT, 100);
 
 void nrf_ccm_TASK_CRYPT ();
 static void signal_EVENTS_ENDCRYPT();

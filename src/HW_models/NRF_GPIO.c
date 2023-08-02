@@ -39,6 +39,7 @@
 #include "NRF_GPIO.h"
 #include "NRF_GPIOTE.h"
 #include "bs_tracing.h"
+#include "nsi_tasks.h"
 
 NRF_GPIO_Type NRF_GPIO_regs[NRF_GPIOS];
 
@@ -79,7 +80,7 @@ static nrf_gpio_input_callback_t test_intoggle_callback;
 /*
  * Initialize the GPIOs model
  */
-void nrf_gpio_init() {
+static void nrf_gpio_init(void) {
 	memset(NRF_GPIO_regs, 0, sizeof(NRF_GPIO_regs));
 
 	for (int p = 0; p < NRF_GPIOS; p ++) {
@@ -92,12 +93,7 @@ void nrf_gpio_init() {
 	nrf_gpio_backend_init();
 }
 
-/*
- * Clean up the GPIOs model before the program exit
- */
-void nrf_gpio_clean_up() {
-
-}
+NSI_TASK(nrf_gpio_init, HW_INIT, 100);
 
 unsigned int nrf_gpio_get_number_pins_in_port(int port) {
 	return GPIO_n_ports_pins[port];
@@ -291,7 +287,6 @@ static void nrf_gpio_eval_sense(unsigned int port){
 		nrf_gpiote_port_event_raise(port);
 	}
 }
-
 
 /*
  * Return the level of the DETECT output signal for a GPIO instance

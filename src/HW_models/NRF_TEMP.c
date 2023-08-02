@@ -20,15 +20,16 @@
 #include "NRF_TEMP.h"
 #include <string.h>
 #include <stdbool.h>
-#include "time_machine_if.h"
-#include "NRF_HW_model_top.h"
+#include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_rand_main.h"
+#include "nsi_tasks.h"
+#include "nsi_hws_models_if.h"
 
 NRF_TEMP_Type NRF_TEMP_regs;
 
-bs_time_t Timer_TEMP = TIME_NEVER; //Time when the next temperature measurement will be ready
+static bs_time_t Timer_TEMP = TIME_NEVER; //Time when the next temperature measurement will be ready
 
 static bool TEMP_hw_started = false;
 static bool TEMP_INTEN = false; //interrupt enable
@@ -40,7 +41,7 @@ static double temperature = 25.0; /* Actual temperature the device is at */
 /**
  * Initialize the TEMP model
  */
-void nrf_temp_init(){
+static void nrf_temp_init(){
   memset(&NRF_TEMP_regs, 0, sizeof(NRF_TEMP_regs));
   NRF_TEMP_regs.A0 = 0x00000326;
   NRF_TEMP_regs.A1 = 0x00000348;
@@ -65,12 +66,7 @@ void nrf_temp_init(){
   Timer_TEMP = TIME_NEVER;
 }
 
-/**
- * Clean up the TEMP model before program exit
- */
-void nrf_temp_clean_up(){
-
-}
+NSI_TASK(nrf_temp_init, HW_INIT, 100);
 
 /**
  * TASK_START triggered handler
@@ -80,8 +76,8 @@ void nrf_temp_task_start(){
     return;
   }
   TEMP_hw_started = true;
-  Timer_TEMP = tm_get_hw_time() + T_TEMP;
-  nrf_hw_find_next_timer_to_trigger();
+  Timer_TEMP = nsi_hws_get_time() + T_TEMP;
+  nsi_hws_find_next_event();
 }
 
 /**
@@ -90,7 +86,7 @@ void nrf_temp_task_start(){
 void nrf_temp_task_stop(){
   TEMP_hw_started = false;
   Timer_TEMP = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 }
 
 void nrf_temp_regw_sideeffects_TASK_START(){
@@ -136,13 +132,13 @@ void nrf_temp_regw_sideeffects_INTENCLEAR(){
 /**
  * Time has come when the temperature measurement is ready
  */
-void nrf_temp_timer_triggered(){
+static void nrf_temp_timer_triggered(){
 
   NRF_TEMP_regs.TEMP = temperature*(1 << TEMP_FBITS) + bs_random_uniformRi(-1,1);
 
   TEMP_hw_started = false;
   Timer_TEMP = TIME_NEVER;
-  nrf_hw_find_next_timer_to_trigger();
+  nsi_hws_find_next_event();
 
   NRF_TEMP_regs.EVENTS_DATARDY = 1;
   nrf_ppi_event(TEMP_EVENTS_DATARDY);
@@ -150,3 +146,5 @@ void nrf_temp_timer_triggered(){
     hw_irq_ctrl_set_irq(TEMP_IRQn);
   }
 }
+
+NSI_HW_EVENT(Timer_TEMP, nrf_temp_timer_triggered, 50);
