@@ -12,6 +12,9 @@
 /**
  * Notes:
  *   * The functionality of TASK_SHUTDOWN is a bit of a guess
+ *   * INTENCLR will always read as 0
+ *   * Unlike in real HW, tasks cannot occur simultaneously, they always happen in some sequence
+ *     so task priority is not accounted for
  *
  * Implementation notes:
  *
