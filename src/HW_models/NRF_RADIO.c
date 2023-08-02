@@ -301,6 +301,7 @@ void nrf_radio_tasks_START () {
   if ( radio_state == RAD_TXIDLE ) {
     bs_time_t Tx_start_time = tm_get_abs_time() + nrfra_timings_get_TX_chain_delay();
     radio_state = RAD_TXSTARTING;
+    NRF_RADIO_regs.STATE = RAD_TX;
     nrfra_set_Timer_RADIO(Tx_start_time);
   } else if ( radio_state == RAD_RXIDLE ) {
     start_Rx();
@@ -366,8 +367,10 @@ void nrf_radio_tasks_EDSTOP() {
 void nrf_radio_tasks_STOP(){
   nrf_radio_stop_bit_counter();
 
-  if ( radio_state == RAD_TX ){
-    abort_if_needed();
+  if ((radio_state == RAD_TX) || (radio_state == RAD_TXSTARTING)) {
+    if (radio_state == RAD_TX) {
+      abort_if_needed();
+    }
     radio_state = RAD_TXIDLE;
     NRF_RADIO_regs.STATE = RAD_TXIDLE;
     nrfra_set_Timer_RADIO(TIME_NEVER);
@@ -398,9 +401,11 @@ void nrf_radio_tasks_STOP(){
 void nrf_radio_tasks_DISABLE() {
   nrf_radio_stop_bit_counter();
 
-  if ( radio_state == RAD_TX ){
-    abort_if_needed();
-    radio_state = RAD_TXIDLE; //Momentary (will be changedin the if below)
+  if ((radio_state == RAD_TX) || (radio_state == RAD_TXSTARTING)) {
+    if (radio_state == RAD_TX) {
+      abort_if_needed();
+    }
+    radio_state = RAD_TXIDLE; //Momentary (will be changed in the if below)
     NRF_RADIO_regs.STATE = RAD_TXIDLE;
   } else if ( radio_state == RAD_RX ){
     abort_if_needed();
