@@ -26,6 +26,7 @@
 #include "NRF_RADIO.h"
 #include "NRF_EGU.h"
 #include "bs_tracing.h"
+#include "bs_oswrap.h"
 
 NRF_PPI_Type NRF_PPI_regs; ///< The PPI registers
 
@@ -604,21 +605,67 @@ static void set_fixed_channel_routes(){
     ppi_ch_tasks[31].tep_f = nrf_timer0_TASK_START; //TIMER0->TASKS_START
 }
 
+/*
+ * When an event comes, we first queue all tasks that would be triggered in tasks_queue,
+ * and then trigger them.
+ * We do this to filter out duplicate tasks caused by the same event,
+ * as this is a use case
+ */
+volatile static struct {
+  dest_f_t* q;
+  uint used;
+  uint size;
+} tasks_queue;
+#define TASK_QUEUE_ALLOC_SIZE 64
+
+
 /**
  * Initialize the PPI model
  */
-void nrf_ppi_init(){
+void nrf_ppi_init(void) {
   memset(&NRF_PPI_regs, 0, sizeof(NRF_PPI_regs));
   memset(ppi_ch_tasks, 0, sizeof(ppi_ch_tasks));
   memset(ppi_evt_to_ch, 0, sizeof(ppi_evt_to_ch));
   set_fixed_channel_routes();
+  tasks_queue.q = (dest_f_t*)bs_calloc(TASK_QUEUE_ALLOC_SIZE, sizeof(dest_f_t));
+  tasks_queue.size = TASK_QUEUE_ALLOC_SIZE;
 }
 
 /**
  * Cleanup the PPI model before exiting the program
  */
-void nrf_ppi_clean_up(){
+void nrf_ppi_clean_up(void) {
+  if (tasks_queue.q) {
+    free(tasks_queue.q);
+    tasks_queue.q = NULL;
+  }
+}
 
+static void nrf_ppi_enqueue_task(dest_f_t task) {
+  int i;
+  for (i = 0; i < tasks_queue.used; i++){
+    if (tasks_queue.q[i] == task){ //We ignore dups
+      return;
+    }
+  }
+
+  if (tasks_queue.used >= tasks_queue.size) {
+    tasks_queue.size += TASK_QUEUE_ALLOC_SIZE;
+    tasks_queue.q = bs_realloc(tasks_queue.q, tasks_queue.size*sizeof(dest_f_t));
+  }
+  tasks_queue.q[tasks_queue.used++] = task;
+}
+
+static void nrf_ppi_dequeue_all_tasks(void) {
+  int i;
+  for (i = 0; i < tasks_queue.used; i++) {
+    if (tasks_queue.q[i]) {
+      dest_f_t f = tasks_queue.q[i];
+      tasks_queue.q[i] = NULL;
+      f();
+    }
+  }
+  tasks_queue.used = 0;
 }
 
 /**
@@ -637,13 +684,14 @@ void nrf_ppi_event(ppi_event_types_t event){
       if ( ch_mask & ( 1 << ch_nbr ) ){
         ch_mask &= ~( (uint64_t) 1 << ch_nbr );
         if ( ppi_ch_tasks[ch_nbr].tep_f != NULL ){
-          ppi_ch_tasks[ch_nbr].tep_f();
+          nrf_ppi_enqueue_task(ppi_ch_tasks[ch_nbr].tep_f);
         }
         if ( ppi_ch_tasks[ch_nbr].fork_tep_f != NULL ){
-          ppi_ch_tasks[ch_nbr].fork_tep_f();
+          nrf_ppi_enqueue_task(ppi_ch_tasks[ch_nbr].fork_tep_f);
         }
       } //if event is mapped to this channel
     } //for channels
+    nrf_ppi_dequeue_all_tasks();
   } //if this event is in any channel
 }
 
