@@ -6,8 +6,14 @@
 
 /*
  * PPI — Programmable peripheral interconnect
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=4_1_0_5_14
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=5_1_0_5_14
  *
+ * Notes:
+ *   * Many tasks and events are not yet plugged. If you try to use those you will get a warning.
+ *
+ *   * In the real PPI, if two separate events which trigger the same task come close enough to each other
+ *     (they are registered by the same 16MHz clock edge), that common task will only be triggered once.
+ *     In this model, such events would cause such a tasks to trigger twice.
  */
 
 #include <stdbool.h>
