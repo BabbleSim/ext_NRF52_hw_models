@@ -411,9 +411,9 @@ void nrf_timer_regw_sideeffects_INTENCLR(int t){
 
 void nrf_timer_regw_sideeffects_CC(int t, int cc_n){
   if (cc_n >= Timer_n_CCs[t]) {
-    bs_trace_error_line_time("%s: Attempted to access non existing register"
+    bs_trace_error_line_time("%s: Attempted to access non existing register "
                              "TIMER%i.CC[%i] (>= %i)\n",
-                              t, cc_n, Timer_n_CCs[t]);
+                              __func__, t, cc_n, Timer_n_CCs[t]);
   }
 
   if ( (Timer_running[t] == true) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
@@ -423,19 +423,33 @@ void nrf_timer_regw_sideeffects_CC(int t, int cc_n){
 }
 
 void nrf_hw_model_timer_timer_triggered(void) {
-  for ( int t = 0 ; t < N_TIMERS ; t++) {
+  unsigned int t, cc;
+  struct {
+    unsigned int t[N_TIMERS*N_MAX_CC];
+    unsigned int cc[N_TIMERS*N_MAX_CC];
+    unsigned int cnt;
+  } match;
+
+  match.cnt = 0;
+
+  for (t = 0 ; t < N_TIMERS ; t++) {
     if ( !(( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 )) ) {
       continue;
     }
-    for ( int cc = 0 ; cc < Timer_n_CCs[t] ; cc++) {
-      if ( CC_timers[t][cc] != Timer_TIMERs ){ //This CC is not matching now
-        continue;
+    for (cc = 0 ; cc < Timer_n_CCs[t] ; cc++) {
+      if ( CC_timers[t][cc] == Timer_TIMERs ){
+        match.t[match.cnt] = t;
+        match.cc[match.cnt] = cc;
+        match.cnt++;
       }
-
-      update_cc_timer(t,cc); //Next time it will match
-
-      nrf_timer_signal_COMPARE(t,cc);
     }
+  }
+  while (match.cnt > 0) {
+    match.cnt--;
+    t = match.t[match.cnt];
+    cc = match.cc[match.cnt];
+    update_cc_timer(t,cc); //Next time it will match
+    nrf_timer_signal_COMPARE(t,cc);
   }
   update_master_timer();
 }
