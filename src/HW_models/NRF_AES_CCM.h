@@ -15,16 +15,16 @@ extern "C"{
 
 extern NRF_CCM_Type NRF_CCM_regs;
 
-void nrf_ccm_TASK_KSGEN();
-void nrf_ccm_TASK_CRYPT();
-void nrf_ccm_TASK_STOP();
-void nrf_ccm_TASK_RATEOVERRIDE();
+void nrf_ccm_TASK_KSGEN(void);
+void nrf_ccm_TASK_CRYPT(void);
+void nrf_ccm_TASK_STOP(void);
+void nrf_ccm_TASK_RATEOVERRIDE(void);
 void nrf_ccm_radio_received_packet(bool crc_error);
-void nrf_ccm_regw_sideeffects_INTENSET();
-void nrf_ccm_regw_sideeffects_INTENCLR();
-void nrf_ccm_regw_sideeffects_TASKS_KSGEN();
-void nrf_ccm_regw_sideeffects_TASKS_CRYPT();
-void nrf_ccm_regw_sideeffects_TASKS_STOP();
+void nrf_ccm_regw_sideeffects_INTENSET(void);
+void nrf_ccm_regw_sideeffects_INTENCLR(void);
+void nrf_ccm_regw_sideeffects_TASKS_KSGEN(void);
+void nrf_ccm_regw_sideeffects_TASKS_CRYPT(void);
+void nrf_ccm_regw_sideeffects_TASKS_STOP(void);
 
 #ifdef __cplusplus
 }

@@ -41,7 +41,7 @@ static double temperature = 25.0; /* Actual temperature the device is at */
 /**
  * Initialize the TEMP model
  */
-static void nrf_temp_init(){
+static void nrf_temp_init(void) {
   memset(&NRF_TEMP_regs, 0, sizeof(NRF_TEMP_regs));
   NRF_TEMP_regs.A0 = 0x00000326;
   NRF_TEMP_regs.A1 = 0x00000348;
@@ -71,7 +71,7 @@ NSI_TASK(nrf_temp_init, HW_INIT, 100);
 /**
  * TASK_START triggered handler
  */
-void nrf_temp_task_start(){
+void nrf_temp_task_start(void) {
   if (TEMP_hw_started) {
     return;
   }
@@ -83,13 +83,13 @@ void nrf_temp_task_start(){
 /**
  * TASK_STOP triggered handler
  */
-void nrf_temp_task_stop(){
+void nrf_temp_task_stop(void) {
   TEMP_hw_started = false;
   Timer_TEMP = TIME_NEVER;
   nsi_hws_find_next_event();
 }
 
-void nrf_temp_regw_sideeffects_TASK_START(){
+void nrf_temp_regw_sideeffects_TASK_START(void) {
 
   NRF_TEMP_regs.TASKS_START &= 1;
 
@@ -99,7 +99,7 @@ void nrf_temp_regw_sideeffects_TASK_START(){
   }
 }
 
-void nrf_temp_regw_sideeffects_TASK_STOP(){
+void nrf_temp_regw_sideeffects_TASK_STOP(void) {
 
   NRF_TEMP_regs.TASKS_STOP &= 1;
 
@@ -109,7 +109,7 @@ void nrf_temp_regw_sideeffects_TASK_STOP(){
   }
 }
 
-void nrf_temp_regw_sideeffects_INTENSET(){
+void nrf_temp_regw_sideeffects_INTENSET(void) {
 
   NRF_TEMP_regs.INTENSET &= 1;
 
@@ -118,7 +118,7 @@ void nrf_temp_regw_sideeffects_INTENSET(){
   }
 }
 
-void nrf_temp_regw_sideeffects_INTENCLEAR(){
+void nrf_temp_regw_sideeffects_INTENCLEAR(void) {
 
   NRF_TEMP_regs.INTENCLR &= 1;
 
@@ -132,7 +132,7 @@ void nrf_temp_regw_sideeffects_INTENCLEAR(){
 /**
  * Time has come when the temperature measurement is ready
  */
-static void nrf_temp_timer_triggered(){
+static void nrf_temp_timer_triggered(void) {
 
   NRF_TEMP_regs.TEMP = temperature*(1 << TEMP_FBITS) + bs_random_uniformRi(-1,1);
 

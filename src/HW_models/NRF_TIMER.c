@@ -452,11 +452,11 @@ static void nrf_hw_model_timer_timer_triggered(void) {
 
 NSI_HW_EVENT(Timer_TIMERs, nrf_hw_model_timer_timer_triggered, 50);
 
-void nrf_timer0_TASK_START() { nrf_timer_TASK_START(0); }
-void nrf_timer1_TASK_START() { nrf_timer_TASK_START(1); }
-void nrf_timer2_TASK_START() { nrf_timer_TASK_START(2); }
-void nrf_timer3_TASK_START() { nrf_timer_TASK_START(3); }
-void nrf_timer4_TASK_START() { nrf_timer_TASK_START(4); }
+void nrf_timer0_TASK_START(void) { nrf_timer_TASK_START(0); }
+void nrf_timer1_TASK_START(void) { nrf_timer_TASK_START(1); }
+void nrf_timer2_TASK_START(void) { nrf_timer_TASK_START(2); }
+void nrf_timer3_TASK_START(void) { nrf_timer_TASK_START(3); }
+void nrf_timer4_TASK_START(void) { nrf_timer_TASK_START(4); }
 
 void nrf_timer0_TASK_STOP(void) { nrf_timer_TASK_STOP(0); }
 void nrf_timer1_TASK_STOP(void) { nrf_timer_TASK_STOP(1); }

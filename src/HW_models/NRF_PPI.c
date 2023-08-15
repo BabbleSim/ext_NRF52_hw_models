@@ -50,18 +50,18 @@ void nrf_ppi_TASK_CHG_ENDIS( int groupnbr, bool enable /*false=disable task*/ ){
   //Note of the author: From the spec I cannot guess if these tasks will affect
   //CHEN or a separate hidden register
 }
-void nrf_ppi_TASK_CHG0_EN() { nrf_ppi_TASK_CHG_ENDIS(0,true); }
-void nrf_ppi_TASK_CHG1_EN() { nrf_ppi_TASK_CHG_ENDIS(1,true); }
-void nrf_ppi_TASK_CHG2_EN() { nrf_ppi_TASK_CHG_ENDIS(2,true); }
-void nrf_ppi_TASK_CHG3_EN() { nrf_ppi_TASK_CHG_ENDIS(3,true); }
-void nrf_ppi_TASK_CHG4_EN() { nrf_ppi_TASK_CHG_ENDIS(4,true); }
-void nrf_ppi_TASK_CHG5_EN() { nrf_ppi_TASK_CHG_ENDIS(5,true); }
-void nrf_ppi_TASK_CHG0_DIS(){ nrf_ppi_TASK_CHG_ENDIS(0,false); }
-void nrf_ppi_TASK_CHG1_DIS(){ nrf_ppi_TASK_CHG_ENDIS(1,false); }
-void nrf_ppi_TASK_CHG2_DIS(){ nrf_ppi_TASK_CHG_ENDIS(2,false); }
-void nrf_ppi_TASK_CHG3_DIS(){ nrf_ppi_TASK_CHG_ENDIS(3,false); }
-void nrf_ppi_TASK_CHG4_DIS(){ nrf_ppi_TASK_CHG_ENDIS(4,false); }
-void nrf_ppi_TASK_CHG5_DIS(){ nrf_ppi_TASK_CHG_ENDIS(5,false); }
+void nrf_ppi_TASK_CHG0_EN(void) { nrf_ppi_TASK_CHG_ENDIS(0,true); }
+void nrf_ppi_TASK_CHG1_EN(void) { nrf_ppi_TASK_CHG_ENDIS(1,true); }
+void nrf_ppi_TASK_CHG2_EN(void) { nrf_ppi_TASK_CHG_ENDIS(2,true); }
+void nrf_ppi_TASK_CHG3_EN(void) { nrf_ppi_TASK_CHG_ENDIS(3,true); }
+void nrf_ppi_TASK_CHG4_EN(void) { nrf_ppi_TASK_CHG_ENDIS(4,true); }
+void nrf_ppi_TASK_CHG5_EN(void) { nrf_ppi_TASK_CHG_ENDIS(5,true); }
+void nrf_ppi_TASK_CHG0_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(0,false); }
+void nrf_ppi_TASK_CHG1_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(1,false); }
+void nrf_ppi_TASK_CHG2_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(2,false); }
+void nrf_ppi_TASK_CHG3_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(3,false); }
+void nrf_ppi_TASK_CHG4_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(4,false); }
+void nrf_ppi_TASK_CHG5_DIS(void) { nrf_ppi_TASK_CHG_ENDIS(5,false); }
 
 typedef void (*dest_f_t)(void); ///<Syntactic sugar for task function pointer
 
@@ -558,7 +558,7 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
 };
 
 
-static void set_fixed_channel_routes(){
+static void set_fixed_channel_routes(void) {
   //TODO: add handler function pointers as we add those functions while modelling the different parts
 
   //Set the fixed channels configuration:
@@ -791,7 +791,7 @@ void nrf_ppi_regw_sideeffects_FORK_TEP(int ch_nbr){
  * Update PPI CHEN mask after a write to CHENSET
  * (writes to CHEN do not need sideeffects)
  */
-void nrf_ppi_regw_sideeffects_CHENSET(){
+void nrf_ppi_regw_sideeffects_CHENSET(void) {
 	if ( NRF_PPI_regs.CHENSET != 0 ){
 		NRF_PPI_regs.CHEN |= NRF_PPI_regs.CHENSET;
 		NRF_PPI_regs.CHENSET = 0;
@@ -802,7 +802,7 @@ void nrf_ppi_regw_sideeffects_CHENSET(){
  * Update PPI CHEN mask after a write to CHENCLR
  * (writes to CHEN do not need sideeffects)
  */
-void nrf_ppi_regw_sideeffects_CHENCLR(){
+void nrf_ppi_regw_sideeffects_CHENCLR(void) {
 	if ( NRF_PPI_regs.CHENCLR != 0 ){
 		NRF_PPI_regs.CHEN &= ~NRF_PPI_regs.CHENCLR;
 		NRF_PPI_regs.CHENCLR = 0;
@@ -813,7 +813,7 @@ void nrf_ppi_regw_sideeffects_CHENCLR(){
  * Update PPI CHEN mask after a write to CHENSET or CHENCLR
  * (writes to CHEN do not need sideeffects)
  */
-void nrf_ppi_regw_sideeffects_CHEN(){
+void nrf_ppi_regw_sideeffects_CHEN(void) {
 	//Note that we do not let people read CHEN from the SET and CLR
 	//registers
 	nrf_ppi_regw_sideeffects_CHENSET();
@@ -834,7 +834,7 @@ void nrf_ppi_regw_sideeffects_TASKS_CHG_EN(int i){
 	}
 }
 
-void nrf_ppi_taskw_sideeffects(){
+void nrf_ppi_taskw_sideeffects(void) {
 	int i;
 	for ( i = 0 ; i < 6 ; i++){
 		nrf_ppi_regw_sideeffects_TASKS_CHG_DIS(i);

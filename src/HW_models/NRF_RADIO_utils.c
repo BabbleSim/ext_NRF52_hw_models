@@ -166,7 +166,7 @@ double nrfra_LQIformat_to_dBm(uint value){
   return (double)value - 93;
 }
 
-int nrfra_is_HW_TIFS_enabled() {
+int nrfra_is_HW_TIFS_enabled(void) {
   if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
       && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
           || ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) )
@@ -383,7 +383,7 @@ void nrfra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
 /**
  * Return the CRC length in bytes
  */
-uint nrfra_get_crc_length(){
+uint nrfra_get_crc_length(void) {
   return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
 }
 

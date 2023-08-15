@@ -114,7 +114,7 @@ int hwll_connect_to_phy(uint d, const char* s, const char* p){
 /**
  * Disconnect from the phy, and ask it to end the simulation
  */
-void hwll_terminate_simulation(){
+void hwll_terminate_simulation(void) {
   if (!nosim) {
     p2G4_dev_terminate_nc();
   }
@@ -123,7 +123,7 @@ void hwll_terminate_simulation(){
 /**
  * Disconnect from the phy, but let the simulation continue without us
  */
-void hwll_disconnect_phy(){
+void hwll_disconnect_phy(void) {
   if (!nosim) {
     p2G4_dev_disconnect_nc();
   }
@@ -133,7 +133,7 @@ void hwll_disconnect_phy(){
  * Terminate the simulation for this device:
  *  Disconnection from the phy and exit
  */
-void hwll_disconnect_phy_and_exit(){
+void hwll_disconnect_phy_and_exit(void) {
   hwll_disconnect_phy();
   bs_trace_exit_line("\n");
 }

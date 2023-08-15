@@ -14,12 +14,12 @@ extern "C" {
 #endif
 
 void hw_irq_ctrl_raise_im(uint32_t irq);
-uint64_t hw_irq_ctrl_get_irq_status();
-void hw_irq_ctrl_clear_all_irqs();
+uint64_t hw_irq_ctrl_get_irq_status(void);
+void hw_irq_ctrl_clear_all_irqs(void);
 void hw_irq_ctrl_clear_irq(unsigned int irq);
 void hw_irq_ctrl_reeval_level_irq(unsigned int irq);
 void hw_irq_controller_set_irq_mask(uint64_t mask);
-uint64_t hw_irq_ctrl_get_irq_mask();
+uint64_t hw_irq_ctrl_get_irq_mask(void);
 void hw_irq_ctrl_enable_irq(unsigned int irq);
 void hw_irq_ctrl_disable_irq(unsigned int irq);
 int hw_irq_ctrl_is_irq_enabled(unsigned int irq);

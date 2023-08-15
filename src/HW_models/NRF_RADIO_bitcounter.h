@@ -13,7 +13,7 @@
 extern "C"{
 #endif
 
-void nrf_radio_stop_bit_counter();
+void nrf_radio_stop_bit_counter(void);
 
 #ifdef __cplusplus
 }

@@ -12,12 +12,12 @@
 extern "C"{
 #endif
 
-void nrf_temp_regw_sideeffects_TASK_START();
-void nrf_temp_regw_sideeffects_TASK_STOP();
-void nrf_temp_regw_sideeffects_INTENSET();
-void nrf_temp_regw_sideeffects_INTENCLEAR();
-void nrf_temp_task_start();
-void nrf_temp_task_stop();
+void nrf_temp_regw_sideeffects_TASK_START(void);
+void nrf_temp_regw_sideeffects_TASK_STOP(void);
+void nrf_temp_regw_sideeffects_INTENSET(void);
+void nrf_temp_regw_sideeffects_INTENCLEAR(void);
+void nrf_temp_task_start(void);
+void nrf_temp_task_stop(void);
 
 extern NRF_TEMP_Type NRF_TEMP_regs;
 

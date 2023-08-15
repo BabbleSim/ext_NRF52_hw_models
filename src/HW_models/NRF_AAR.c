@@ -40,7 +40,7 @@ NSI_TASK(nrf_aar_init, HW_INIT, 100);
 
 static int nrf_aar_resolve(int *good_irk);
 
-static void signal_EVENTS_END(){
+static void signal_EVENTS_END(void) {
   NRF_AAR_regs.EVENTS_END = 1;
   nrf_ppi_event(AAR_EVENTS_END);
 
@@ -49,7 +49,7 @@ static void signal_EVENTS_END(){
   }
 }
 
-static void signal_EVENTS_RESOLVED(){
+static void signal_EVENTS_RESOLVED(void) {
   NRF_AAR_regs.EVENTS_RESOLVED = 1;
   nrf_ppi_event(AAR_EVENTS_RESOLVED);
 
@@ -58,7 +58,7 @@ static void signal_EVENTS_RESOLVED(){
   }
 }
 
-static void signal_EVENTS_NOTRESOLVED(){
+static void signal_EVENTS_NOTRESOLVED(void) {
   NRF_AAR_regs.EVENTS_NOTRESOLVED = 1;
   nrf_ppi_event(AAR_EVENTS_NOTRESOLVED);
 
@@ -67,7 +67,7 @@ static void signal_EVENTS_NOTRESOLVED(){
   }
 }
 
-void nrf_aar_TASK_START(){
+void nrf_aar_TASK_START(void) {
   int n_irks;
 
   if (NRF_AAR_regs.ENABLE != 0x3) {
@@ -81,7 +81,7 @@ void nrf_aar_TASK_START(){
   nsi_hws_find_next_event();
 }
 
-void nrf_aar_TASK_STOP(){
+void nrf_aar_TASK_STOP(void) {
   if (!AAR_Running) {
     return;
   }
@@ -94,14 +94,14 @@ void nrf_aar_TASK_STOP(){
   //and only an END?
 }
 
-void nrf_aar_regw_sideeffects_INTENSET(){
+void nrf_aar_regw_sideeffects_INTENSET(void) {
   if ( NRF_AAR_regs.INTENSET ){
     AAR_INTEN |= NRF_AAR_regs.INTENSET;
     NRF_AAR_regs.INTENSET = AAR_INTEN;
   }
 }
 
-void nrf_aar_regw_sideeffects_INTENCLR(){
+void nrf_aar_regw_sideeffects_INTENCLR(void) {
   if ( NRF_AAR_regs.INTENCLR ){
     AAR_INTEN  &= ~NRF_AAR_regs.INTENCLR;
     NRF_AAR_regs.INTENSET = AAR_INTEN;
@@ -109,14 +109,14 @@ void nrf_aar_regw_sideeffects_INTENCLR(){
   }
 }
 
-void nrf_aar_regw_sideeffects_TASKS_START(){
+void nrf_aar_regw_sideeffects_TASKS_START(void) {
   if ( NRF_AAR_regs.TASKS_START ) {
     NRF_AAR_regs.TASKS_START = 0;
     nrf_aar_TASK_START();
   }
 }
 
-void nrf_aar_regw_sideeffects_TASKS_STOP(){
+void nrf_aar_regw_sideeffects_TASKS_STOP(void) {
   if ( NRF_AAR_regs.TASKS_STOP ) {
     NRF_AAR_regs.TASKS_STOP = 0;
     nrf_aar_TASK_STOP();

@@ -17,9 +17,9 @@ extern "C"{
 #endif
 
 int hwll_connect_to_phy(unsigned int d, const char* s, const char* p);
-void hwll_disconnect_phy();
-void hwll_disconnect_phy_and_exit();
-void hwll_terminate_simulation();
+void hwll_disconnect_phy(void);
+void hwll_disconnect_phy_and_exit(void);
+void hwll_terminate_simulation(void);
 void hwll_set_nosim(bool new_nosim);
 
 bs_time_t hwll_phy_time_from_dev(bs_time_t d_t);

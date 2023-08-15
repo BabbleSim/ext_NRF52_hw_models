@@ -74,7 +74,7 @@ void nrfra_timings_init(void) {
 /**
  * Return the Rx chain delay given the configured MODE
  */
-bs_time_t nrfra_timings_get_Rx_chain_delay(){
+bs_time_t nrfra_timings_get_Rx_chain_delay(void) {
   int mod_idx = 0;
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     mod_idx = 1;

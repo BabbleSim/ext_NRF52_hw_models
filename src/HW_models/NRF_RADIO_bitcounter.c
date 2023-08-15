@@ -29,7 +29,7 @@ static void nrf_radio_bitcounter_timer_triggered(void) {
 
 NSI_HW_EVENT(Timer_RADIO_bitcounter, nrf_radio_bitcounter_timer_triggered, 50);
 
-void nrf_radio_tasks_BCSTART() {
+void nrf_radio_tasks_BCSTART(void) {
   /* Note that we do not validate that the end of the address has been received */
 
   if (bit_counter_running) {
@@ -43,7 +43,7 @@ void nrf_radio_tasks_BCSTART() {
   nsi_hws_find_next_event();
 }
 
-void nrf_radio_stop_bit_counter() {
+void nrf_radio_stop_bit_counter(void) {
   if (!bit_counter_running){
     return;
   }
@@ -54,11 +54,11 @@ void nrf_radio_stop_bit_counter() {
   }
 }
 
-void nrf_radio_tasks_BCSTOP() {
+void nrf_radio_tasks_BCSTOP(void) {
   nrf_radio_stop_bit_counter();
 }
 
-void nrf_radio_regw_sideeffects_BCC() {
+void nrf_radio_regw_sideeffects_BCC(void) {
   if (!bit_counter_running){
     return;
   }

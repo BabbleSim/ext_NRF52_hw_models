@@ -21,7 +21,7 @@ static uint8_t awake_cpu_asap = 0;
 static bs_time_t Timer_event_fw_test_ticker_internal = TIME_NEVER;
 static bs_time_t fw_test_ticker_tick_period = TIME_NEVER;
 
-static void bst_ticker_find_next_time(){
+static void bst_ticker_find_next_time(void) {
   if ( awake_cpu_asap == 1){
     Timer_event_fw_test_ticker = nsi_hws_get_time(); //We will awake it in this same microsecond
   } else {
@@ -81,7 +81,7 @@ NSI_HW_EVENT(Timer_event_fw_test_ticker, bst_ticker_triggered, 1 /* Purposedly t
 /**
  * Awake the MCU as soon as possible (in this same microsecond, in a following delta)
  */
-void bst_awake_cpu_asap(){
+void bst_awake_cpu_asap(void) {
   awake_cpu_asap = 1;
   bst_ticker_find_next_time();
 }

@@ -22,11 +22,11 @@ extern "C"{
 
 extern NRF_NVMC_Type NRF_NVMC_regs;
 
-void nrfhw_nvmc_regw_sideeffects_ERASEPAGE();
-void nrf_nvmc_regw_sideeffects_ERASEPCR0();
-void nrfhw_nvmc_regw_sideeffects_ERASEUICR();
-void nrfhw_nvmc_regw_sideeffects_ERASEALL();
-void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL();
+void nrfhw_nvmc_regw_sideeffects_ERASEPAGE(void);
+void nrf_nvmc_regw_sideeffects_ERASEPCR0(void);
+void nrfhw_nvmc_regw_sideeffects_ERASEUICR(void);
+void nrfhw_nvmc_regw_sideeffects_ERASEALL(void);
+void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL(void);
 void nrfhw_nmvc_write_word(uint32_t address, uint32_t value);
 uint32_t nrfhw_nmvc_read_word(uint32_t address);
 uint16_t nrfhw_nmvc_read_halfword(uint32_t address);

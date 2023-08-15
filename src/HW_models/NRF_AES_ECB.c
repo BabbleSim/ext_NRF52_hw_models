@@ -38,7 +38,7 @@ typedef struct {
 	uint8_t CIPHERTEXT[16]; /* 16 byte AES ciphertext output block */
 } ecbdata_t;
 
-static void nrf_aes_ecb_init(){
+static void nrf_aes_ecb_init(void) {
 	memset(&NRF_ECB_regs, 0, sizeof(NRF_ECB_regs));
 	Timer_ECB = TIME_NEVER;
 	ECB_INTEN = 0;
@@ -64,7 +64,7 @@ void nrf_aes_ecb_cheat_reset_t_ecb(void){
 	ECB_t_ECB = DEFAULT_t_ECB;
 }
 
-static void signal_ENDECB(){
+static void signal_ENDECB(void) {
 	NRF_ECB_regs.EVENTS_ENDECB = 1;
 	nrf_ppi_event(ECB_EVENTS_ENDECB);
 
@@ -73,7 +73,7 @@ static void signal_ENDECB(){
 	}
 }
 
-static void signal_ERRORECB(){
+static void signal_ERRORECB(void) {
 	NRF_ECB_regs.EVENTS_ERRORECB = 1;
 	nrf_ppi_event(ECB_EVENTS_ERRORECB);
 
@@ -82,7 +82,7 @@ static void signal_ERRORECB(){
 	}
 }
 
-void nrf_ecb_TASK_STOPECB(){
+void nrf_ecb_TASK_STOPECB(void) {
 	if (!ECB_Running) {
 		return;
 	}
@@ -93,20 +93,20 @@ void nrf_ecb_TASK_STOPECB(){
 	signal_ERRORECB();
 }
 
-void nrf_ecb_TASK_STARTECB(){
+void nrf_ecb_TASK_STARTECB(void) {
 	ECB_Running = true;
 	Timer_ECB = nsi_hws_get_time() + ECB_t_ECB;
 	nsi_hws_find_next_event();
 }
 
-void nrf_ecb_regw_sideeffects_INTENSET(){
+void nrf_ecb_regw_sideeffects_INTENSET(void) {
 	if ( NRF_ECB_regs.INTENSET ) {
 		ECB_INTEN |= NRF_ECB_regs.INTENSET;
 		NRF_ECB_regs.INTENSET = ECB_INTEN;
 	}
 }
 
-void nrf_ecb_regw_sideeffects_INTENCLEAR(){
+void nrf_ecb_regw_sideeffects_INTENCLEAR(void) {
 	if ( NRF_ECB_regs.INTENCLR ) {
 		ECB_INTEN &= ~NRF_ECB_regs.INTENCLR;
 		NRF_ECB_regs.INTENSET = ECB_INTEN;
@@ -114,21 +114,21 @@ void nrf_ecb_regw_sideeffects_INTENCLEAR(){
 	}
 }
 
-void nrf_ecb_regw_sideeffects_TASKS_STARTECB(){
+void nrf_ecb_regw_sideeffects_TASKS_STARTECB(void) {
 	if ( NRF_ECB_regs.TASKS_STARTECB ) {
 		NRF_ECB_regs.TASKS_STARTECB = 0;
 		nrf_ecb_TASK_STARTECB();
 	}
 }
 
-void nrf_ecb_regw_sideeffects_TASKS_STOPECB(){
+void nrf_ecb_regw_sideeffects_TASKS_STOPECB(void) {
 	if ( NRF_ECB_regs.TASKS_STOPECB ) {
 		NRF_ECB_regs.TASKS_STOPECB = 0;
 		nrf_ecb_TASK_STOPECB();
 	}
 }
 
-static void nrf_ecb_timer_triggered(){
+static void nrf_ecb_timer_triggered(void) {
 
 	ECB_Running = false;
 	Timer_ECB = TIME_NEVER;

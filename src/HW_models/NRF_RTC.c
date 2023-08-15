@@ -90,7 +90,7 @@ static uint64_t us_time_to_sub_us_time(bs_time_t us_time)
   return us_time << SUB_US_BITS;
 }
 
-static uint64_t get_hw_time_sub_us()
+static uint64_t get_hw_time_sub_us(void)
 {
   bs_time_t now = nsi_hws_get_time();
 
@@ -102,7 +102,7 @@ static uint64_t get_hw_time_sub_us()
   return us_time_to_sub_us_time(now);
 }
 
-static uint64_t get_last_lf_tick_time_sub_us() {
+static uint64_t get_last_lf_tick_time_sub_us(void) {
   uint64_t now_sub_us = get_hw_time_sub_us();
 
   uint64_t lf_ticks = (now_sub_us - first_lf_tick_time_sub_us) / LF_CLOCK_PERIOD; //floor()
@@ -175,7 +175,7 @@ static bs_time_t get_counter_match_time(uint64_t counter_match, int rtc, uint64_
   return next_match_us;
 }
 
-static void update_master_timer() {
+static void update_master_timer(void) {
   Timer_RTC = TIME_NEVER;
   for (int rtc = 0; rtc < N_RTC ; rtc++) {
     if (RTC_Running[rtc] == false) {
@@ -474,18 +474,18 @@ void nrf_rtc_TASKS_TRIGOVRFLW(int rtc) {
   set_counter_to(RTC_TRIGGER_OVERFLOW_COUNTER_VALUE, rtc);
 }
 
-void nrf_rtc0_TASKS_START()       { nrf_rtc_TASKS_START(0); }
-void nrf_rtc0_TASKS_STOP()        { nrf_rtc_TASKS_STOP(0);  }
-void nrf_rtc0_TASKS_CLEAR()       { nrf_rtc_TASKS_CLEAR(0); }
-void nrf_rtc0_TASKS_TRIGOVRFLW()  { nrf_rtc_TASKS_TRIGOVRFLW(0); }
-void nrf_rtc1_TASKS_START()       { nrf_rtc_TASKS_START(1); }
-void nrf_rtc1_TASKS_STOP()        { nrf_rtc_TASKS_STOP(1);  }
-void nrf_rtc1_TASKS_CLEAR()       { nrf_rtc_TASKS_CLEAR(1); }
-void nrf_rtc1_TASKS_TRIGOVRFLW()  { nrf_rtc_TASKS_TRIGOVRFLW(1); }
-void nrf_rtc2_TASKS_START()       { nrf_rtc_TASKS_START(2); }
-void nrf_rtc2_TASKS_STOP()        { nrf_rtc_TASKS_STOP(2);  }
-void nrf_rtc2_TASKS_CLEAR()       { nrf_rtc_TASKS_CLEAR(2); }
-void nrf_rtc2_TASKS_TRIGOVRFLW()  { nrf_rtc_TASKS_TRIGOVRFLW(2); }
+void nrf_rtc0_TASKS_START(void)      { nrf_rtc_TASKS_START(0); }
+void nrf_rtc0_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(0);  }
+void nrf_rtc0_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(0); }
+void nrf_rtc0_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(0); }
+void nrf_rtc1_TASKS_START(void)      { nrf_rtc_TASKS_START(1); }
+void nrf_rtc1_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(1);  }
+void nrf_rtc1_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(1); }
+void nrf_rtc1_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(1); }
+void nrf_rtc2_TASKS_START(void)      { nrf_rtc_TASKS_START(2); }
+void nrf_rtc2_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(2);  }
+void nrf_rtc2_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(2); }
+void nrf_rtc2_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(2); }
 
 void nrf_rtc_regw_sideeffect_TASKS_START(int i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];

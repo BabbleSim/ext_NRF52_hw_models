@@ -49,7 +49,7 @@ static void nrf_gpiote_init(void) {
 
 NSI_TASK(nrf_gpiote_init, HW_INIT, 100);
 
-static void nrf_gpiote_events_port();
+static void nrf_gpiote_events_port(void);
 
 /*
  * API to the GPIO components, in which they can signal that their DETECT output signal
@@ -141,7 +141,7 @@ static void nrf_gpiote_events_in(unsigned int n) {
 	nrf_ppi_event(GPIOTE_EVENTS_IN_0 + n);
 }
 
-static void nrf_gpiote_events_port() {
+static void nrf_gpiote_events_port(void) {
 	NRF_GPIOTE_regs.EVENTS_PORT = 1;
 	nrf_gpiote_eval_interrupt();
 	nrf_ppi_event(GPIOTE_EVENTS_PORT);
@@ -227,12 +227,12 @@ void nrf_gpiote_regw_sideeffects_EVENTS_IN(unsigned int n) {
 	nrf_gpiote_eval_interrupt();
 }
 
-void nrf_gpiote_regw_sideeffects_EVENTS_PORT() {
+void nrf_gpiote_regw_sideeffects_EVENTS_PORT(void) {
 	nrf_gpiote_eval_interrupt();
 
 }
 
-void nrf_gpiote_regw_sideeffects_INTENSET() {
+void nrf_gpiote_regw_sideeffects_INTENSET(void) {
 	if (NRF_GPIOTE_regs.INTENSET) {
 		GPIOTE_ITEN |= NRF_GPIOTE_regs.INTENSET;
 		NRF_GPIOTE_regs.INTENSET = GPIOTE_ITEN;
@@ -240,7 +240,7 @@ void nrf_gpiote_regw_sideeffects_INTENSET() {
 	}
 }
 
-void nrf_gpiote_regw_sideeffects_INTENCLR() {
+void nrf_gpiote_regw_sideeffects_INTENCLR(void) {
 	if (NRF_GPIOTE_regs.INTENCLR) {
 		GPIOTE_ITEN &= ~NRF_GPIOTE_regs.INTENCLR;
 		NRF_GPIOTE_regs.INTENCLR = 0;

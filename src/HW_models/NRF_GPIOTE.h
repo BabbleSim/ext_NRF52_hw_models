@@ -22,9 +22,9 @@ void nrf_gpiote_regw_sideeffects_TASKS_OUT(unsigned int n);
 void nrf_gpiote_regw_sideeffects_TASKS_SET(unsigned int n);
 void nrf_gpiote_regw_sideeffects_TASKS_CLR(unsigned int n);
 void nrf_gpiote_regw_sideeffects_EVENTS_IN(unsigned int n);
-void nrf_gpiote_regw_sideeffects_EVENTS_PORT();
-void nrf_gpiote_regw_sideeffects_INTENSET();
-void nrf_gpiote_regw_sideeffects_INTENCLR();
+void nrf_gpiote_regw_sideeffects_EVENTS_PORT(void);
+void nrf_gpiote_regw_sideeffects_INTENSET(void);
+void nrf_gpiote_regw_sideeffects_INTENCLR(void);
 void nrf_gpiote_regw_sideeffects_CONFIG(unsigned int n);
 
 void nrf_gpiote_TASKS_SET_0(void);

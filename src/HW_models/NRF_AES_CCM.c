@@ -46,7 +46,7 @@ NRF_CCM_Type NRF_CCM_regs;
 static uint32_t CCM_INTEN; //interrupt enable
 static bool decryption_ongoing;
 
-static void nrf_aes_ccm_init(){
+static void nrf_aes_ccm_init(void) {
   memset(&NRF_CCM_regs, 0, sizeof(NRF_CCM_regs));
   NRF_CCM_regs.MODE = 0x01;
   NRF_CCM_regs.HEADERMASK= 0xE3;
@@ -57,8 +57,8 @@ static void nrf_aes_ccm_init(){
 
 NSI_TASK(nrf_aes_ccm_init, HW_INIT, 100);
 
-void nrf_ccm_TASK_CRYPT ();
-static void signal_EVENTS_ENDCRYPT();
+void nrf_ccm_TASK_CRYPT(void);
+static void signal_EVENTS_ENDCRYPT(void);
 
 #define IV_LEN      8
 #define NONCE_LEN   13
@@ -86,7 +86,7 @@ static void nonce_calc(
 }
 
 
-static void nrf_ccm_encrypt_tx() {
+static void nrf_ccm_encrypt_tx(void) {
   const uint8_t* cnfptr;
   const uint8_t* sk;
   const uint8_t* iv;
@@ -186,7 +186,7 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
   signal_EVENTS_ENDCRYPT();
 }
 
-static void signal_EVENTS_ENDKSGEN() {
+static void signal_EVENTS_ENDKSGEN(void) {
   NRF_CCM_regs.EVENTS_ENDKSGEN = 1;
   nrf_ppi_event(CCM_EVENTS_ENDKSGEN);
 
@@ -199,7 +199,7 @@ static void signal_EVENTS_ENDKSGEN() {
   }
 }
 
-static void signal_EVENTS_ENDCRYPT(){
+static void signal_EVENTS_ENDCRYPT(void) {
   NRF_CCM_regs.EVENTS_ENDCRYPT = 1;
   nrf_ppi_event(CCM_EVENTS_ENDCRYPT);
 
@@ -217,7 +217,7 @@ static void signal_EVENTS_ENDCRYPT(){
 	}
 } */
 
-void nrf_ccm_TASK_KSGEN() {
+void nrf_ccm_TASK_KSGEN(void) {
   if (NRF_CCM_regs.ENABLE != CCM_ENABLE_ENABLE_Enabled) {
     return;
   }
@@ -225,7 +225,7 @@ void nrf_ccm_TASK_KSGEN() {
   signal_EVENTS_ENDKSGEN();
 }
 
-void nrf_ccm_TASK_CRYPT() {
+void nrf_ccm_TASK_CRYPT(void) {
   if (NRF_CCM_regs.ENABLE != CCM_ENABLE_ENABLE_Enabled) {
     return;
   }
@@ -238,24 +238,24 @@ void nrf_ccm_TASK_CRYPT() {
   }
 }
 
-void nrf_ccm_TASK_STOP() {
+void nrf_ccm_TASK_STOP(void) {
   decryption_ongoing = false;
 }
 
-void nrf_ccm_TASK_RATEOVERRIDE() {
+void nrf_ccm_TASK_RATEOVERRIDE(void) {
   /* We ignore the RATEOVERRIDE task */
   bs_trace_warning_line_time("%s ignored\n", __func__);
 }
 
 
-void nrf_ccm_regw_sideeffects_INTENSET(){
+void nrf_ccm_regw_sideeffects_INTENSET(void) {
   if (NRF_CCM_regs.INTENSET) {
     CCM_INTEN |= NRF_CCM_regs.INTENSET;
     NRF_CCM_regs.INTENSET = CCM_INTEN;
   }
 }
 
-void nrf_ccm_regw_sideeffects_INTENCLR(){
+void nrf_ccm_regw_sideeffects_INTENCLR(void) {
   if (NRF_CCM_regs.INTENCLR) {
     CCM_INTEN  &= ~NRF_CCM_regs.INTENCLR;
     NRF_CCM_regs.INTENSET = CCM_INTEN;
@@ -263,21 +263,21 @@ void nrf_ccm_regw_sideeffects_INTENCLR(){
   }
 }
 
-void nrf_ccm_regw_sideeffects_TASKS_KSGEN(){
+void nrf_ccm_regw_sideeffects_TASKS_KSGEN(void) {
   if (NRF_CCM_regs.TASKS_KSGEN) {
     NRF_CCM_regs.TASKS_KSGEN = 0;
     nrf_ccm_TASK_KSGEN();
   }
 }
 
-void nrf_ccm_regw_sideeffects_TASKS_CRYPT(){
+void nrf_ccm_regw_sideeffects_TASKS_CRYPT(void) {
   if (NRF_CCM_regs.TASKS_CRYPT) {
     NRF_CCM_regs.TASKS_CRYPT = 0;
     nrf_ccm_TASK_CRYPT();
   }
 }
 
-void nrf_ccm_regw_sideeffects_TASKS_STOP(){
+void nrf_ccm_regw_sideeffects_TASKS_STOP(void) {
   if (NRF_CCM_regs.TASKS_STOP) {
     NRF_CCM_regs.TASKS_STOP = 0;
     nrf_ccm_TASK_STOP();

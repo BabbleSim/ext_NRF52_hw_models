@@ -101,13 +101,13 @@ struct nvmc_args_t {
   bool flash_erase_warnings;
 } nvmc_args;
 
-static void nvmc_initialize_data_storage();
-static void nvmc_clear_storage();
+static void nvmc_initialize_data_storage(storage_state_t *st);
+static void nvmc_clear_storage(storage_state_t *st);
 
 /**
  * Initialize the NVMC and UICR models
  */
-static void nrfhw_nvmc_uicr_init(){
+static void nrfhw_nvmc_uicr_init(void) {
   memset(&NRF_NVMC_regs, 0x00, sizeof(NRF_NVMC_regs));
   NRF_NVMC_regs.READY = 1;
   NRF_NVMC_regs.READYNEXT = 1;
@@ -158,7 +158,7 @@ NSI_TASK(nrfhw_nvmc_uicr_init, HW_INIT, 100);
 /**
  * Clean up the NVMC and UICR model before program exit
  */
-static void nrfhw_nvmc_uicr_clean_up(){
+static void nrfhw_nvmc_uicr_clean_up(void) {
   nvmc_clear_storage(&flash_st);
   nvmc_clear_storage(&uicr_st);
 }
@@ -311,15 +311,15 @@ static void nrfhw_nvmc_erase_page(uint32_t address){
 }
 
 /* Note ERASEPCR1 is an alias to ERASEPAGE (same register) */
-void nrfhw_nvmc_regw_sideeffects_ERASEPAGE(){
+void nrfhw_nvmc_regw_sideeffects_ERASEPAGE(void) {
   nrfhw_nvmc_erase_page(NRF_NVMC_regs.ERASEPAGE);
 }
 
-void nrf_nvmc_regw_sideeffects_ERASEPCR0(){
+void nrf_nvmc_regw_sideeffects_ERASEPCR0(void) {
   nrfhw_nvmc_erase_page(NRF_NVMC_regs.ERASEPCR0);
 }
 
-void nrfhw_nvmc_regw_sideeffects_ERASEUICR(){
+void nrfhw_nvmc_regw_sideeffects_ERASEUICR(void) {
   NRF_NVMC_regs.ERASEUICR &= 1;
 
   if (NRF_NVMC_regs.ERASEUICR) {
@@ -334,7 +334,7 @@ void nrfhw_nvmc_regw_sideeffects_ERASEUICR(){
   }
 }
 
-void nrfhw_nvmc_regw_sideeffects_ERASEALL(){
+void nrfhw_nvmc_regw_sideeffects_ERASEALL(void) {
   NRF_NVMC_regs.ERASEALL &= 1;
 
   if (NRF_NVMC_regs.ERASEALL) {
@@ -349,7 +349,7 @@ void nrfhw_nvmc_regw_sideeffects_ERASEALL(){
   }
 }
 
-void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL(){
+void nrfhw_nvmc_regw_sideeffects_ERASEPAGEPARTIAL(void) {
   ERASE_ENABLED_CHECK("ERASEPARTIAL");
   BUSY_CHECK("ERASEPARTIAL");
   erase_address = NRF_NVMC_regs.ERASEPAGEPARTIAL;

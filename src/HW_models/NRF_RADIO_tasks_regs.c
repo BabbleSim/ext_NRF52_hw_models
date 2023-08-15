@@ -26,7 +26,7 @@ RADIO_TASK_SIDEFFECT_FUNC(START)
 RADIO_TASK_SIDEFFECT_FUNC(STOP)
 RADIO_TASK_SIDEFFECT_FUNC(DISABLE)
 
-void nrf_radio_regw_sideeffects_TASKS_RSSISTART() {
+void nrf_radio_regw_sideeffects_TASKS_RSSISTART(void) {
   //We don't need to model this yet
   if ( NRF_RADIO_regs.TASKS_RSSISTART ){
     NRF_RADIO_regs.TASKS_RSSISTART = 0;
@@ -34,7 +34,7 @@ void nrf_radio_regw_sideeffects_TASKS_RSSISTART() {
   }
 }
 
-void nrf_radio_regw_sideeffects_TASKS_RSSISTOP() {
+void nrf_radio_regw_sideeffects_TASKS_RSSISTOP(void) {
   //We don't need to model this yet
   if ( NRF_RADIO_regs.TASKS_RSSISTOP ){
     NRF_RADIO_regs.TASKS_RSSISTOP = 0;

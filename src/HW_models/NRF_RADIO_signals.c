@@ -21,9 +21,9 @@
 #include "bs_tracing.h"
 
 extern uint32_t NRF_RADIO_INTEN; //interrupt enable
-extern void nrf_radio_fake_task_TRXEN_TIFS();
+extern void nrf_radio_fake_task_TRXEN_TIFS(void);
 
-void nrf_radio_signal_READY(){
+void nrf_radio_signal_READY(void) {
   NRF_RADIO_regs.EVENTS_READY = 1;
   nrf_ppi_event(RADIO_EVENTS_READY);
 
@@ -39,7 +39,7 @@ void nrf_radio_signal_READY(){
   }
 }
 
-void nrf_radio_signal_ADDRESS(){
+void nrf_radio_signal_ADDRESS(void) {
   NRF_RADIO_regs.EVENTS_ADDRESS = 1;
   nrf_ppi_event(RADIO_EVENTS_ADDRESS);
 
@@ -55,7 +55,7 @@ void nrf_radio_signal_ADDRESS(){
   }
 }
 
-void nrf_radio_signal_PAYLOAD(){
+void nrf_radio_signal_PAYLOAD(void) {
   NRF_RADIO_regs.EVENTS_PAYLOAD = 1;
   nrf_ppi_event(RADIO_EVENTS_PAYLOAD);
 
@@ -64,7 +64,7 @@ void nrf_radio_signal_PAYLOAD(){
   }
 }
 
-void nrf_radio_signal_END(){
+void nrf_radio_signal_END(void) {
   NRF_RADIO_regs.EVENTS_END = 1;
   nrf_ppi_event(RADIO_EVENTS_END);
 
@@ -80,7 +80,7 @@ void nrf_radio_signal_END(){
   }
 }
 
-void nrf_radio_signal_DISABLED(){
+void nrf_radio_signal_DISABLED(void) {
   NRF_RADIO_regs.EVENTS_DISABLED = 1;
   nrf_ppi_event(RADIO_EVENTS_DISABLED);
 
@@ -115,7 +115,7 @@ void nrf_radio_signal_DISABLED(){
   }
 }
 
-void nrf_radio_signal_DEVMATCH() {
+void nrf_radio_signal_DEVMATCH(void) {
   NRF_RADIO_regs.EVENTS_DEVMATCH = 1;
   nrf_ppi_event(RADIO_EVENTS_DEVMATCH);
 
@@ -124,7 +124,7 @@ void nrf_radio_signal_DEVMATCH() {
   }
 }
 
-void nrf_radio_signal_DEVMISS() {
+void nrf_radio_signal_DEVMISS(void) {
   NRF_RADIO_regs.EVENTS_DEVMISS = 1;
   nrf_ppi_event(RADIO_EVENTS_DEVMISS);
 
@@ -133,7 +133,7 @@ void nrf_radio_signal_DEVMISS() {
   }
 }
 
-void nrf_radio_signal_RSSIEND(){
+void nrf_radio_signal_RSSIEND(void) {
   NRF_RADIO_regs.EVENTS_RSSIEND = 1;
   nrf_ppi_event(RADIO_EVENTS_RSSIEND);
 
@@ -142,7 +142,7 @@ void nrf_radio_signal_RSSIEND(){
   }
 }
 
-void nrf_radio_signal_BCMATCH() {
+void nrf_radio_signal_BCMATCH(void) {
   NRF_RADIO_regs.EVENTS_BCMATCH = 1;
   nrf_ppi_event(RADIO_EVENTS_BCMATCH);
 
@@ -151,7 +151,7 @@ void nrf_radio_signal_BCMATCH() {
   }
 }
 
-void nrf_radio_signal_CRCOK(){
+void nrf_radio_signal_CRCOK(void) {
   NRF_RADIO_regs.EVENTS_CRCOK = 1;
   nrf_ppi_event(RADIO_EVENTS_CRCOK);
 
@@ -160,7 +160,7 @@ void nrf_radio_signal_CRCOK(){
   }
 }
 
-void nrf_radio_signal_CRCERROR(){
+void nrf_radio_signal_CRCERROR(void) {
   NRF_RADIO_regs.EVENTS_CRCERROR = 1;
   nrf_ppi_event(RADIO_EVENTS_CRCERROR);
 
@@ -169,7 +169,7 @@ void nrf_radio_signal_CRCERROR(){
   }
 }
 
-void nrf_radio_signal_FRAMESTART(){
+void nrf_radio_signal_FRAMESTART(void) {
   NRF_RADIO_regs.EVENTS_FRAMESTART = 1;
   nrf_ppi_event(RADIO_EVENTS_FRAMESTART);
 
@@ -182,7 +182,7 @@ void nrf_radio_signal_FRAMESTART(){
   }
 }
 
-void nrf_radio_signal_EDEND(){
+void nrf_radio_signal_EDEND(void) {
   NRF_RADIO_regs.EVENTS_EDEND = 1;
   nrf_ppi_event(RADIO_EVENTS_EDEND);
 
@@ -195,7 +195,7 @@ void nrf_radio_signal_EDEND(){
   }
 }
 
-void nrf_radio_signal_EDSTOPPED(){
+void nrf_radio_signal_EDSTOPPED(void) {
   NRF_RADIO_regs.EVENTS_EDSTOPPED = 1;
   nrf_ppi_event(RADIO_EVENTS_EDSTOPPED);
 
@@ -204,7 +204,7 @@ void nrf_radio_signal_EDSTOPPED(){
   }
 }
 
-void nrf_radio_signal_CCAIDLE(){
+void nrf_radio_signal_CCAIDLE(void) {
   NRF_RADIO_regs.EVENTS_CCAIDLE = 1;
   nrf_ppi_event(RADIO_EVENTS_CCAIDLE);
 
@@ -220,7 +220,7 @@ void nrf_radio_signal_CCAIDLE(){
   }
 }
 
-void nrf_radio_signal_CCABUSY(){
+void nrf_radio_signal_CCABUSY(void) {
   NRF_RADIO_regs.EVENTS_CCABUSY = 1;
   nrf_ppi_event(RADIO_EVENTS_CCABUSY);
 
@@ -233,7 +233,7 @@ void nrf_radio_signal_CCABUSY(){
   }
 }
 
-void nrf_radio_signal_CCASTOPPED(){
+void nrf_radio_signal_CCASTOPPED(void) {
   NRF_RADIO_regs.EVENTS_CCASTOPPED = 1;
   nrf_ppi_event(RADIO_EVENTS_CCASTOPPED);
 
@@ -242,7 +242,7 @@ void nrf_radio_signal_CCASTOPPED(){
   }
 }
 
-void nrf_radio_signal_RATEBOOST(){
+void nrf_radio_signal_RATEBOOST(void) {
   NRF_RADIO_regs.EVENTS_RATEBOOST = 1;
   nrf_ppi_event(RADIO_EVENTS_RATEBOOST);
 
@@ -251,7 +251,7 @@ void nrf_radio_signal_RATEBOOST(){
   }
 }
 
-void nrf_radio_signal_TXREADY(){
+void nrf_radio_signal_TXREADY(void) {
   NRF_RADIO_regs.EVENTS_TXREADY = 1;
   nrf_ppi_event(RADIO_EVENTS_TXREADY);
 
@@ -264,7 +264,7 @@ void nrf_radio_signal_TXREADY(){
   }
 }
 
-void nrf_radio_signal_RXREADY(){
+void nrf_radio_signal_RXREADY(void) {
   NRF_RADIO_regs.EVENTS_RXREADY = 1;
   nrf_ppi_event(RADIO_EVENTS_RXREADY);
 
@@ -280,7 +280,7 @@ void nrf_radio_signal_RXREADY(){
   }
 }
 
-void nrf_radio_signal_MHRMATCH(){
+void nrf_radio_signal_MHRMATCH(void) {
   NRF_RADIO_regs.EVENTS_MHRMATCH = 1;
   nrf_ppi_event(RADIO_EVENTS_MHRMATCH);
 
@@ -289,7 +289,7 @@ void nrf_radio_signal_MHRMATCH(){
   }
 }
 
-void nrf_radio_signal_SYNC() {
+void nrf_radio_signal_SYNC(void) {
   NRF_RADIO_regs.EVENTS_SYNC = 1;
   nrf_ppi_event(RADIO_EVENTS_SYNC);
 
@@ -298,7 +298,7 @@ void nrf_radio_signal_SYNC() {
   }
 }
 
-void nrf_radio_signal_PHYEND(){
+void nrf_radio_signal_PHYEND(void) {
   NRF_RADIO_regs.EVENTS_PHYEND = 1;
   nrf_ppi_event(RADIO_EVENTS_PHYEND);
 
@@ -314,7 +314,7 @@ void nrf_radio_signal_PHYEND(){
   }
 }
 
-void nrf_radio_signal_CTEPRESENT(){
+void nrf_radio_signal_CTEPRESENT(void) {
   NRF_RADIO_regs.EVENTS_CTEPRESENT = 1;
   nrf_ppi_event(RADIO_EVENTS_CTEPRESENT);
 

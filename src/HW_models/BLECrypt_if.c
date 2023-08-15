@@ -81,7 +81,7 @@ static void BLECrypt_if_register_cmd_args(void) {
 
 NSI_TASK(BLECrypt_if_register_cmd_args, PRE_BOOT_1, 90);
 
-static void BLECrypt_if_enable_real_encryption() {
+static void BLECrypt_if_enable_real_encryption(void) {
   if ( BLECrypt_if_args_useRealAES ) { //if the user tried to enable it
     //Attempt to load libCrypto
     char lib_name[128];
@@ -124,7 +124,7 @@ static void BLECrypt_if_enable_real_encryption() {
 
 NSI_TASK(BLECrypt_if_enable_real_encryption, HW_INIT, 100);
 
-static void BLECrypt_if_free(){
+static void BLECrypt_if_free(void){
   if ( LibCryptoHandle != NULL ){
     //#define DONTCLOSELIBRARIES
 #ifndef DONTCLOSELIBRARIES /*To be able to profile time spent in libraries in callgrind*/

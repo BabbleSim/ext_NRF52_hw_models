@@ -329,8 +329,8 @@ void nrf_ppi_regw_sideeffects_EEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_FORK_TEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_TASKS_CHG_DIS(int i);
 void nrf_ppi_regw_sideeffects_TASKS_CHG_EN(int i);
-void nrf_ppi_regw_sideeffects_CHENSET();
-void nrf_ppi_regw_sideeffects_CHENCLR();
+void nrf_ppi_regw_sideeffects_CHENSET(void);
+void nrf_ppi_regw_sideeffects_CHENCLR(void);
 
 #ifdef __cplusplus
 }

@@ -193,16 +193,16 @@ static bool radio_on = false;
 
 static bool rssi_sampling_on = false;
 
-static void start_Tx();
-static void start_Rx();
+static void start_Tx(void);
+static void start_Rx(void);
 static void start_CCA_ED(bool CCA_not_ED);
-static void Rx_Addr_received();
-static void Tx_abort_eval_respond();
-static void Rx_abort_eval_respond();
-static void CCA_abort_eval_respond();
-static void nrf_radio_device_address_match();
+static void Rx_Addr_received(void);
+static void Tx_abort_eval_respond(void);
+static void Rx_abort_eval_respond(void);
+static void CCA_abort_eval_respond(void);
+static void nrf_radio_device_address_match(uint8_t rx_buf[]);
 
-static void radio_reset() {
+static void radio_reset(void) {
   memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
   radio_state = RAD_DISABLED;
   NRF_RADIO_INTEN = 0;
@@ -237,7 +237,7 @@ static void nrf_radio_init(void) {
 
 NSI_TASK(nrf_radio_init, HW_INIT, 100);
 
-double nrf_radio_get_bpus(){
+double nrf_radio_get_bpus(void) {
   return bits_per_us;
 }
 
@@ -251,7 +251,7 @@ static inline void nrfra_set_Timer_abort_reeval(bs_time_t t){
   nsi_hws_find_next_event();
 }
 
-void nrf_radio_tasks_TXEN() {
+void nrf_radio_tasks_TXEN(void) {
   if ( ( radio_state != RAD_DISABLED )
       && ( radio_state != RAD_TXIDLE )
       && ( radio_state != RAD_RXIDLE ) ){
@@ -266,7 +266,7 @@ void nrf_radio_tasks_TXEN() {
   nrfra_set_Timer_RADIO(nsi_hws_get_time() + nrfra_timings_get_rampup_time(1, from_hw_tifs));
 }
 
-void nrf_radio_tasks_RXEN() {
+void nrf_radio_tasks_RXEN(void) {
   if ( ( radio_state != RAD_DISABLED )
       && ( radio_state != RAD_TXIDLE )
       && ( radio_state != RAD_RXIDLE ) ){
@@ -281,7 +281,7 @@ void nrf_radio_tasks_RXEN() {
   nrfra_set_Timer_RADIO(nsi_hws_get_time() + nrfra_timings_get_rampup_time(0, from_hw_tifs));
 }
 
-static void abort_if_needed(){
+static void abort_if_needed(void) {
   if ( ( abort_fsm_state == Tx_Abort_reeval )
       || ( abort_fsm_state == Rx_Abort_reeval )
       || ( abort_fsm_state == CCA_Abort_reeval ) ){
@@ -295,7 +295,7 @@ static void abort_if_needed(){
   }
 }
 
-void nrf_radio_tasks_START () {
+void nrf_radio_tasks_START(void) {
   if ( radio_state == RAD_TXIDLE ) {
     bs_time_t Tx_start_time = nsi_hws_get_time() + nrfra_timings_get_TX_chain_delay();
     radio_state = RAD_TXSTARTING;
@@ -310,7 +310,7 @@ void nrf_radio_tasks_START () {
   }
 }
 
-void nrf_radio_tasks_CCASTART() {
+void nrf_radio_tasks_CCASTART(void) {
   if ((radio_state != RAD_RXIDLE)){
     bs_trace_warning_line_time(
         "NRF_RADIO: CCASTART received when the radio was not RXIDLE but in state %i. "
@@ -321,7 +321,7 @@ void nrf_radio_tasks_CCASTART() {
   start_CCA_ED(1);
 }
 
-void nrf_radio_tasks_CCASTOP() {
+void nrf_radio_tasks_CCASTOP(void) {
   if (( radio_state == RAD_CCA_ED ) && ( cca_status.CCA_notED )) {
     abort_if_needed();
     radio_state = RAD_RXIDLE;
@@ -336,7 +336,7 @@ void nrf_radio_tasks_CCASTOP() {
   }
 }
 
-void nrf_radio_tasks_EDSTART() {
+void nrf_radio_tasks_EDSTART(void) {
   if ((radio_state != RAD_RXIDLE)){
     bs_trace_warning_line_time(
         "NRF_RADIO: EDSTART received when the radio was not RXIDLE but in state %i. "
@@ -347,7 +347,7 @@ void nrf_radio_tasks_EDSTART() {
   start_CCA_ED(0);
 }
 
-void nrf_radio_tasks_EDSTOP() {
+void nrf_radio_tasks_EDSTOP(void) {
   if (( radio_state == RAD_CCA_ED ) && ( cca_status.CCA_notED == 0)) {
     abort_if_needed();
     radio_state = RAD_RXIDLE;
@@ -362,7 +362,7 @@ void nrf_radio_tasks_EDSTOP() {
   }
 }
 
-void nrf_radio_tasks_STOP(){
+void nrf_radio_tasks_STOP(void) {
   nrf_radio_stop_bit_counter();
 
   if ((radio_state == RAD_TX) || (radio_state == RAD_TXSTARTING)) {
@@ -396,7 +396,7 @@ void nrf_radio_tasks_STOP(){
   }
 }
 
-void nrf_radio_tasks_DISABLE() {
+void nrf_radio_tasks_DISABLE(void) {
   nrf_radio_stop_bit_counter();
 
   if ((radio_state == RAD_TX) || (radio_state == RAD_TXSTARTING)) {
@@ -440,22 +440,22 @@ void nrf_radio_tasks_DISABLE() {
   }
 }
 
-void nrf_radio_tasks_RSSISTART () {
+void nrf_radio_tasks_RSSISTART(void) {
   rssi_sampling_on = true;
 }
 
-void nrf_radio_tasks_RSSISTOP(){
+void nrf_radio_tasks_RSSISTOP(void) {
   rssi_sampling_on = false;
 }
 
-void nrf_radio_regw_sideeffects_INTENSET(){
+void nrf_radio_regw_sideeffects_INTENSET(void) {
   if ( NRF_RADIO_regs.INTENSET ){
     NRF_RADIO_INTEN |= NRF_RADIO_regs.INTENSET;
     NRF_RADIO_regs.INTENSET = NRF_RADIO_INTEN;
   }
 }
 
-void nrf_radio_regw_sideeffects_INTENCLR(){
+void nrf_radio_regw_sideeffects_INTENCLR(void) {
   if ( NRF_RADIO_regs.INTENCLR ){
     NRF_RADIO_INTEN  &= ~NRF_RADIO_regs.INTENCLR;
     NRF_RADIO_regs.INTENSET = NRF_RADIO_INTEN;
@@ -463,7 +463,7 @@ void nrf_radio_regw_sideeffects_INTENCLR(){
   }
 }
 
-void nrf_radio_regw_sideeffects_POWER(){
+void nrf_radio_regw_sideeffects_POWER(void) {
   if ( NRF_RADIO_regs.POWER == 0 ){
     radio_on = false;
   } else {
@@ -479,7 +479,7 @@ void nrf_radio_regw_sideeffects_POWER(){
 /**
  * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
  */
-void nrf_radio_fake_task_TRXEN_TIFS(){
+void nrf_radio_fake_task_TRXEN_TIFS(void) {
   if ( TIFS_state == TIFS_WAITING_FOR_DISABLE ) {
     TIFS_state = TIFS_TRIGGERING_TRX_EN;
     nrfra_set_Timer_RADIO(Timer_TIFS);
@@ -706,7 +706,7 @@ static void update_abort_struct(p2G4_abort_t *abort, bs_time_t *next_recheck_tim
  * We have reached the time in which we wanted to reevaluate if we would abort or not
  * so we answer to the Phy with our decision
  */
-static void Tx_abort_eval_respond(){
+static void Tx_abort_eval_respond(void) {
   //The abort must have been evaluated by now so we can respond to the waiting phy
   p2G4_abort_t *abort = &tx_status.tx_req.abort;
 
@@ -720,7 +720,7 @@ static void Tx_abort_eval_respond(){
 /*
  * Actually start the Tx in this microsecond (+ the Tx chain delay in the Phy)
  */
-static void start_Tx(){
+static void start_Tx(void) {
 
   radio_state = RAD_TX;
   NRF_RADIO_regs.STATE = RAD_TX;
@@ -919,7 +919,7 @@ static void handle_Rx_response(int ret){
  * We have reached the time in which we wanted to reevaluate if we would abort or not
  * so we answer to the phy with our decision
  */
-static void Rx_abort_eval_respond(){
+static void Rx_abort_eval_respond(void) {
   //The abort must have been evaluated by now so we can respond to the waiting phy
   p2G4_abort_t *abort = &rx_status.rx_req.abort;
   update_abort_struct(abort, &next_recheck_time);
@@ -932,7 +932,7 @@ static void Rx_abort_eval_respond(){
 /*
  * Actually start the Rx in this microsecond
  */
-static void start_Rx(){
+static void start_Rx(void) {
   #define RX_N_ADDR 8 /* How many addresses we can search in parallel */
   p2G4_address_t rx_addresses[RX_N_ADDR];
 
@@ -985,7 +985,7 @@ static void start_Rx(){
  *
  * Note that libPhyCom has already copied the whole packet into the input buffer
  */
-static void Rx_Addr_received(){
+static void Rx_Addr_received(void) {
 
   bool accept_packet = !rx_status.packet_rejected;
 
@@ -1118,7 +1118,7 @@ static void handle_CCA_response(int ret){
  * We have reached the time in which we wanted to reevaluate if we would abort or not
  * so we answer to the Phy with our decision
  */
-static void CCA_abort_eval_respond(){
+static void CCA_abort_eval_respond(void) {
   //The abort must have been evaluated by now so we can respond to the waiting phy
   p2G4_abort_t *abort = &cca_status.cca_req.abort;
 
