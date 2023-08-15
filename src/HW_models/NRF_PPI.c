@@ -820,28 +820,6 @@ void nrf_ppi_regw_sideeffects_CHEN(){
 	nrf_ppi_regw_sideeffects_CHENCLR();
 }
 
-/**
- * If you dont want to bother about individual calls,
- * when any PPI register is written which changes the configuration of the PPI
- * call this to update the routing table or cause other sideeffects
- * This call will inspect all input registers
- *
- * (otherwise call the correspondent sideeffect function above for each register
- * write)
- */
-void nrf_ppi_regw_sideeffects(){
-
-  for (int ch_nbr = 0; ch_nbr < 32 ; ch_nbr++){
-    if ( ch_nbr < 20 ){
-      nrf_ppi_regw_sideeffects_EEP(ch_nbr);
-      nrf_ppi_regw_sideeffects_TEP(ch_nbr);
-    }
-    nrf_ppi_regw_sideeffects_FORK_TEP(ch_nbr);
-  }
-
-  nrf_ppi_regw_sideeffects_CHEN();
-}
-
 void nrf_ppi_regw_sideeffects_TASKS_CHG_DIS(int i){
 	if ( NRF_PPI_regs.TASKS_CHG[i].DIS ) {
 		NRF_PPI_regs.TASKS_CHG[i].DIS = 0;

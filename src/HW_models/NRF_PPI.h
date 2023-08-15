@@ -324,7 +324,6 @@ typedef enum { //Note that, for performance, it is better to leave commented the
 #define NUMBER_PPI_CHANNELS 32
 
 void nrf_ppi_event(ppi_event_types_t event);
-void nrf_ppi_regw_sideeffects();
 void nrf_ppi_regw_sideeffects_TEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_EEP(int ch_nbr);
 void nrf_ppi_regw_sideeffects_FORK_TEP(int ch_nbr);

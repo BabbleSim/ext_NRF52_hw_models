@@ -571,29 +571,3 @@ void nrf_rtc_regw_sideeffects_CC(int rtc, int cc_n) {
     update_master_timer();
   }
 }
-
-/**
- * Handle any register side effect (by inspecting the registers values)
- * (deprecated)
- */
-void nrf_rtc_regw_sideeffects(int i){
-  nrf_rtc_regw_sideeffect_TASKS_START(i);
-
-  nrf_rtc_regw_sideeffect_TASKS_STOP(i);
-
-  nrf_rtc_regw_sideeffect_TASKS_CLEAR(i);
-
-  nrf_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(i);
-
-  nrf_rtc_regw_sideeffect_INTENSET(i);
-
-  nrf_rtc_regw_sideeffect_INTENCLR(i);
-
-  nrf_rtc_regw_sideeffect_EVTENSET(i);
-
-  nrf_rtc_regw_sideeffect_EVTENCLR(i);
-}
-
-void nrf_rtc0_regw_sideeffects(){ nrf_rtc_regw_sideeffects(0); }
-void nrf_rtc1_regw_sideeffects(){ nrf_rtc_regw_sideeffects(1); }
-void nrf_rtc2_regw_sideeffects(){ nrf_rtc_regw_sideeffects(2); }

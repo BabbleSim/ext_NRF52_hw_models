@@ -248,19 +248,6 @@ void nrf_clock_regw_sideeffects_EVENTS_all(void) {
   nrf_clock_eval_interrupt();
 }
 
-/* LCOV_EXCL_START */
-// To be removed
-void nrf_clock_regw_sideeffects(void) {
-  nrf_clock_reqw_sideeffects_INTENSET();
-
-  nrf_clock_reqw_sideeffects_INTENCLR();
-
-  nrf_clock_reqw_sideeffects_TASKS_LFCLKSTART();
-
-  nrf_clock_reqw_sideeffects_TASKS_HFCLKSTART();
-}
-/* LCOV_EXCL_STOP */
-
 void nrf_clock_LFTimer_triggered(void) {
   //For simplicity we assume the enable comes at the same instant as the first
   //tick of the clock so we start ticking in this same instant

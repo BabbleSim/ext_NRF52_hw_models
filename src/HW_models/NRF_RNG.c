@@ -116,21 +116,6 @@ void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
 }
 
 /**
- * Handle any register side effect (by inspecting the registers states)
- * (deprecated)
- */
-void nrf_rng_regw_sideeffects(){
-
-  nrf_rng_regw_sideeffects_TASK_START();
-
-  nrf_rng_regw_sideeffects_TASK_STOP();
-
-  nrf_rng_regw_sideeffects_INTENSET();
-
-  nrf_rng_regw_sideeffects_INTENCLEAR();
-}
-
-/**
  * Time has come when a new random number is ready
  */
 static void nrf_rng_timer_triggered(void){
