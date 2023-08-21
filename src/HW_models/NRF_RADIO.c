@@ -10,7 +10,7 @@
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=5_1_0_5_17
  *
  * Note: as of now, only 1&2Mbps BLE & 15.4 packet formats are supported, there is quite many notes around in the code
- * where changes would be required to support other formats
+ * where changes would be required to support other formats. PCNF1.STATLEN is always assumed 0
  *
  * Note3: Only logical address 0 (in Tx or Rx) is supported
  *
@@ -29,7 +29,9 @@
  *                                 MODE @ TXEN | RXEN
  *                                 CRC config @ START
  *
- * Note10: Maxlength is only partially checked (the packet is cut, but the interaction with the phy is not proper)
+ * Note10: Regarding MAXLEN:
+ *           if CRCINC==1, the CRC LEN is deducted from the length field, before MAXLEN is checked.
+ *           It is unclear from the spec if this is the real HW behaviour
  *
  * Note11: Only the BLE & 15.4 CRC polynomials are supported
  *         During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
@@ -86,7 +88,6 @@
  *            The spec seems to contradict itself here. But seems in real HW it is generated at the end of the PHR.
  *
  * Note23: Powering off/on is not properly modeled (it is mostly ignored)
- *
  *
  * Implementation Specification:
  *   A diagram of the main state machine can be found in docs/RADIO_states.svg
@@ -290,6 +291,11 @@ static void abort_if_needed(){
     //If the phy is waiting for a response from us, we need to tell it, that we are aborting whatever it was doing
     aborting_set = 1;
   }
+  /* Note: In Rx, we may be
+   *   waiting to respond to the Phy to an abort reevaluation request abort_fsm_state == Rx_Abort_reeval
+   *   or waiting to reach the address end time to respond to the Phy if we accepted the packet or not
+   * but not both
+   */
   if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ){
     //we answer immediately to the phy rejecting the packet
     p2G4_dev_rxv2_cont_after_addr_nc_b(false, NULL);
@@ -730,7 +736,6 @@ static void start_Tx(){
   uint8_t address_len;
   uint8_t header_len;
   uint payload_len;
-  //Note: I assume in Tx the length is always < PCNF1.MAXLEN and that STATLEN is always 0 (otherwise add a check)
   uint8_t crc_len = nrfra_get_crc_length();
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
@@ -796,23 +801,8 @@ static void Rx_handle_end_response(bs_time_t end_time) {
   //packet lenght was received correctly, and just report a CRC error at the
   //end of the CRC
 
-  uint payload_len = nrfra_get_payload_length(rx_buf);
-  uint crc_len = nrfra_get_crc_length();
-
   if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
-    //Let's copy the CRC
-    uint32_t crc = 0;
-    //Eventually this should be generalized with the packet configuration
-    if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-        || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
-        && ( rx_status.rx_resp.packet_size >= 5 ) ){
-      memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
-    } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
-        && ( rx_status.rx_resp.packet_size >= 3 ) ){
-      memcpy((void*)&crc, &rx_buf[1 + payload_len], crc_len);
-    }
-
-    NRF_RADIO_regs.RXCRC = crc;
+    NRF_RADIO_regs.RXCRC = nrfra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
     rx_status.CRC_OK = 1;
     NRF_RADIO_regs.CRCSTATUS = 1;
   }
@@ -826,19 +816,20 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
   rx_status.ADDRESS_End_Time = address_time + nrfra_timings_get_Rx_chain_delay();
 
   uint length = nrfra_get_payload_length(rx_buf);
-  uint max_length = (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+  uint max_length = nrfra_get_MAXLEN();
 
-  if (length > max_length){
-    bs_trace_error_time_line("NRF_RADIO: received a packet longer than the configured max lenght (%i>%i), this is not yet handled in this models. I stop before it gets confusing\n", length, max_length);
+  if (length > max_length) {
+    // We reject the packet right away, setting the CRC error, and timers as expected
+    bs_trace_warning_time_line("NRF_RADIO: received a packet longer than the configured MAXLEN (%i>%i). Truncating it\n", length, max_length);
     length  = max_length;
-    //TODO: check packet length. If too long the packet should be truncated and not accepted from the phy, [we already have it in the buffer and we will have a CRC error anyhow. And we cannot let the phy run for longer than we will]
+    NRF_RADIO_regs.PDUSTAT = RADIO_PDUSTAT_PDUSTAT_Msk;
+    rx_status.packet_rejected = true;
   } else {
-    //NRF_RADIO_regs.PDUSTAT = 0; //TODO, set if greater
+    NRF_RADIO_regs.PDUSTAT = 0;
+    rx_status.packet_rejected = false;
   }
 
   //TODO: Discard Ieee802154_250Kbit frames with length == 0
-
-  rx_status.packet_rejected = false;
 
   bs_time_t payload_end;
 
@@ -852,7 +843,7 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
   rx_status.PAYLOAD_End_Time = nrfra_timings_get_Rx_chain_delay() +
                                hwll_dev_time_from_phy(payload_end);
 
-  rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value
+  rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value (if we are accepting the packet)
 
   //Copy the whole packet (S0, lenght, S1 & payload) excluding the CRC.
   if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
@@ -1011,7 +1002,11 @@ static void Rx_Addr_received(){
   if ( accept_packet ){
     handle_Rx_response(ret);
   } else {
-    //else We said we dont want to continue => there will be no response (ret==0 always). We just close the reception like if the phy finished on its own even though we finished it
+    //We said we don't want to continue => there will be no response (ret==0 always). We just close the reception like if the phy finished on its own even though we finished it
+
+    //We do what would correspond to Rx_handle_end_response() as it won't get called
+    NRF_RADIO_regs.RXCRC = nrfra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
+    nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
   }
 }
 
