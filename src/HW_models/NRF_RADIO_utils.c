@@ -26,6 +26,26 @@ static void nrfra_check_crc_conf_ble(void) {
   }
 }
 
+static void nrfra_check_pcnf1_ble(void) {
+  int checked, check;
+  checked = NRF_RADIO_regs.PCNF1 &
+        (  RADIO_PCNF1_WHITEEN_Msk
+         | RADIO_PCNF1_ENDIAN_Msk
+         | RADIO_PCNF1_BALEN_Msk
+         | RADIO_PCNF1_STATLEN_Msk );
+
+  check = (1 << RADIO_PCNF1_WHITEEN_Pos)
+          | (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos)
+          | (3 << RADIO_PCNF1_BALEN_Pos) //4 bytes address
+          | (0 << RADIO_PCNF1_STATLEN_Pos);
+
+  if (checked != check) {
+    bs_trace_error_line_time(
+        "%s w 1|2Mbps BLE modulation only the BLE packet format is supported so far (PCNF1=%u)\n",
+        __func__, NRF_RADIO_regs.PCNF1);
+  }
+}
+
 static void nrfra_check_ble1M_conf(void){
   int checked =NRF_RADIO_regs.PCNF0 &
       (RADIO_PCNF0_PLEN_Msk
@@ -44,6 +64,7 @@ static void nrfra_check_ble1M_conf(void){
         NRF_RADIO_regs.PCNF0);
   }
 
+  nrfra_check_pcnf1_ble();
   nrfra_check_crc_conf_ble();
 }
 
@@ -66,6 +87,7 @@ static void nrfra_check_ble2M_conf(void){
         NRF_RADIO_regs.PCNF0);
   }
 
+  nrfra_check_pcnf1_ble();
   nrfra_check_crc_conf_ble();
 }
 
@@ -387,8 +409,14 @@ uint nrfra_get_crc_length(void) {
   return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
 }
 
+
+uint nrfra_get_MAXLEN(void) {
+  return (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+}
+
 /*
  * Return the payload length, NOT including the CRC length
+ * (and NOT adding S0 or S1 lengths)
  */
 uint nrfra_get_payload_length(uint8_t *buf){
   int S0Len;
@@ -416,12 +444,43 @@ uint nrfra_get_payload_length(uint8_t *buf){
   return payload_len;
 }
 
+uint nrfra_get_capped_payload_length(uint8_t *buf) {
+  uint payload_lenght = nrfra_get_payload_length(buf);
+  uint max_length = nrfra_get_MAXLEN();
+  return BS_MIN(payload_lenght, max_length);
+}
+
+/*
+ * Get the received CRC value from the received buffer
+ * paramters:
+ *    rx_buf: Pointer to the received buffer
+ *    rx_packet_size: Number of input bytes in rx_buf
+ */
+uint32_t nrfra_get_rx_crc_value(uint8_t *rx_buf, size_t rx_packet_size) {
+  uint32_t crc = 0;
+  uint crc_len = nrfra_get_crc_length();
+  uint payload_len = nrfra_get_capped_payload_length(rx_buf);
+
+  //Eventually this should be generalized with the packet configuration
+  if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
+      && ( rx_packet_size >= 5 ) ){
+    memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
+  } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)
+      && ( rx_packet_size >= 3 ) ){
+    memcpy((void*)&crc, &rx_buf[1 + payload_len], crc_len);
+  }
+  return crc;
+}
+
 /**
  * Assemble a packet to be transmitted out thru the air into tx_buf[]
  * Omitting the preamble and address/sync flag
  *
  * Return copied payload size (after S0 + len + S1) into tx_buf[]
  * (without the CRC)
+ *
+ * Note: PCNF1.MAXLEN is taken into account to cap len
  *
  * Note: When adding support for CodedPhy and or other packet formats,
  * this needs to be reworked together with the start_Tx()
@@ -432,6 +491,7 @@ uint nrfra_tx_copy_payload(uint8_t *tx_buf){
   int LFLenb, S1LenAirb;
   int i;
   uint payload_len;
+  int maxlen;
 
   S0Len = (NRF_RADIO_regs.PCNF0 &  RADIO_PCNF0_S0LEN_Msk) >> RADIO_PCNF0_S0LEN_Pos;
 
@@ -465,6 +525,21 @@ uint nrfra_tx_copy_payload(uint8_t *tx_buf){
   }
 
   payload_len = nrfra_get_payload_length(tx_buf);
+  /* Note that we assume if CRCINC=1, CRCLEN is deducted from the length field
+   * before capping the length to MAXLEN */
+  maxlen = nrfra_get_MAXLEN();
+  if (payload_len > maxlen) {
+    bs_trace_error_time_line("NRF_RADIO: Transmitting a packet longer than the configured MAXLEN (%i>%i). "
+        "This would truncate it and a corrupted packet will be transmitted. "
+        "Assuming this is a controller programming error, so we stop here. "
+        "If you did really intend this, please request this error to be converted into a warning "
+        "(the model handles this properly)\n", payload_len, maxlen);
+    payload_len = maxlen;
+    NRF_RADIO_regs.PDUSTAT = RADIO_PDUSTAT_PDUSTAT_Msk;
+  } else {
+    NRF_RADIO_regs.PDUSTAT = 0;
+  }
+
   int copy_len = payload_len + S1LenB;
   memcpy(&tx_buf[i], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[i + S1Off], copy_len);
   return payload_len;
