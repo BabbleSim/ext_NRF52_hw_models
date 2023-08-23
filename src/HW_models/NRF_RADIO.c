@@ -31,7 +31,7 @@
  *
  * Note10: Regarding MAXLEN:
  *           if CRCINC==1, the CRC LEN is deducted from the length field, before MAXLEN is checked.
- *           It is unclear from the spec if this is the real HW behaviour
+ *           This seems to be also the real HW behavior
  *
  * Note11: Only the BLE & 15.4 CRC polynomials are supported
  *         During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
