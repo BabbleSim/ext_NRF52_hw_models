@@ -3,7 +3,7 @@
 
 # CMake file to compile this BabbleSim component as a west module in Zephyr
 
-if(CONFIG_BOARD_NRF52_BSIM)
+if(CONFIG_SOC_SERIES_BSIM_NRFXX)
 
   if (NOT DEFINED ENV{BSIM_COMPONENTS_PATH})
     message(FATAL_ERROR "This Zephyr module requires the BabbleSim simulator.\
@@ -30,9 +30,26 @@ if(CONFIG_BOARD_NRF52_BSIM)
     src/nrfx/nrfx_replacements
   )
 
+  if(CONFIG_SOC_SERIES_BSIM_NRF52X)
+    file(STRINGS make_inc/52833_hw_files HW_MODEL_SRCS)
+    file(STRINGS make_inc/52833_hal_files HAL_SRCS)
+    set(VARIANT_FLAGS 
+        -DNRF52833_XXAA
+        -DNRF52833
+    )
+  elseif(CONFIG_SOC_SERIES_BSIM_NRF53X)
+    file(STRINGS make_inc/5340_hw_files HW_MODEL_SRCS)
+    file(STRINGS make_inc/5340_hal_files HAL_SRCS)
+    # Pending definitions in Zephyr side for app and net core targets as well as of support
+    # for multi core native simulator based targets, by now we build the HAL as for the network core
+    set(VARIANT_FLAGS
+        -DNRF5340_XXAA_NETWORK
+        -DNRF5340
+    )
+  endif()
+
   # The nrfx HAL is built in the context of the embedded software
   zephyr_library()
-  file(GLOB_RECURSE HAL_SRCS . src/nrfx/*.c)
   zephyr_library_sources(${HAL_SRCS})
 
   zephyr_library_include_directories(
@@ -41,7 +58,6 @@ if(CONFIG_BOARD_NRF52_BSIM)
   )
 
   # The HW models are built in the runner context, so they have access to the host OS
-  file(GLOB_RECURSE HW_MODEL_SRCS . src/HW_models/*.c)
   target_sources(native_simulator INTERFACE ${HW_MODEL_SRCS})
 
   target_compile_options(native_simulator BEFORE INTERFACE 
@@ -57,7 +73,7 @@ if(CONFIG_BOARD_NRF52_BSIM)
     -I${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/nrfx_replacements
     -I${NRFX_DIR}
     -I${NRFX_DIR}/mdk
-    -DNRF52833_XXAA
+    ${VARIANT_FLAGS}
     -std=gnu11 #The nrfx hal uses non standard features which will cause warnings otherwise
   )
 

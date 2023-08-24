@@ -16,6 +16,7 @@
 extern "C" {
 #endif
 
+#if defined(NRF52833_XXAA)
 /*
  * Redefine the base addresses.
  */
@@ -92,6 +93,8 @@ extern NRF_EGU_Type NRF_EGU_regs[6];
 #undef NRF_UICR_BASE
 extern NRF_UICR_Type *NRF_UICR_regs_p;
 #define NRF_UICR_BASE                     (NRF_UICR_regs_p)
+
+#endif /* defined(NRF52833_XXAA) */
 
 #ifdef __cplusplus
 }

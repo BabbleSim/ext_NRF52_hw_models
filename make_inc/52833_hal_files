@@ -1,0 +1,16 @@
+src/nrfx/drivers/nrfx_common.c
+src/nrfx/hal/nrf_ccm.c
+src/nrfx/hal/nrf_rtc.c
+src/nrfx/hal/nrf_gpio.c
+src/nrfx/hal/nrf_temp.c
+src/nrfx/hal/nrf_radio.c
+src/nrfx/hal/nrf_egu.c
+src/nrfx/hal/nrf_timer.c
+src/nrfx/hal/nrf_hal_originals.c
+src/nrfx/hal/nrf_nvmc.c
+src/nrfx/hal/nrf_clock.c
+src/nrfx/hal/nrf_gpiote.c
+src/nrfx/hal/nrf_rng.c
+src/nrfx/hal/nrf_aar.c
+src/nrfx/hal/nrf_ppi.c
+src/nrfx/hal/nrf_ecb.c
