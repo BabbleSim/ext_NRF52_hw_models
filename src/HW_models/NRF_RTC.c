@@ -5,7 +5,7 @@
  */
 
 /*
- * RTC — Real-time counter
+ * RTC - Real-time counter
  *
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rtc.html?cp=4_1_0_5_19
  */

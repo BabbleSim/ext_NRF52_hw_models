@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 /*
- * TIMER — Timer/counter
+ * TIMER - Timer/counter
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/timer.html?cp=5_1_0_5_27
  */
 

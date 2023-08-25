@@ -5,7 +5,7 @@
  */
 
 /*
- * GPIOTE — GPIO tasks and events
+ * GPIOTE - GPIO tasks and events
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/gpiote.html?cp=5_1_0_5_8
  *
  * This model has the following limitations:

@@ -5,7 +5,7 @@
  */
 
 /*
- * EGU — Event generator unit
+ * EGU - Event generator unit
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=5_1_0_5_6
  */
 

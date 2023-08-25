@@ -5,10 +5,10 @@
  */
 
 /*
- * NVMC — Non-volatile memory controller
+ * NVMC - Non-volatile memory controller
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/nvmc.html?cp=5_1_0_3_2
  * &
- * UICR — User information configuration registers
+ * UICR - User information configuration registers
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/uicr.html?cp=5_1_0_3_4
  *
  * Notes for the NVMC:

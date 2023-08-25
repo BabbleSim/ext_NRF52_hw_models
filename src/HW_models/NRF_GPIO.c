@@ -5,7 +5,7 @@
  */
 
 /*
- * GPIO — General purpose input/output
+ * GPIO - General purpose input/output
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/gpio.html?cp=5_1_0_5_7
  *
  * This model has the following limitations:

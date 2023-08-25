@@ -6,7 +6,7 @@
  */
 
 /*
- * CLOCK — Clock control
+ * CLOCK - Clock control
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/clock.html?cp=5_1_0_4_3
  *
  * Notes:

@@ -6,7 +6,7 @@
  */
 
 /*
- * PPI — Programmable peripheral interconnect
+ * PPI - Programmable peripheral interconnect
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ppi.html?cp=5_1_0_5_14
  *
  * Notes:

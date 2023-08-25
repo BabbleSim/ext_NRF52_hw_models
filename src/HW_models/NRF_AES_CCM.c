@@ -6,7 +6,7 @@
  */
 
 /*
- * CCM — AES CCM mode encryption
+ * CCM - AES CCM mode encryption
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ccm.html?cp=5_1_0_5_3
  *
  * Notes:

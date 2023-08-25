@@ -5,7 +5,7 @@
  */
 
 /*
- * TEMP — Temperature sensor
+ * TEMP - Temperature sensor
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/temp.html?cp=4_1_0_5_25
  *
  * A very simple and rough model

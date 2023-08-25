@@ -6,7 +6,7 @@
  */
 
 /**
- * AAR — Accelerated address resolver
+ * AAR - Accelerated address resolver
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/aar.html?cp=4_1_0_5_1
  */
 

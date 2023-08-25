@@ -6,7 +6,7 @@
  */
 
 /*
- * RNG — Random number generator
+ * RNG - Random number generator
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=5_1_0_5_18
  *
  * Very rough model

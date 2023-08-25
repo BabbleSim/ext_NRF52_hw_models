@@ -6,7 +6,7 @@
  */
 
 /**
- * RADIO — 2.4 GHz Radio
+ * RADIO - 2.4 GHz Radio
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/radio.html?cp=5_1_0_5_17
  *
  * Note: as of now, only 1&2Mbps BLE & 15.4 packet formats are supported, there is quite many notes around in the code
