@@ -6,7 +6,7 @@
 #ifndef _NRF_HW_MODEL_NVMC_H
 #define _NRF_HW_MODEL_NVMC_H
 
-#include "nrfx.h"
+#include "nrf.h"
 #include "bs_types.h"
 
 #ifdef __cplusplus

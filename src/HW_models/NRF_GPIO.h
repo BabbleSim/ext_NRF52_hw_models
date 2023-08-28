@@ -7,7 +7,7 @@
 #ifndef _NRF_HW_MODEL_GPIO_H
 #define _NRF_HW_MODEL_GPIO_H
 
-#include "nrfx.h"
+#include "nrf.h"
 #include "NRF_GPIO_backend.h"
 #include <stdbool.h>
 

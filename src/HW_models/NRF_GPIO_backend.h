@@ -8,6 +8,7 @@
 #define _NRF_HW_MODEL_GPIO_BACKEND_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"{

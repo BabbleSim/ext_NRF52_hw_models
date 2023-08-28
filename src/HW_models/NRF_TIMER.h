@@ -7,7 +7,7 @@
 #ifndef _NRF_HW_MODEL_TIMER_H
 #define _NRF_HW_MODEL_TIMER_H
 
-#include "nrfx.h"
+#include "nrf.h"
 
 #ifdef __cplusplus
 extern "C"{

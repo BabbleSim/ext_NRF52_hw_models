@@ -6,7 +6,7 @@
 #ifndef _NRF_HW_MODEL_AES_ECB_H
 #define _NRF_HW_MODEL_AES_ECB_H
 
-#include "nrfx.h"
+#include "nrf.h"
 
 #ifdef __cplusplus
 extern "C"{
