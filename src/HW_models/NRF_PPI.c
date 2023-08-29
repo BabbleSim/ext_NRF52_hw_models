@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include "NHW_types.h"
 #include "NRF_AAR.h"
 #include "NRF_AES_CCM.h"
 #include "NRF_GPIOTE.h"

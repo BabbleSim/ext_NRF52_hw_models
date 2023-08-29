@@ -8,6 +8,7 @@
  * The actual tasks logic does not below here.
  */
 
+#include "NHW_types.h"
 #include "NRF_RADIO.h"
 #include "bs_tracing.h"
 

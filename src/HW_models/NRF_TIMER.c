@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include "NHW_types.h"
 #include "NRF_TIMER.h"
 #include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"

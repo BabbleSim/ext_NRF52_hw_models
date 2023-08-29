@@ -7,13 +7,9 @@
 #ifndef _NRF_HW_MODEL_TIMER_H
 #define _NRF_HW_MODEL_TIMER_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_TIMER_Type NRF_TIMER_regs[];
 
 void nrf_timer0_TASK_CAPTURE_0(void);
 void nrf_timer0_TASK_CAPTURE_1(void);

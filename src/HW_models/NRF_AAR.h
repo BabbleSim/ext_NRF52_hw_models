@@ -6,13 +6,9 @@
 #ifndef _NRF_HW_MODEL_AAR_H
 #define _NRF_HW_MODEL_AAR_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_AAR_Type NRF_AAR_regs;
 
 void nrf_aar_TASK_START(void);
 void nrf_aar_TASK_STOP(void);

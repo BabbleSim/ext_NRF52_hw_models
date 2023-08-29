@@ -14,6 +14,7 @@
  * The delay is constant
  */
 
+#include "NHW_types.h"
 #include "NRF_RNG.h"
 #include <string.h>
 #include <stdbool.h>

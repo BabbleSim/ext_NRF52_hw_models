@@ -7,7 +7,6 @@
 #ifndef _NRF_HW_MODEL_GPIO_H
 #define _NRF_HW_MODEL_GPIO_H
 
-#include "nrf.h"
 #include "NRF_GPIO_backend.h"
 #include <stdbool.h>
 
@@ -18,10 +17,6 @@ extern "C"{
 #define NRF_GPIOS 2
 #define NRF_GPIO_MAX_PINS_PER_PORT 32
 #define NRF_GPIO_PORTS_PINS {32, 10} /* Number of IOs per port */
-
-extern NRF_GPIO_Type NRF_GPIO_regs[NRF_GPIOS];
-extern NRF_GPIO_Type *NRF_P0_regs;
-extern NRF_GPIO_Type *NRF_P1_regs;
 
 /*
  * Callback another peripheral or tests can register if it wants to be called when an input

@@ -6,13 +6,10 @@
 #ifndef _NRF_HW_MODEL_CLOCK_H
 #define _NRF_HW_MODEL_CLOCK_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-extern NRF_CLOCK_Type NRF_CLOCK_regs;
 void nrf_clock_TASKS_LFCLKSTART(void);
 void nrf_clock_TASKS_LFCLKSTOP(void);
 void nrf_clock_TASKS_HFCLKSTART(void);

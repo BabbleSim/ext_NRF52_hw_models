@@ -6,13 +6,9 @@
 #ifndef _NRF_HW_MODEL_GPIOTE_H
 #define _NRF_HW_MODEL_GPIOTE_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 
 #define N_GPIOTE_CHANNELS (sizeof(NRF_GPIOTE_regs.CONFIG)/sizeof(NRF_GPIOTE_regs.CONFIG[0]))
 

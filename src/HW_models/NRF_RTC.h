@@ -6,13 +6,9 @@
 #ifndef _NRF_HW_MODEL_RTC_H
 #define _NRF_HW_MODEL_RTC_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_RTC_Type NRF_RTC_regs[];
 
 void nrf_rtc_LF_tick(void);
 void nrf_rtc_update_COUNTER(int rtc);

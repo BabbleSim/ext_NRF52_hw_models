@@ -57,6 +57,7 @@
 #include "bs_dynargs.h"
 #include "bs_oswrap.h"
 #include "bs_compat.h"
+#include "NHW_types.h"
 #include "NRF_NVMC.h"
 #include "nsi_hw_scheduler.h"
 #include "nsi_tasks.h"

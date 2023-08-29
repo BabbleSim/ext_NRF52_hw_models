@@ -6,13 +6,9 @@
 #ifndef _NRF_RADIO_H
 #define _NRF_RADIO_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_RADIO_Type NRF_RADIO_regs;
 
 void nrf_radio_tasks_TXEN(void);
 void nrf_radio_tasks_RXEN(void);

@@ -12,6 +12,7 @@
 #include "bs_utils.h"
 #include "bs_pc_2G4.h"
 #include "bs_pc_2G4_utils.h"
+#include "NHW_types.h"
 #include "NRF_RADIO.h"
 #include "NRF_HWLowL.h"
 #include "NRF_RADIO_timings.h"

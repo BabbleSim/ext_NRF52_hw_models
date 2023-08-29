@@ -7,13 +7,9 @@
 #ifndef _NRF_HW_MODEL_EGU_H
 #define _NRF_HW_MODEL_EGU_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-extern NRF_EGU_Type NRF_EGU_regs[];
 
 void nrf_egu_regw_sideeffects_TASK_TRIGGER(unsigned int inst, unsigned int task_nbr);
 void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(int inst, unsigned int event_nbr);

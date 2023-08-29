@@ -9,6 +9,8 @@
 #include "bs_tracing.h"
 #include "NRF_RNG.h"
 
+extern NRF_RNG_Type NRF_RNG_regs;
+
 void nrf_rng_task_trigger(NRF_RNG_Type * p_reg, nrf_rng_task_t rng_task)
 {
   *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)rng_task)) = 0x1UL;

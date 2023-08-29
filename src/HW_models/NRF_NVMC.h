@@ -6,7 +6,6 @@
 #ifndef _NRF_HW_MODEL_NVMC_H
 #define _NRF_HW_MODEL_NVMC_H
 
-#include "nrf.h"
 #include "bs_types.h"
 
 #ifdef __cplusplus
@@ -19,8 +18,6 @@ extern "C"{
 
 #define UICR_DATA_SIZE 64 /* Words */
 #define UICR_SIZE ( UICR_DATA_SIZE*4 )
-
-extern NRF_NVMC_Type NRF_NVMC_regs;
 
 void nrfhw_nvmc_regw_sideeffects_ERASEPAGE(void);
 void nrf_nvmc_regw_sideeffects_ERASEPCR0(void);

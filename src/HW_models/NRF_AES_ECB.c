@@ -10,11 +10,12 @@
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ecb.html?cp=5_1_0_5_5
  */
 
-#include "NRF_AES_ECB.h"
-#include "NRF_PPI.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "NHW_types.h"
+#include "NRF_AES_ECB.h"
+#include "NRF_PPI.h"
 #include "nsi_hw_scheduler.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"

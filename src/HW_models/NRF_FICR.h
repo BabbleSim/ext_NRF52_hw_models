@@ -7,8 +7,6 @@
 #ifndef _NRF_HW_MODEL_FICR_H
 #define _NRF_HW_MODEL_FICR_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif

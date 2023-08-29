@@ -6,8 +6,6 @@
 #ifndef _NRF_HW_MODEL_TEMP_H
 #define _NRF_HW_MODEL_TEMP_H
 
-#include "nrf.h"
-
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -18,8 +16,6 @@ void nrf_temp_regw_sideeffects_INTENSET(void);
 void nrf_temp_regw_sideeffects_INTENCLEAR(void);
 void nrf_temp_task_start(void);
 void nrf_temp_task_stop(void);
-
-extern NRF_TEMP_Type NRF_TEMP_regs;
 
 #ifdef __cplusplus
 }

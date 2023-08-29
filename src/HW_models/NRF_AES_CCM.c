@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "nsi_hw_scheduler.h"
+#include "NHW_types.h"
 #include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
