@@ -40,6 +40,8 @@ static struct nhw_irq_mapping nhw_rng_irq_map[NHW_RNG_TOTAL_INST] = NHW_RNG_INT_
 static uint nhw_rng_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
 #endif
 
+static void nhw_rng_eval_interrupt(uint inst);
+
 /**
  * Initialize the RNG model
  */
@@ -98,38 +100,56 @@ void nrf_rng_task_stop(void) {
 
 
 void nrf_rng_regw_sideeffects_TASK_START(void) {
-  if ( NRF_RNG_regs.TASKS_START ) {
+  if (NRF_RNG_regs.TASKS_START) { /* LCOV_EXCL_BR_LINE */
     NRF_RNG_regs.TASKS_START = 0;
     nrf_rng_task_start();
   }
 }
 
 void nrf_rng_regw_sideeffects_TASK_STOP(void) {
-  if ( NRF_RNG_regs.TASKS_STOP ) {
+  if (NRF_RNG_regs.TASKS_STOP) { /* LCOV_EXCL_BR_LINE */
     NRF_RNG_regs.TASKS_STOP = 0;
     nrf_rng_task_stop();
   }
 }
 
 void nrf_rng_regw_sideeffects_INTENSET(void) {
-  if ( NRF_RNG_regs.INTENSET ) {
-    RNG_INTEN = true;
+  if (NRF_RNG_regs.INTENSET) { /* LCOV_EXCL_BR_LINE */
+    RNG_INTEN |= NRF_RNG_regs.INTENSET;
+    NRF_RNG_regs.INTENSET = RNG_INTEN;
+    nhw_rng_eval_interrupt(0);
   }
 }
 
 void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
-  if ( NRF_RNG_regs.INTENCLR ) {
-    RNG_INTEN = false;
-    NRF_RNG_regs.INTENSET = 0;
+  if (NRF_RNG_regs.INTENCLR) { /* LCOV_EXCL_BR_LINE */
+    RNG_INTEN &= ~NRF_RNG_regs.INTENCLR;
+    NRF_RNG_regs.INTENSET = RNG_INTEN;
     NRF_RNG_regs.INTENCLR = 0;
+    nhw_rng_eval_interrupt(0);
   }
 }
 
-//TODO: Switch to level interrupts
-static void nhw_rng_eval_interrupt(uint periph_inst) {
-  if ( RNG_INTEN ){
-    nhw_irq_ctrl_set_irq(nhw_rng_irq_map[periph_inst].cntl_inst,
-                         nhw_rng_irq_map[periph_inst].int_nbr);
+void nrf_rng_regw_sideeffects_EVENTS_all(void) {
+  nhw_rng_eval_interrupt(0);
+}
+
+static void nhw_rng_eval_interrupt(uint inst) {
+  static bool rng_int_line[NHW_RNG_TOTAL_INST]; /* Is the RNG currently driving its interrupt line high */
+  bool new_int_line = false;
+
+  if (NRF_RNG_regs.EVENTS_VALRDY && (RNG_INTEN & RNG_INTENCLR_VALRDY_Msk)){
+    new_int_line = true;
+  }
+
+  if (rng_int_line[inst] == false && new_int_line == true) {
+    rng_int_line[inst] = true;
+    nhw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+                                      nhw_rng_irq_map[inst].int_nbr);
+  } else if (rng_int_line[inst] == true && new_int_line == false) {
+    rng_int_line[inst] = false;
+    nhw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+                                      nhw_rng_irq_map[inst].int_nbr);
   }
 }
 
@@ -139,14 +159,15 @@ static void nhw_rng_signal_VALRDY(uint periph_inst) {
   }
 
   NRF_RNG_regs.EVENTS_VALRDY = 1;
+
+  nhw_rng_eval_interrupt(periph_inst);
+
 #if (NHW_HAS_PPI)
   nrf_ppi_event(RNG_EVENTS_VALRDY);
 #elif (NHW_HAS_DPPI)
   nhw_dppi_event_signal_if(nhw_rng_dppi_map[periph_inst],
                            NRF_RNG_regs.PUBLISH_VALRDY);
 #endif
-
-  nhw_rng_eval_interrupt(periph_inst);
 }
 
 /**

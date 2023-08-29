@@ -37,3 +37,9 @@ void nrf_rng_int_disable(NRF_RNG_Type * p_reg, uint32_t mask)
   NRF_RNG_regs.INTENCLR = mask;
   nrf_rng_regw_sideeffects_INTENCLEAR();
 }
+
+void nrf_rng_event_clear(NRF_RNG_Type * p_reg, nrf_rng_event_t rng_event)
+{
+  *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)rng_event)) = 0x0UL;
+  nrf_rng_regw_sideeffects_EVENTS_all();
+}
