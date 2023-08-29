@@ -14,7 +14,7 @@
  * There should not be any logic beyond that here.
  */
 
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_RADIO.h"
 #include "NRF_RADIO_utils.h"
 #include "NRF_PPI.h"

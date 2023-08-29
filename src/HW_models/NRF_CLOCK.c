@@ -37,7 +37,7 @@
  *    After TASK_CTSTOP EVENTS_CTSTOPPED is raised immediately.
  */
 
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_CLOCK.h"
 #include <string.h>
 #include <stdint.h>

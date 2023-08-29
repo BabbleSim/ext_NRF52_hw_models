@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_AES_ECB.h"
 #include "NRF_PPI.h"
 #include "nsi_hw_scheduler.h"

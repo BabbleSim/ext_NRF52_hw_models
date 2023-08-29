@@ -14,12 +14,14 @@
  * The delay is constant
  */
 
-#include "NHW_types.h"
-#include "NRF_RNG.h"
 #include <string.h>
 #include <stdbool.h>
+#include "NRF_HW_config.h"
+#include "NHW_peri_types.h"
+#include "NHW_common_types.h"
+#include "NRF_RNG.h"
+#include "NHW_xPPI.h"
 #include "nsi_hw_scheduler.h"
-#include "NRF_PPI.h"
 #include "irq_ctrl.h"
 #include "bs_rand_main.h"
 #include "nsi_tasks.h"
@@ -30,6 +32,13 @@ static bs_time_t Timer_RNG = TIME_NEVER; //Time when the next random number will
 
 static bool RNG_hw_started = false;
 static bool RNG_INTEN = false; //interrupt enable
+
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_rng_irq_map[NHW_RNG_TOTAL_INST] = NHW_RNG_INT_MAP;
+#if (NHW_HAS_DPPI)
+/* Mapping of peripheral instance to DPPI instance */
+static uint nhw_rng_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
+#endif
 
 /**
  * Initialize the RNG model
@@ -116,6 +125,29 @@ void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
   }
 }
 
+//TODO: Switch to level interrupts
+static void nhw_rng_eval_interrupt(uint periph_inst) {
+  if ( RNG_INTEN ){
+    hw_irq_ctrl_set_irq(nhw_rng_irq_map[periph_inst].int_nbr);
+  }
+}
+
+static void nhw_rng_signal_VALRDY(uint periph_inst) {
+  if (NRF_RNG_regs.SHORTS & 1) {
+    nrf_rng_task_stop();
+  }
+
+  NRF_RNG_regs.EVENTS_VALRDY = 1;
+#if (NHW_HAS_PPI)
+  nrf_ppi_event(RNG_EVENTS_VALRDY);
+#elif (NHW_HAS_DPPI)
+  nhw_dppi_event_signal_if(nhw_rng_dppi_map[periph_inst],
+                           NRF_RNG_regs.PUBLISH_VALRDY);
+#endif
+
+  nhw_rng_eval_interrupt(periph_inst);
+}
+
 /**
  * Time has come when a new random number is ready
  */
@@ -124,18 +156,9 @@ static void nrf_rng_timer_triggered(void){
   NRF_RNG_regs.VALUE = bs_random_uint32();
   //A proper random number even if CONFIG is not set to correct the bias
 
-  if ( NRF_RNG_regs.SHORTS & 1 ) {
-    nrf_rng_task_stop();
-  } else {
-    nrf_rng_schedule_next(false);
-  }
+  nrf_rng_schedule_next(false);
 
-  NRF_RNG_regs.EVENTS_VALRDY = 1;
-  nrf_ppi_event(RNG_EVENTS_VALRDY);
-  if ( RNG_INTEN ){
-    hw_irq_ctrl_set_irq(RNG_IRQn);
-    //Note: there is no real need to delay the interrupt a delta
-  }
+  nhw_rng_signal_VALRDY(0);
 }
 
 NSI_HW_EVENT(Timer_RNG, nrf_rng_timer_triggered, 50);

@@ -12,7 +12,7 @@
 #include <string.h>
 #include "bs_tracing.h"
 #include "irq_ctrl.h"
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_EGU.h"
 #include "NRF_PPI.h"
 #include "nsi_tasks.h"

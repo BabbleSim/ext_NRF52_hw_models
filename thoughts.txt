@@ -17,7 +17,7 @@ HW models:
     NHW_<PERIPH_TYPE>_TOTAL_INST = __sum__(NHW_<PERIPH_TYPE>_NINST)
     NHW_<PERIPH_TYPE>_<CORE>_<INST> = __index_in_total_of_ninst
   Peripheral:
-    static uint <Periph_type>_NIST[NHW_<PERIPH_TYPE>_NCORES] = NHW_<PERIPH_TYPE>_NINST;
+    ~static uint <Periph_type>_NIST[NHW_<PERIPH_TYPE>_NCORES] = NHW_<PERIPH_TYPE>_NINST;~
     struct nhw_<periph_type>_st_type {
       bs_time_t <PERIPH_TYPE>_timer
       ..other status.

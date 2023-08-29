@@ -5,7 +5,7 @@
 include make_inc/pre.mk
 
 VARIANT=NRF5340
-HAL_VARIANT=NRF5340_XXAA
+HAL_VARIANT=NRF5340_XXAA_NETWORK
 
 HW_SRCS_FILE=make_inc/5340_hw_files
 HAL_SRCS_FILE=make_inc/5340_hal_files

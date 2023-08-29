@@ -17,7 +17,7 @@
  * with command line options; something like -deviceaddr=<bt_address>
  */
 
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_FICR.h"
 #include "NRF_NVMC.h"
 #include <string.h>

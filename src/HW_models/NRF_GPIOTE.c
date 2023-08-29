@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "NHW_types.h"
+#include "NHW_peri_types.h"
 #include "NRF_GPIOTE.h"
 #include "NRF_GPIO.h"
 #include "NRF_PPI.h"
