@@ -1,1 +1,2 @@
 src/nrfx/hal/nrf_rng.c
+src/nrfx/hal/nrf_dppi.c

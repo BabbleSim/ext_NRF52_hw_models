@@ -58,6 +58,160 @@ typedef struct {
   __IM  uint32_t  DATA;                         /*!< (@ 0x00000004) Description cluster: Data                                  */
 } FICR_TRIMCNF_Type;                            /*!< Size = 8 (0x8)                                                            */
 
+/**
+  * @brief DPPIC_TASKS_CHG [TASKS_CHG] (Channel group tasks)
+  */
+typedef struct {
+  __OM  uint32_t  EN;                           /*!< (@ 0x00000000) Description cluster: Enable channel group n                */
+  __OM  uint32_t  DIS;                          /*!< (@ 0x00000004) Description cluster: Disable channel group n               */
+} DPPIC_TASKS_CHG_Type;                         /*!< Size = 8 (0x8)                                                            */
+
+
+/**
+  * @brief DPPIC_SUBSCRIBE_CHG [SUBSCRIBE_CHG] (Subscribe configuration for tasks)
+  */
+typedef struct {
+  __IOM uint32_t  EN;                           /*!< (@ 0x00000000) Description cluster: Subscribe configuration
+                                                                    for task CHG[n].EN                                         */
+  __IOM uint32_t  DIS;                          /*!< (@ 0x00000004) Description cluster: Subscribe configuration
+                                                                    for task CHG[n].DIS                                        */
+} DPPIC_SUBSCRIBE_CHG_Type;                     /*!< Size = 8 (0x8)                                                            */
+
+/* =========================================================================================================================== */
+/* ================                                         DPPIC_NS                                          ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Distributed programmable peripheral interconnect controller (DPPIC_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x4100F000) DPPIC_NS Structure                                         */
+  __OM  DPPIC_TASKS_CHG_Type TASKS_CHG[6];      /*!< (@ 0x00000000) Channel group tasks                                        */
+  __IM  uint32_t  RESERVED[20];
+  __IOM DPPIC_SUBSCRIBE_CHG_Type SUBSCRIBE_CHG[6];/*!< (@ 0x00000080) Subscribe configuration for tasks                        */
+  __IM  uint32_t  RESERVED1[276];
+  __IOM uint32_t  CHEN;                         /*!< (@ 0x00000500) Channel enable register                                    */
+  __IOM uint32_t  CHENSET;                      /*!< (@ 0x00000504) Channel enable set register                                */
+  __IOM uint32_t  CHENCLR;                      /*!< (@ 0x00000508) Channel enable clear register                              */
+  __IM  uint32_t  RESERVED2[189];
+  __IOM uint32_t  CHG[6];                       /*!< (@ 0x00000800) Description collection: Channel group n Note:
+                                                                    Writes to this register are ignored if either
+                                                                    SUBSCRIBE_CHG[n].EN or SUBSCRIBE_CHG[n].DIS
+                                                                    is enabled                                                 */
+} NRF_DPPIC_Type;                               /*!< Size = 2072 (0x818)                                                       */
+
+
+
+/* Peripheral: DPPIC */
+/* Description: Distributed programmable peripheral interconnect controller */
+
+/* Register: DPPIC_TASKS_CHG_EN */
+/* Description: Description cluster: Enable channel group n */
+
+/* Bit 0 : Enable channel group n */
+#define DPPIC_TASKS_CHG_EN_EN_Pos (0UL) /*!< Position of EN field. */
+#define DPPIC_TASKS_CHG_EN_EN_Msk (0x1UL << DPPIC_TASKS_CHG_EN_EN_Pos) /*!< Bit mask of EN field. */
+#define DPPIC_TASKS_CHG_EN_EN_Trigger (1UL) /*!< Trigger task */
+
+/* Register: DPPIC_TASKS_CHG_DIS */
+/* Description: Description cluster: Disable channel group n */
+
+/* Bit 0 : Disable channel group n */
+#define DPPIC_TASKS_CHG_DIS_DIS_Pos (0UL) /*!< Position of DIS field. */
+#define DPPIC_TASKS_CHG_DIS_DIS_Msk (0x1UL << DPPIC_TASKS_CHG_DIS_DIS_Pos) /*!< Bit mask of DIS field. */
+#define DPPIC_TASKS_CHG_DIS_DIS_Trigger (1UL) /*!< Trigger task */
+
+/* Register: DPPIC_SUBSCRIBE_CHG_EN */
+/* Description: Description cluster: Subscribe configuration for task CHG[n].EN */
+
+/* Bit 31 :   */
+#define DPPIC_SUBSCRIBE_CHG_EN_EN_Pos (31UL) /*!< Position of EN field. */
+#define DPPIC_SUBSCRIBE_CHG_EN_EN_Msk (0x1UL << DPPIC_SUBSCRIBE_CHG_EN_EN_Pos) /*!< Bit mask of EN field. */
+#define DPPIC_SUBSCRIBE_CHG_EN_EN_Disabled (0UL) /*!< Disable subscription */
+#define DPPIC_SUBSCRIBE_CHG_EN_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CHG[n].EN will subscribe to */
+#define DPPIC_SUBSCRIBE_CHG_EN_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define DPPIC_SUBSCRIBE_CHG_EN_CHIDX_Msk (0xFFUL << DPPIC_SUBSCRIBE_CHG_EN_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: DPPIC_SUBSCRIBE_CHG_DIS */
+/* Description: Description cluster: Subscribe configuration for task CHG[n].DIS */
+
+/* Bit 31 :   */
+#define DPPIC_SUBSCRIBE_CHG_DIS_EN_Pos (31UL) /*!< Position of EN field. */
+#define DPPIC_SUBSCRIBE_CHG_DIS_EN_Msk (0x1UL << DPPIC_SUBSCRIBE_CHG_DIS_EN_Pos) /*!< Bit mask of EN field. */
+#define DPPIC_SUBSCRIBE_CHG_DIS_EN_Disabled (0UL) /*!< Disable subscription */
+#define DPPIC_SUBSCRIBE_CHG_DIS_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CHG[n].DIS will subscribe to */
+#define DPPIC_SUBSCRIBE_CHG_DIS_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define DPPIC_SUBSCRIBE_CHG_DIS_CHIDX_Msk (0xFFUL << DPPIC_SUBSCRIBE_CHG_DIS_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: DPPIC_CHEN */
+/* Description: Channel enable register */
+
+/* Bit 31 : Enable or disable channel 31 */
+#define DPPIC_CHEN_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHEN_CH31_Msk (0x1UL << DPPIC_CHEN_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHEN_CH31_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH31_Enabled (1UL) /*!< Enable channel */
+
+/* Bit 0 : Enable or disable channel 0 */
+#define DPPIC_CHEN_CH0_Pos (0UL) /*!< Position of CH0 field. */
+#define DPPIC_CHEN_CH0_Msk (0x1UL << DPPIC_CHEN_CH0_Pos) /*!< Bit mask of CH0 field. */
+#define DPPIC_CHEN_CH0_Disabled (0UL) /*!< Disable channel */
+#define DPPIC_CHEN_CH0_Enabled (1UL) /*!< Enable channel */
+
+/* Register: DPPIC_CHENSET */
+/* Description: Channel enable set register */
+
+/* Bit 31 : Channel 31 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHENSET_CH31_Msk (0x1UL << DPPIC_CHENSET_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHENSET_CH31_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH31_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH31_Set (1UL) /*!< Write: Enable channel */
+
+/* Bit 0 : Channel 0 enable set register. Writing 0 has no effect. */
+#define DPPIC_CHENSET_CH0_Pos (0UL) /*!< Position of CH0 field. */
+#define DPPIC_CHENSET_CH0_Msk (0x1UL << DPPIC_CHENSET_CH0_Pos) /*!< Bit mask of CH0 field. */
+#define DPPIC_CHENSET_CH0_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENSET_CH0_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENSET_CH0_Set (1UL) /*!< Write: Enable channel */
+
+/* Register: DPPIC_CHENCLR */
+/* Description: Channel enable clear register */
+
+/* Bit 31 : Channel 31 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHENCLR_CH31_Msk (0x1UL << DPPIC_CHENCLR_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHENCLR_CH31_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH31_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH31_Clear (1UL) /*!< Write: Disable channel */
+
+/* Bit 0 : Channel 0 enable clear register.  Writing 0 has no effect. */
+#define DPPIC_CHENCLR_CH0_Pos (0UL) /*!< Position of CH0 field. */
+#define DPPIC_CHENCLR_CH0_Msk (0x1UL << DPPIC_CHENCLR_CH0_Pos) /*!< Bit mask of CH0 field. */
+#define DPPIC_CHENCLR_CH0_Disabled (0UL) /*!< Read: Channel disabled */
+#define DPPIC_CHENCLR_CH0_Enabled (1UL) /*!< Read: Channel enabled */
+#define DPPIC_CHENCLR_CH0_Clear (1UL) /*!< Write: Disable channel */
+
+/* Register: DPPIC_CHG */
+/* Description: Description collection: Channel group n Note: Writes to this register are ignored if either SUBSCRIBE_CHG[n].EN or SUBSCRIBE_CHG[n].DIS is enabled */
+
+/* Bit 31 : Include or exclude channel 31 */
+#define DPPIC_CHG_CH31_Pos (31UL) /*!< Position of CH31 field. */
+#define DPPIC_CHG_CH31_Msk (0x1UL << DPPIC_CHG_CH31_Pos) /*!< Bit mask of CH31 field. */
+#define DPPIC_CHG_CH31_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH31_Included (1UL) /*!< Include */
+
+/* Bit 0 : Include or exclude channel 0 */
+#define DPPIC_CHG_CH0_Pos (0UL) /*!< Position of CH0 field. */
+#define DPPIC_CHG_CH0_Msk (0x1UL << DPPIC_CHG_CH0_Pos) /*!< Bit mask of CH0 field. */
+#define DPPIC_CHG_CH0_Excluded (0UL) /*!< Exclude */
+#define DPPIC_CHG_CH0_Included (1UL) /*!< Include */
+
 
 
 /* =========================================================================================================================== */

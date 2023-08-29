@@ -109,6 +109,14 @@
 #define NHW_HAS_DPPI 1
 #define NHW_USE_MDK_TYPES 0
 
+#define NHW_DPPI_TOTAL_INST 2
+#define NHW_DPPI_APP_0 0
+#define NHW_DPPI_NET_0 1
+/* The DPPI does not generate interrupts */
+#define NHW_DPPI_DPPI_MAP {0,1} /*App DPPI connects to itself, network DPPI to itself*/
+#define NHW_DPPI_N_CH {32, 32} /* Number of channels in each DPPI */
+#define NHW_DPPI_N_CHG {6, 6}  /* Number of channel groups in each DPPI */
+
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_NET_0 0
