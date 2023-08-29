@@ -8,10 +8,19 @@
 /*
  * RNG - Random number generator
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/rng.html?cp=5_1_0_5_18
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/rng.html?cp=4_0_0_6_26
  *
- * Very rough model
+ * Compatible with 52833 & 5340
  *
- * The delay is constant
+ * Note:
+ *   1. The delay to produce a value is constant (though bias correction increases time)
+ *
+ *   2. The spec says that the delay is unpredictable but it does not provide any indication
+ *      of what kind of random distribution to expect => The model just assumes the value is
+ *      always the average(?) the spec provides
+ *
+ *   3. The produced random value is always "good enough".
+ *      The bias correction has no effect on the random value quality
  */
 
 #include <string.h>
@@ -40,8 +49,6 @@ static struct nhw_irq_mapping nhw_rng_irq_map[NHW_RNG_TOTAL_INST] = NHW_RNG_INT_
 static uint nhw_rng_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
 #endif
 
-static void nhw_rng_eval_interrupt(uint inst);
-
 /**
  * Initialize the RNG model
  */
@@ -57,24 +64,38 @@ NSI_TASK(nrf_rng_init, HW_INIT, 100);
 static void nrf_rng_schedule_next(bool first_time){
   bs_time_t delay = 0;
 
-  if ( first_time ) {
-    delay = 128;
+  if (first_time) {
+    delay = NHW_RNG_tRNG_START;
   }
 
-  if ( NRF_RNG_regs.CONFIG ){ //Bias correction enabled
-    delay += 120;
-    /*
-     * The spec says that the delay is unpredictable yet it does not
-     * provide any indication of what kind of random distribution to
-     * expect => I just assume the value is always the average(?) they
-     * provide
-     */
+  //See Note 1.
+  if (NRF_RNG_regs.CONFIG & RNG_CONFIG_DERCEN_Msk){ //Bias correction enabled
+    delay += NHW_RNG_tRNG_BC;
   } else {
-    delay += 30;
+    delay += NHW_RNG_tRNG_RAW;
   }
   Timer_RNG = nsi_hws_get_time() + delay;
 
   nsi_hws_find_next_event();
+}
+
+static void nhw_rng_eval_interrupt(uint inst) {
+  static bool rng_int_line[NHW_RNG_TOTAL_INST]; /* Is the RNG currently driving its interrupt line high */
+  bool new_int_line = false;
+
+  if (NRF_RNG_regs.EVENTS_VALRDY && (RNG_INTEN & RNG_INTENCLR_VALRDY_Msk)){
+    new_int_line = true;
+  }
+
+  if (rng_int_line[inst] == false && new_int_line == true) {
+    rng_int_line[inst] = true;
+    nhw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+                                      nhw_rng_irq_map[inst].int_nbr);
+  } else if (rng_int_line[inst] == true && new_int_line == false) {
+    rng_int_line[inst] = false;
+    nhw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+                                      nhw_rng_irq_map[inst].int_nbr);
+  }
 }
 
 /**
@@ -85,7 +106,6 @@ void nrf_rng_task_start(void) {
     return;
   }
   RNG_hw_started = true;
-
   nrf_rng_schedule_next(true);
 }
 
@@ -113,6 +133,32 @@ void nrf_rng_regw_sideeffects_TASK_STOP(void) {
   }
 }
 
+#if (NHW_HAS_DPPI)
+void nrf_rng_regw_sideeffects_SUBSCRIBE_START(unsigned int inst) {
+  static bool START_subscribed[NHW_RNG_TOTAL_INST];
+  static unsigned int START_subscribe_ch[NHW_RNG_TOTAL_INST];
+
+  nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
+                                       NRF_RNG_regs.SUBSCRIBE_START,
+                                       &START_subscribed[inst],
+                                       &START_subscribe_ch[inst],
+                                       (dppi_callback_t)nrf_rng_task_start,
+                                       DPPI_CB_NO_PARAM);
+}
+
+void nrf_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
+  static bool STOP_subscribed[NHW_RNG_TOTAL_INST];
+  static unsigned int STOP_subscribe_ch[NHW_RNG_TOTAL_INST];
+
+  nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
+                                       NRF_RNG_regs.SUBSCRIBE_START,
+                                       &STOP_subscribed[inst],
+                                       &STOP_subscribe_ch[inst],
+                                       (dppi_callback_t)nrf_rng_task_stop,
+                                       DPPI_CB_NO_PARAM);
+}
+#endif /* NHW_HAS_DPPI */
+
 void nrf_rng_regw_sideeffects_INTENSET(void) {
   if (NRF_RNG_regs.INTENSET) { /* LCOV_EXCL_BR_LINE */
     RNG_INTEN |= NRF_RNG_regs.INTENSET;
@@ -134,27 +180,8 @@ void nrf_rng_regw_sideeffects_EVENTS_all(void) {
   nhw_rng_eval_interrupt(0);
 }
 
-static void nhw_rng_eval_interrupt(uint inst) {
-  static bool rng_int_line[NHW_RNG_TOTAL_INST]; /* Is the RNG currently driving its interrupt line high */
-  bool new_int_line = false;
-
-  if (NRF_RNG_regs.EVENTS_VALRDY && (RNG_INTEN & RNG_INTENCLR_VALRDY_Msk)){
-    new_int_line = true;
-  }
-
-  if (rng_int_line[inst] == false && new_int_line == true) {
-    rng_int_line[inst] = true;
-    nhw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
-                                      nhw_rng_irq_map[inst].int_nbr);
-  } else if (rng_int_line[inst] == true && new_int_line == false) {
-    rng_int_line[inst] = false;
-    nhw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
-                                      nhw_rng_irq_map[inst].int_nbr);
-  }
-}
-
 static void nhw_rng_signal_VALRDY(uint periph_inst) {
-  if (NRF_RNG_regs.SHORTS & 1) {
+  if (NRF_RNG_regs.SHORTS & RNG_SHORTS_VALRDY_STOP_Msk) {
     nrf_rng_task_stop();
   }
 
@@ -173,10 +200,9 @@ static void nhw_rng_signal_VALRDY(uint periph_inst) {
 /**
  * Time has come when a new random number is ready
  */
-static void nrf_rng_timer_triggered(void){
-
+static void nrf_rng_timer_triggered(void) {
+  //We generate a proper random number even if CONFIG is not set to correct the bias:
   NRF_RNG_regs.VALUE = bs_random_uint32();
-  //A proper random number even if CONFIG is not set to correct the bias
 
   nrf_rng_schedule_next(false);
 

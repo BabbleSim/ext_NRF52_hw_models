@@ -64,6 +64,9 @@
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_0 0
 #define NHW_RNG_INT_MAP {{0 , 13}} /*Only core,RNG_IRQn*/
+#define NHW_RNG_tRNG_START 128
+#define NHW_RNG_tRNG_RAW    30
+#define NHW_RNG_tRNG_BC    120
 
 #define NHW_RTC_TOTAL_INST 3
 #define NHW_RTC_0 0
@@ -122,6 +125,9 @@
 #define NHW_RNG_NET_0 0
 #define NHW_RNG_INT_MAP  {{1, 9}} /*Network core, "RNG_IRQn"*/
 #define NHW_RNG_DPPI_MAP {1} /*Network core*/
+#define NHW_RNG_tRNG_START 128
+#define NHW_RNG_tRNG_RAW 32
+#define NHW_RNG_tRNG_BC 122
 
 #define NHW_FAKE_TIMER_TOTAL_INST 2
 #define NHW_FAKE_TIMER_INT_MAP {{0 , 0}, \
