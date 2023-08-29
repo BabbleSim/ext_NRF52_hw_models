@@ -12,15 +12,20 @@
 #include <string.h>
 #include "bs_tracing.h"
 #include "irq_ctrl.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_EGU.h"
 #include "NRF_PPI.h"
 #include "nsi_tasks.h"
 
-#define N_EGU 6
+#define N_EGU NHW_EGU_TOTAL_INST
 #define N_EGU_EVENTS 16
 NRF_EGU_Type NRF_EGU_regs[N_EGU];
 static bool egu_int_line[N_EGU] = {false}; //Is the EGU currently driving this interrupt line high
+
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_egu_irq_map[NHW_EGU_TOTAL_INST] = NHW_EGU_INT_MAP;
 
 /**
  * Initialize the EGU model
@@ -50,10 +55,12 @@ static void nrf_egu_eval_interrupt(int inst){
 
   if (new_egu_int_line && (egu_int_line[inst] == false)) {
     egu_int_line[inst] = true;
-    hw_irq_ctrl_raise_level_irq_line(SWI0_EGU0_IRQn + inst);
+    nhw_irq_ctrl_raise_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
+                                      nhw_egu_irq_map[inst].int_nbr);
   } else if ((new_egu_int_line == false) && egu_int_line[inst]) {
     egu_int_line[inst] = false;
-    hw_irq_ctrl_lower_level_irq_line(SWI0_EGU0_IRQn + inst);
+    nhw_irq_ctrl_lower_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
+                                      nhw_egu_irq_map[inst].int_nbr);
   }
 }
 
@@ -127,6 +134,7 @@ void nrf_egu_regw_sideeffects_TASK_TRIGGER(uint inst, uint task_nbr){
   }
 }
 
+#if (NHW_HAS_PPI)
 /*
  * Trampolines to automatically call from the PPI
  */
@@ -246,3 +254,4 @@ void nrf_egu_5_TASK_TRIGGER_12(void){ nrf_egu_TASK_TRIGGER(5,12); }
 void nrf_egu_5_TASK_TRIGGER_13(void){ nrf_egu_TASK_TRIGGER(5,13); }
 void nrf_egu_5_TASK_TRIGGER_14(void){ nrf_egu_TASK_TRIGGER(5,14); }
 void nrf_egu_5_TASK_TRIGGER_15(void){ nrf_egu_TASK_TRIGGER(5,15); }
+#endif /* NHW_HAS_PPI */

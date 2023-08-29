@@ -37,10 +37,12 @@
  *    After TASK_CTSTOP EVENTS_CTSTOPPED is raised immediately.
  */
 
-#include "NHW_peri_types.h"
-#include "NRF_CLOCK.h"
 #include <string.h>
 #include <stdint.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
+#include "NHW_peri_types.h"
+#include "NRF_CLOCK.h"
 #include "nsi_hw_scheduler.h"
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
@@ -51,6 +53,9 @@
 #include "nsi_hws_models_if.h"
 
 NRF_CLOCK_Type NRF_CLOCK_regs;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_clock_irq_map[NHW_CLOCK_TOTAL_INST] = NHW_CLOCK_INT_MAP;
+
 static uint32_t CLOCK_INTEN = 0; //interrupt enable
 
 static bs_time_t Timer_CLOCK = TIME_NEVER;
@@ -107,12 +112,15 @@ static void nrf_clock_eval_interrupt(void) {
   check_interrupt(CTSTARTED);
   check_interrupt(CTSTOPPED);
 
+  int inst = 0;
   if (clock_int_line == false && new_int_line == true) {
     clock_int_line = true;
-    hw_irq_ctrl_raise_level_irq_line(POWER_CLOCK_IRQn);
+    nhw_irq_ctrl_raise_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
+                                      nhw_clock_irq_map[inst].int_nbr);
   } else if (clock_int_line == true && new_int_line == false) {
     clock_int_line = false;
-    hw_irq_ctrl_lower_level_irq_line(POWER_CLOCK_IRQn);
+    nhw_irq_ctrl_lower_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
+                                      nhw_clock_irq_map[inst].int_nbr);
   }
 }
 

@@ -6,6 +6,8 @@
  */
 
 #include <stdint.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_DPPI.h"
 
 /*

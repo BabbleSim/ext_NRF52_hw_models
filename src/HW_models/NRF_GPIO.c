@@ -37,6 +37,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_GPIO.h"
 #include "NRF_GPIOTE.h"

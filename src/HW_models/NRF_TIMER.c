@@ -28,6 +28,8 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_TIMER.h"
 #include "nsi_hw_scheduler.h"
@@ -37,11 +39,13 @@
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
-#define N_TIMERS 5
+#define N_TIMERS NHW_TIMER_TOTAL_INST
 #define N_MAX_CC 6
 #define N_TIMER_CC_REGS {4, 4, 4, 6, 6} /* Number CC registers for each Timer */
 
 NRF_TIMER_Type NRF_TIMER_regs[N_TIMERS];
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_timer_irq_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_INT_MAP;
 
 static uint32_t TIMER_INTEN[N_TIMERS] = {0};
 
@@ -163,38 +167,9 @@ static void update_all_cc_timers(int t){
   }
 }
 
-static int nrf_timer_get_irq_number(int t){
-  int irq = TIMER0_IRQn;
-
-  switch (t){
-  case 0:
-    irq = TIMER0_IRQn;
-    break;
-  case 1:
-    irq = TIMER1_IRQn;
-    break;
-  case 2:
-    irq = TIMER2_IRQn;
-    break;
-  case 3:
-    irq = TIMER3_IRQn;
-    break;
-  case 4:
-    irq = TIMER4_IRQn;
-    break;
-  default:
-    irq = -1;
-    break;
-  }
-  return irq;
-}
-
 static void nrf_timer_eval_interrupts(int t) {
   static bool TIMER_int_line[N_TIMERS]; /* Is the TIMER currently driving its interrupt line high */
   bool new_int_line = false;
-  int irq_line = nrf_timer_get_irq_number(t);
-  const char *no_int_error = "NRF HW TIMER%i interrupt triggered "
-                             "but there is no interrupt mapped for it\n";
 
   for (int cc = 0; cc < Timer_n_CCs[t]; cc++) {
     int mask = TIMER_INTEN[t] & (TIMER_INTENSET_COMPARE0_Msk << cc);
@@ -206,16 +181,13 @@ static void nrf_timer_eval_interrupts(int t) {
 
   if (TIMER_int_line[t] == false && new_int_line == true) {
     TIMER_int_line[t] = true;
-    if (irq_line < -1) {
-      bs_trace_error_line_time(no_int_error, t);
-    }
-    hw_irq_ctrl_raise_level_irq_line(irq_line);
+    nhw_irq_ctrl_raise_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
+                                      nhw_timer_irq_map[t].int_nbr);
   } else if (TIMER_int_line[t] == true && new_int_line == false) {
     TIMER_int_line[t] = false;
-    if (irq_line < -1) {
-      bs_trace_error_line_time(no_int_error, t);
-    }
-    hw_irq_ctrl_lower_level_irq_line(irq_line);
+
+    nhw_irq_ctrl_lower_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
+                                      nhw_timer_irq_map[t].int_nbr);
   }
 }
 

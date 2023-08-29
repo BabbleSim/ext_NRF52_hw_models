@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_AES_ECB.h"
 #include "NRF_PPI.h"
@@ -26,6 +28,9 @@
 static bs_time_t Timer_ECB = TIME_NEVER; /* Time when the ECB will finish */
 
 NRF_ECB_Type NRF_ECB_regs;
+
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_ecb_irq_map[NHW_ECB_TOTAL_INST] = NHW_ECB_INT_MAP;
 
 static uint32_t ECB_INTEN; /* interrupt enable */
 static bool ECB_Running;
@@ -69,8 +74,10 @@ static void signal_ENDECB(void) {
 	NRF_ECB_regs.EVENTS_ENDECB = 1;
 	nrf_ppi_event(ECB_EVENTS_ENDECB);
 
+	int inst = 0;
 	if (ECB_INTEN & ECB_INTENSET_ENDECB_Msk){
-		hw_irq_ctrl_set_irq(ECB_IRQn);
+		nhw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
+				nhw_ecb_irq_map[inst].int_nbr);
 	}
 }
 
@@ -78,8 +85,10 @@ static void signal_ERRORECB(void) {
 	NRF_ECB_regs.EVENTS_ERRORECB = 1;
 	nrf_ppi_event(ECB_EVENTS_ERRORECB);
 
+	int inst = 0;
 	if (ECB_INTEN & ECB_INTENSET_ERRORECB_Msk){
-		hw_irq_ctrl_set_irq(ECB_IRQn);
+		nhw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
+				nhw_ecb_irq_map[inst].int_nbr);
 	}
 }
 

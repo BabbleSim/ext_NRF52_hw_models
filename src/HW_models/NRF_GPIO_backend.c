@@ -16,6 +16,8 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NRF_GPIO.h"
 #include "bs_types.h"
 #include "nsi_hw_scheduler.h"

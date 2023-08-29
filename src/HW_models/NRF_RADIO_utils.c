@@ -12,6 +12,8 @@
 #include "bs_utils.h"
 #include "bs_pc_2G4.h"
 #include "bs_pc_2G4_utils.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_RADIO.h"
 #include "NRF_HWLowL.h"

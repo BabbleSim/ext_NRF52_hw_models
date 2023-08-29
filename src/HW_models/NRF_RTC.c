@@ -26,6 +26,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_PPI.h"
 #include "NRF_CLOCK.h"
@@ -35,7 +37,7 @@
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
-#define N_RTC 3
+#define N_RTC NHW_RTC_TOTAL_INST
 #define N_CC 4
 
 #define RTC_COUNTER_MASK 0xFFFFFF /*24 bits*/
@@ -44,6 +46,8 @@
 #define SUB_US_BITS 9 // Bits representing sub-microsecond units
 
 NRF_RTC_Type NRF_RTC_regs[N_RTC];
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_rtc_irq_map[NHW_RTC_TOTAL_INST] = NHW_RTC_INT_MAP;
 
 static bool RTC_Running[N_RTC] = {false};
 static uint32_t RTC_INTEN[N_RTC] = {0};
@@ -252,26 +256,6 @@ static void set_counter_to(uint64_t counter_val, int rtc)
   update_timers(rtc);
 }
 
-static unsigned int get_irq_t(int rtc)
-{
-    unsigned int irq_t = RTC0_IRQn;
-
-    switch (rtc){
-    case 0:
-      irq_t = RTC0_IRQn;
-      break;
-    case 1:
-      irq_t = RTC1_IRQn;
-      break;
-    case 2:
-      irq_t = RTC2_IRQn;
-      bs_trace_error_line_time("There is no IRQ mapped for RTC2\n");
-      break;
-    }
-
-    return irq_t;
-}
-
 static ppi_event_types_t get_cc_event(int rtc)
 {
     ppi_event_types_t event = RTC0_EVENTS_COMPARE_0;
@@ -307,17 +291,17 @@ static ppi_event_types_t get_overflow_event(int rtc)
     return event;
 }
 
-static void handle_event(int rtc, ppi_event_types_t event, uint32_t mask)
+static void nhw_rtc_signal_event(int rtc, ppi_event_types_t event, uint32_t mask)
 {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
 
-  if ( ( RTC_regs->EVTEN | RTC_INTEN[rtc] ) & mask ) {
-    if ( RTC_regs->EVTEN & mask ){
-      nrf_ppi_event(event);
-    }
-    if ( RTC_INTEN[rtc] & mask ){
-      hw_irq_ctrl_set_irq(get_irq_t(rtc));
-    }
+  if (RTC_regs->EVTEN & mask) {
+    nrf_ppi_event(event);
+  }
+
+  if (RTC_INTEN[rtc] & mask) {
+    nhw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc].cntl_inst,
+                         nhw_rtc_irq_map[rtc].int_nbr);
   }
 }
 
@@ -333,7 +317,7 @@ static void handle_cc_event(int rtc, int cc)
     bs_trace_raw_time(8, "RTC%i: CC%i matching now\n", rtc, cc);
 
     RTC_regs->EVENTS_COMPARE[cc] = 1;
-    handle_event(rtc, event, mask);
+    nhw_rtc_signal_event(rtc, event, mask);
   }
 }
 
@@ -354,7 +338,7 @@ static void handle_overflow_event(int rtc)
     bs_trace_raw_time(8, "RTC%i: Timer overflow\n", rtc);
 
     RTC_regs->EVENTS_OVRFLW = 1;
-    handle_event(rtc, event, RTC_EVTEN_OVRFLW_Msk);
+    nhw_rtc_signal_event(rtc, event, RTC_EVTEN_OVRFLW_Msk);
 
     RTC_counter_startT_sub_us[rtc] = current_overflow_event_sub_us;
     RTC_counter_startT_negative_sub_us[rtc] = 0;
@@ -520,22 +504,22 @@ void nrf_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(int i) {
   }
 }
 
-void nrf_rtc_regw_sideeffect_INTENSET(int i) {
-  NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
+void nrf_rtc_regw_sideeffect_INTENSET(int rtc_inst) {
+  NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc_inst];
   if ( RTC_regs->INTENSET ){
-    uint32_t new_interrupts = RTC_regs->INTENSET & ~RTC_INTEN[i];
-    unsigned int irq_t = get_irq_t(i);
+    uint32_t new_interrupts = RTC_regs->INTENSET & ~RTC_INTEN[rtc_inst];
     uint32_t mask = RTC_EVTEN_COMPARE0_Msk;
 
-    RTC_INTEN[i] |= RTC_regs->INTENSET;
-    RTC_regs->INTENSET = RTC_INTEN[i];
+    RTC_INTEN[rtc_inst] |= RTC_regs->INTENSET;
+    RTC_regs->INTENSET = RTC_INTEN[rtc_inst];
     for ( int cc = 0 ; cc < N_CC ; cc++, mask <<=1) {
       if (RTC_regs->EVENTS_COMPARE[cc] && (new_interrupts & mask)) {
-        hw_irq_ctrl_set_irq(irq_t);
+        nhw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc_inst].cntl_inst,
+                             nhw_rtc_irq_map[rtc_inst].int_nbr);
       }
     }
 
-    check_not_supported_func(RTC_INTEN[i]);
+    check_not_supported_func(RTC_INTEN[rtc_inst]);
   }
 }
 

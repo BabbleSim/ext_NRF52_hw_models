@@ -9,6 +9,8 @@
  */
 #include "bs_types.h"
 #include "bs_tracing.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_RADIO.h"
 #include "NRF_RADIO_signals.h"

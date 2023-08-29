@@ -16,6 +16,8 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_GPIOTE.h"
 #include "NRF_GPIO.h"
@@ -25,6 +27,8 @@
 #include "nsi_tasks.h"
 
 NRF_GPIOTE_Type NRF_GPIOTE_regs = {0};
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_gpiote_irq_map[NHW_GPIOTE_TOTAL_INST] = NHW_GPIOTE_INT_MAP;
 
 static uint32_t GPIOTE_ITEN;
 static bool gpiote_int_line; /* Is the GPIOTE currently driving its interrupt line high */
@@ -127,12 +131,15 @@ static void nrf_gpiote_eval_interrupt(void) {
 		new_int_line = true;
 	}
 
+	int inst = 0;
 	if (gpiote_int_line == false && new_int_line == true) {
 		gpiote_int_line = true;
-		hw_irq_ctrl_raise_level_irq_line(GPIOTE_IRQn);
+		nhw_irq_ctrl_raise_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
+				nhw_gpiote_irq_map[inst].int_nbr);
 	} else if (gpiote_int_line == true && new_int_line == false) {
 		gpiote_int_line = false;
-		hw_irq_ctrl_lower_level_irq_line(GPIOTE_IRQn);
+		nhw_irq_ctrl_lower_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
+				nhw_gpiote_irq_map[inst].int_nbr);
 	}
 }
 

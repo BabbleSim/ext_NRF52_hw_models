@@ -32,6 +32,8 @@
  * 4. TASK_RATEOVERRIDE and RATEOVERRIDE are not supported
  */
 
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NRF_AES_CCM.h"
 #include <string.h>
 #include <stdbool.h>
@@ -44,6 +46,9 @@
 #include "nsi_tasks.h"
 
 NRF_CCM_Type NRF_CCM_regs;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_ccm_irq_map[NHW_CCM_TOTAL_INST] = NHW_CCM_INT_MAP;
+
 static uint32_t CCM_INTEN; //interrupt enable
 static bool decryption_ongoing;
 
@@ -191,8 +196,10 @@ static void signal_EVENTS_ENDKSGEN(void) {
   NRF_CCM_regs.EVENTS_ENDKSGEN = 1;
   nrf_ppi_event(CCM_EVENTS_ENDKSGEN);
 
+  int inst = 0;
   if (CCM_INTEN & CCM_INTENSET_ENDKSGEN_Msk) {
-    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
+                         nhw_ccm_irq_map[inst].int_nbr);
   }
 
   if (NRF_CCM_regs.SHORTS & CCM_SHORTS_ENDKSGEN_CRYPT_Msk) {
@@ -204,8 +211,10 @@ static void signal_EVENTS_ENDCRYPT(void) {
   NRF_CCM_regs.EVENTS_ENDCRYPT = 1;
   nrf_ppi_event(CCM_EVENTS_ENDCRYPT);
 
+  int inst = 0;
   if (CCM_INTEN & CCM_INTENSET_ENDCRYPT_Msk) {
-    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
+                         nhw_ccm_irq_map[inst].int_nbr);
   }
 }
 
@@ -214,7 +223,7 @@ static void signal_EVENTS_ENDCRYPT(void) {
 	NRF_PPI_Event(CCM_EVENTS_ERROR);
 
 	if (CCM_INTEN & CCM_INTENSET_ERROR_Msk) {
-		hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
+		nhw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
 	}
 } */
 

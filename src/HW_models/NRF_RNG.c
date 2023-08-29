@@ -16,7 +16,7 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "NRF_HW_config.h"
+#include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_common_types.h"
 #include "NRF_RNG.h"
@@ -128,7 +128,8 @@ void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
 //TODO: Switch to level interrupts
 static void nhw_rng_eval_interrupt(uint periph_inst) {
   if ( RNG_INTEN ){
-    hw_irq_ctrl_set_irq(nhw_rng_irq_map[periph_inst].int_nbr);
+    nhw_irq_ctrl_set_irq(nhw_rng_irq_map[periph_inst].cntl_inst,
+                         nhw_rng_irq_map[periph_inst].int_nbr);
   }
 }
 

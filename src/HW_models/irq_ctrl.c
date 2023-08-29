@@ -13,6 +13,8 @@
  */
 
 #include <stdint.h>
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "nsi_internal.h"
 #include "nsi_cpu_if.h"
 #include "bs_types.h"
@@ -246,7 +248,7 @@ static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
  * Note that this is equivalent to a HW peripheral sending a *pulse* interrupt
  * to the interrupt controller
  */
-void hw_irq_ctrl_set_irq(unsigned int irq)
+void nhw_irq_ctrl_set_irq(unsigned int ctl_inst, unsigned int irq)
 {
 	hw_irq_ctrl_irq_raise_prefix(irq);
 	if ((irqs_locked == false) || (lock_ignore)) {
@@ -270,11 +272,11 @@ void hw_irq_ctrl_set_irq(unsigned int irq)
  * An IRQ will be raised in one delta cycle from now
  *
  * Any call from the hardware models to this function must be eventually
- * followed by a call to hw_irq_ctrl_lower_level_irq_line(), otherwise
+ * followed by a call to nhw_irq_ctrl_lower_level_irq_line(), otherwise
  * the interrupt controller will keep interrupting the CPU and causing it to
  * re-enter the interrupt handler
  */
-void hw_irq_ctrl_raise_level_irq_line(unsigned int irq)
+void nhw_irq_ctrl_raise_level_irq_line(unsigned int ctl_inst, unsigned int irq)
 {
 	if ( irq >= NRF_HW_NBR_IRQs ) {
 		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
@@ -282,7 +284,7 @@ void hw_irq_ctrl_raise_level_irq_line(unsigned int irq)
 
 	if ((irq_lines & ((uint64_t)1<<irq)) == 0) {
 		irq_lines |= ((uint64_t)1<<irq);
-		hw_irq_ctrl_set_irq(irq);
+		nhw_irq_ctrl_set_irq(ctl_inst, irq);
 	}
 }
 
@@ -292,7 +294,7 @@ void hw_irq_ctrl_raise_level_irq_line(unsigned int irq)
  * This function is meant to be used only from a HW model which wants
  * to emulate level interrupts.
  */
-void hw_irq_ctrl_lower_level_irq_line(unsigned int irq)
+void nhw_irq_ctrl_lower_level_irq_line(unsigned int ctl_inst, unsigned int irq)
 {
 	if ( irq >= NRF_HW_NBR_IRQs ) {
 		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
@@ -317,7 +319,7 @@ static void irq_raising_from_hw_now(void)
 
 /**
  * Set/Raise/Pend an interrupt immediately.
- * Like hw_irq_ctrl_set_irq() but awake immediately the CPU instead of in
+ * Like nhw_irq_ctrl_set_irq() but awake immediately the CPU instead of in
  * 1 delta cycle
  *
  * Call only from HW threads; Should be used with care

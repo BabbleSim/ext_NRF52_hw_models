@@ -17,6 +17,8 @@
  *   * There is no modeling of possible calibration errors or inaccuracies due to no non-linearities compensation
  */
 
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 #include "NRF_TEMP.h"
 #include <string.h>
 #include <stdbool.h>
@@ -29,6 +31,8 @@
 #include "nsi_hws_models_if.h"
 
 NRF_TEMP_Type NRF_TEMP_regs;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_temp_irq_map[NHW_TEMP_TOTAL_INST] = NHW_TEMP_INT_MAP;
 
 static bs_time_t Timer_TEMP = TIME_NEVER; //Time when the next temperature measurement will be ready
 
@@ -143,8 +147,11 @@ static void nrf_temp_timer_triggered(void) {
 
   NRF_TEMP_regs.EVENTS_DATARDY = 1;
   nrf_ppi_event(TEMP_EVENTS_DATARDY);
+
+  int inst = 0;
   if ( TEMP_INTEN ){
-    hw_irq_ctrl_set_irq(TEMP_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_temp_irq_map[inst].cntl_inst,
+                         nhw_temp_irq_map[inst].int_nbr);
   }
 }
 

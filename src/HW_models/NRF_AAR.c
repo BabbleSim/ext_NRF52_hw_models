@@ -10,10 +10,12 @@
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/aar.html?cp=4_1_0_5_1
  */
 
-#include "NRF_AAR.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "NHW_config.h"
+#include "NHW_common_types.h"
+#include "NRF_AAR.h"
 #include "nsi_hw_scheduler.h"
 #include "NHW_peri_types.h"
 #include "NRF_PPI.h"
@@ -26,6 +28,9 @@
 static bs_time_t Timer_AAR = TIME_NEVER; /* Time when the AAR will finish */
 
 NRF_AAR_Type NRF_AAR_regs;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_aar_irq_map[NHW_AAR_TOTAL_INST] = NHW_AAR_INT_MAP;
+
 static uint32_t AAR_INTEN = 0; //interrupt enable
 static bool AAR_Running;
 static int matching_irk;
@@ -45,8 +50,10 @@ static void signal_EVENTS_END(void) {
   NRF_AAR_regs.EVENTS_END = 1;
   nrf_ppi_event(AAR_EVENTS_END);
 
+  unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENSET_END_Msk){
-    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+                         nhw_aar_irq_map[inst].int_nbr);
   }
 }
 
@@ -54,8 +61,10 @@ static void signal_EVENTS_RESOLVED(void) {
   NRF_AAR_regs.EVENTS_RESOLVED = 1;
   nrf_ppi_event(AAR_EVENTS_RESOLVED);
 
+  unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENCLR_RESOLVED_Msk){
-    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+                         nhw_aar_irq_map[inst].int_nbr);
   }
 }
 
@@ -63,8 +72,10 @@ static void signal_EVENTS_NOTRESOLVED(void) {
   NRF_AAR_regs.EVENTS_NOTRESOLVED = 1;
   nrf_ppi_event(AAR_EVENTS_NOTRESOLVED);
 
+  unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENCLR_NOTRESOLVED_Msk){
-    hw_irq_ctrl_set_irq(CCM_AAR_IRQn);
+    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+                         nhw_aar_irq_map[inst].int_nbr);
   }
 }
 

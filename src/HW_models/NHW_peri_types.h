@@ -11,7 +11,7 @@
 #ifndef _NRF_TYPES_H
 #define _NRF_TYPES_H
 
-#include "NRF_HW_config.h"
+#include "NHW_config.h"
 
 #if NHW_USE_MDK_TYPES
   #include "nrf.h"

@@ -15,8 +15,12 @@
 #include "irq_ctrl.h"
 #include "nsi_hw_scheduler.h"
 #include "nsi_hws_models_if.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 
 static bs_time_t Timer_fake_timer = TIME_NEVER;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_faketimer_irq_map[NHW_FAKE_TIMER_TOTAL_INST] = NHW_FAKE_TIMER_INT_MAP;
 
 /**
  * The timer HW will awake the CPU (without an interrupt) at least when <time>
@@ -38,7 +42,10 @@ static void fake_timer_triggered(void)
 {
 	Timer_fake_timer = TIME_NEVER;
 	nsi_hws_find_next_event();
-	hw_irq_ctrl_set_irq(PHONY_HARD_IRQ);
+
+	int inst = 0;
+	nhw_irq_ctrl_set_irq(nhw_faketimer_irq_map[inst].cntl_inst,
+	                     PHONY_HARD_IRQ);
 }
 
 NSI_HW_EVENT(Timer_fake_timer, fake_timer_triggered, 0 /* Purposely the first */);

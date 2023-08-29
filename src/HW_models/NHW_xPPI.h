@@ -6,7 +6,7 @@
 #ifndef _NRF_HW_MODELS_NHW_XPPI_H
 #define _NRF_HW_MODELS_NHW_XPPI_H
 
-#include "NRF_HW_config.h"
+#include "NHW_config.h"
 
 #if (NHW_HAS_PPI)
 #include "NRF_PPI.h"
