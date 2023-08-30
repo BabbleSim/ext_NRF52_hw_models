@@ -12,6 +12,8 @@
 #ifndef NRF_BSIM_REDEF_H
 #define NRF_BSIM_REDEF_H
 
+#include "NHW_config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -94,7 +96,387 @@ extern NRF_EGU_Type NRF_EGU_regs[6];
 extern NRF_UICR_Type *NRF_UICR_regs_p;
 #define NRF_UICR_BASE                     (NRF_UICR_regs_p)
 
-#endif /* defined(NRF52833_XXAA) */
+/********************************************************************/
+/********************************************************************/
+/********************************************************************/
+#elif defined(NRF5340_XXAA_NETWORK)
+
+#undef NRF_FICR_NS_BASE
+#define NRF_FICR_NS_BASE           NULL
+#undef NRF_UICR_NS_BASE
+#define NRF_UICR_NS_BASE           NULL
+#undef NRF_CTI_NS_BASE
+#define NRF_CTI_NS_BASE            NULL
+#undef NRF_DCNF_NS_BASE
+#define NRF_DCNF_NS_BASE           NULL
+#undef NRF_VREQCTRL_NS_BASE
+#define NRF_VREQCTRL_NS_BASE       NULL
+#undef NRF_CLOCK_NS_BASE
+#define NRF_CLOCK_NS_BASE          NULL
+#undef NRF_POWER_NS_BASE
+#define NRF_POWER_NS_BASE          NULL
+#undef NRF_RESET_NS_BASE
+#define NRF_RESET_NS_BASE          NULL
+#undef NRF_CTRLAP_NS_BASE
+#define NRF_CTRLAP_NS_BASE         NULL
+#undef NRF_RADIO_NS_BASE
+#define NRF_RADIO_NS_BASE          NULL
+extern NRF_RNG_Type NRF_RNG_regs;
+#undef NRF_RNG_NS_BASE
+#define NRF_RNG_NS_BASE            (&NRF_RNG_regs)
+#undef NRF_GPIOTE_NS_BASE
+#define NRF_GPIOTE_NS_BASE         NULL
+#undef NRF_WDT_NS_BASE
+#define NRF_WDT_NS_BASE            NULL
+#undef NRF_TIMER0_NS_BASE
+#define NRF_TIMER0_NS_BASE         NULL
+#undef NRF_ECB_NS_BASE
+#define NRF_ECB_NS_BASE            NULL
+#undef NRF_AAR_NS_BASE
+#define NRF_AAR_NS_BASE            NULL
+#undef NRF_CCM_NS_BASE
+#define NRF_CCM_NS_BASE            NULL
+extern NRF_DPPIC_Type NRF_DPPIC_regs[];
+#undef NRF_DPPIC_NS_BASE
+#define NRF_DPPIC_NS_BASE          (&NRF_DPPIC_regs[NHW_DPPI_NET_0])
+#undef NRF_TEMP_NS_BASE
+#define NRF_TEMP_NS_BASE           NULL
+#undef NRF_RTC0_NS_BASE
+#define NRF_RTC0_NS_BASE           NULL
+#undef NRF_IPC_NS_BASE
+#define NRF_IPC_NS_BASE            NULL
+#undef NRF_SPIM0_NS_BASE
+#define NRF_SPIM0_NS_BASE          NULL
+#undef NRF_SPIS0_NS_BASE
+#define NRF_SPIS0_NS_BASE          NULL
+#undef NRF_TWIM0_NS_BASE
+#define NRF_TWIM0_NS_BASE          NULL
+#undef NRF_TWIS0_NS_BASE
+#define NRF_TWIS0_NS_BASE          NULL
+#undef NRF_UARTE0_NS_BASE
+#define NRF_UARTE0_NS_BASE         NULL
+#undef NRF_EGU0_NS_BASE
+#define NRF_EGU0_NS_BASE           NULL
+#undef NRF_RTC1_NS_BASE
+#define NRF_RTC1_NS_BASE           NULL
+#undef NRF_TIMER1_NS_BASE
+#define NRF_TIMER1_NS_BASE         NULL
+#undef NRF_TIMER2_NS_BASE
+#define NRF_TIMER2_NS_BASE         NULL
+#undef NRF_SWI0_NS_BASE
+#define NRF_SWI0_NS_BASE           NULL
+#undef NRF_SWI1_NS_BASE
+#define NRF_SWI1_NS_BASE           NULL
+#undef NRF_SWI2_NS_BASE
+#define NRF_SWI2_NS_BASE           NULL
+#undef NRF_SWI3_NS_BASE
+#define NRF_SWI3_NS_BASE           NULL
+#undef NRF_APPMUTEX_NS_BASE
+#define NRF_APPMUTEX_NS_BASE       NULL
+#undef NRF_APPMUTEX_S_BASE
+#define NRF_APPMUTEX_S_BASE        NULL
+#undef NRF_ACL_NS_BASE
+#define NRF_ACL_NS_BASE            NULL
+#undef NRF_NVMC_NS_BASE
+#define NRF_NVMC_NS_BASE           NULL
+#undef NRF_VMC_NS_BASE
+#define NRF_VMC_NS_BASE            NULL
+#undef NRF_P0_NS_BASE
+#define NRF_P0_NS_BASE             NULL
+#undef NRF_P1_NS_BASE
+#define NRF_P1_NS_BASE             NULL
+
+/********************************************************************/
+/********************************************************************/
+/********************************************************************/
+#elif defined(NRF5340_XXAA_APPLICATION)
+
+#undef NRF_CACHEDATA_S_BASE
+#define NRF_CACHEDATA_S_BASE        NULL
+#undef NRF_CACHEINFO_S_BASE
+#define NRF_CACHEINFO_S_BASE        NULL
+#undef NRF_FICR_S_BASE
+#define NRF_FICR_S_BASE             NULL
+#undef NRF_UICR_S_BASE
+#define NRF_UICR_S_BASE             NULL
+#undef NRF_CTI_S_BASE
+#define NRF_CTI_S_BASE              NULL
+#undef NRF_TAD_S_BASE
+#define NRF_TAD_S_BASE              NULL
+#undef NRF_DCNF_NS_BASE
+#define NRF_DCNF_NS_BASE            NULL
+#undef NRF_FPU_NS_BASE
+#define NRF_FPU_NS_BASE             NULL
+#undef NRF_DCNF_S_BASE
+#define NRF_DCNF_S_BASE             NULL
+#undef NRF_FPU_S_BASE
+#define NRF_FPU_S_BASE              NULL
+#undef NRF_CACHE_S_BASE
+#define NRF_CACHE_S_BASE            NULL
+#undef NRF_SPU_S_BASE
+#define NRF_SPU_S_BASE              NULL
+#undef NRF_OSCILLATORS_NS_BASE
+#define NRF_OSCILLATORS_NS_BASE     NULL
+#undef NRF_REGULATORS_NS_BASE
+#define NRF_REGULATORS_NS_BASE      NULL
+#undef NRF_OSCILLATORS_S_BASE
+#define NRF_OSCILLATORS_S_BASE      NULL
+#undef NRF_REGULATORS_S_BASE
+#define NRF_REGULATORS_S_BASE       NULL
+#undef NRF_CLOCK_NS_BASE
+#define NRF_CLOCK_NS_BASE           NULL
+#undef NRF_POWER_NS_BASE
+#define NRF_POWER_NS_BASE           NULL
+#undef NRF_RESET_NS_BASE
+#define NRF_RESET_NS_BASE           NULL
+#undef NRF_CLOCK_S_BASE
+#define NRF_CLOCK_S_BASE            NULL
+#undef NRF_POWER_S_BASE
+#define NRF_POWER_S_BASE            NULL
+#undef NRF_RESET_S_BASE
+#define NRF_RESET_S_BASE            NULL
+#undef NRF_CTRLAP_NS_BASE
+#define NRF_CTRLAP_NS_BASE          NULL
+#undef NRF_CTRLAP_S_BASE
+#define NRF_CTRLAP_S_BASE           NULL
+#undef NRF_SPIM0_NS_BASE
+#define NRF_SPIM0_NS_BASE           NULL
+#undef NRF_SPIS0_NS_BASE
+#define NRF_SPIS0_NS_BASE           NULL
+#undef NRF_TWIM0_NS_BASE
+#define NRF_TWIM0_NS_BASE           NULL
+#undef NRF_TWIS0_NS_BASE
+#define NRF_TWIS0_NS_BASE           NULL
+#undef NRF_UARTE0_NS_BASE
+#define NRF_UARTE0_NS_BASE          NULL
+#undef NRF_SPIM0_S_BASE
+#define NRF_SPIM0_S_BASE            NULL
+#undef NRF_SPIS0_S_BASE
+#define NRF_SPIS0_S_BASE            NULL
+#undef NRF_TWIM0_S_BASE
+#define NRF_TWIM0_S_BASE            NULL
+#undef NRF_TWIS0_S_BASE
+#define NRF_TWIS0_S_BASE            NULL
+#undef NRF_UARTE0_S_BASE
+#define NRF_UARTE0_S_BASE           NULL
+#undef NRF_SPIM1_NS_BASE
+#define NRF_SPIM1_NS_BASE           NULL
+#undef NRF_SPIS1_NS_BASE
+#define NRF_SPIS1_NS_BASE           NULL
+#undef NRF_TWIM1_NS_BASE
+#define NRF_TWIM1_NS_BASE           NULL
+#undef NRF_TWIS1_NS_BASE
+#define NRF_TWIS1_NS_BASE           NULL
+#undef NRF_UARTE1_NS_BASE
+#define NRF_UARTE1_NS_BASE          NULL
+#undef NRF_SPIM1_S_BASE
+#define NRF_SPIM1_S_BASE            NULL
+#undef NRF_SPIS1_S_BASE
+#define NRF_SPIS1_S_BASE            NULL
+#undef NRF_TWIM1_S_BASE
+#define NRF_TWIM1_S_BASE            NULL
+#undef NRF_TWIS1_S_BASE
+#define NRF_TWIS1_S_BASE            NULL
+#undef NRF_UARTE1_S_BASE
+#define NRF_UARTE1_S_BASE           NULL
+#undef NRF_SPIM4_NS_BASE
+#define NRF_SPIM4_NS_BASE           NULL
+#undef NRF_SPIM4_S_BASE
+#define NRF_SPIM4_S_BASE            NULL
+#undef NRF_SPIM2_NS_BASE
+#define NRF_SPIM2_NS_BASE           NULL
+#undef NRF_SPIS2_NS_BASE
+#define NRF_SPIS2_NS_BASE           NULL
+#undef NRF_TWIM2_NS_BASE
+#define NRF_TWIM2_NS_BASE           NULL
+#undef NRF_TWIS2_NS_BASE
+#define NRF_TWIS2_NS_BASE           NULL
+#undef NRF_UARTE2_NS_BASE
+#define NRF_UARTE2_NS_BASE          NULL
+#undef NRF_SPIM2_S_BASE
+#define NRF_SPIM2_S_BASE            NULL
+#undef NRF_SPIS2_S_BASE
+#define NRF_SPIS2_S_BASE            NULL
+#undef NRF_TWIM2_S_BASE
+#define NRF_TWIM2_S_BASE            NULL
+#undef NRF_TWIS2_S_BASE
+#define NRF_TWIS2_S_BASE            NULL
+#undef NRF_UARTE2_S_BASE
+#define NRF_UARTE2_S_BASE           NULL
+#undef NRF_SPIM3_NS_BASE
+#define NRF_SPIM3_NS_BASE           NULL
+#undef NRF_SPIS3_NS_BASE
+#define NRF_SPIS3_NS_BASE           NULL
+#undef NRF_TWIM3_NS_BASE
+#define NRF_TWIM3_NS_BASE           NULL
+#undef NRF_TWIS3_NS_BASE
+#define NRF_TWIS3_NS_BASE           NULL
+#undef NRF_UARTE3_NS_BASE
+#define NRF_UARTE3_NS_BASE          NULL
+#undef NRF_SPIM3_S_BASE
+#define NRF_SPIM3_S_BASE            NULL
+#undef NRF_SPIS3_S_BASE
+#define NRF_SPIS3_S_BASE            NULL
+#undef NRF_TWIM3_S_BASE
+#define NRF_TWIM3_S_BASE            NULL
+#undef NRF_TWIS3_S_BASE
+#define NRF_TWIS3_S_BASE            NULL
+#undef NRF_UARTE3_S_BASE
+#define NRF_UARTE3_S_BASE           NULL
+#undef NRF_GPIOTE0_S_BASE
+#define NRF_GPIOTE0_S_BASE          NULL
+#undef NRF_SAADC_NS_BASE
+#define NRF_SAADC_NS_BASE           NULL
+#undef NRF_SAADC_S_BASE
+#define NRF_SAADC_S_BASE            NULL
+#undef NRF_TIMER0_NS_BASE
+#define NRF_TIMER0_NS_BASE          NULL
+#undef NRF_TIMER0_S_BASE
+#define NRF_TIMER0_S_BASE           NULL
+#undef NRF_TIMER1_NS_BASE
+#define NRF_TIMER1_NS_BASE          NULL
+#undef NRF_TIMER1_S_BASE
+#define NRF_TIMER1_S_BASE           NULL
+#undef NRF_TIMER2_NS_BASE
+#define NRF_TIMER2_NS_BASE          NULL
+#undef NRF_TIMER2_S_BASE
+#define NRF_TIMER2_S_BASE           NULL
+#undef NRF_RTC0_NS_BASE
+#define NRF_RTC0_NS_BASE            NULL
+#undef NRF_RTC0_S_BASE
+#define NRF_RTC0_S_BASE             NULL
+#undef NRF_RTC1_NS_BASE
+#define NRF_RTC1_NS_BASE            NULL
+#undef NRF_RTC1_S_BASE
+#define NRF_RTC1_S_BASE             NULL
+extern NRF_DPPIC_Type NRF_DPPIC_regs[];
+#undef NRF_DPPIC_NS_BASE
+#define NRF_DPPIC_NS_BASE           (&NRF_DPPIC_regs[NHW_DPPI_APP_0])
+#undef NRF_DPPIC_S_BASE
+#define NRF_DPPIC_S_BASE            (&NRF_DPPIC_regs[NHW_DPPI_APP_0])
+#undef NRF_WDT0_NS_BASE
+#define NRF_WDT0_NS_BASE            NULL
+#undef NRF_WDT0_S_BASE
+#define NRF_WDT0_S_BASE             NULL
+#undef NRF_WDT1_NS_BASE
+#define NRF_WDT1_NS_BASE            NULL
+#undef NRF_WDT1_S_BASE
+#define NRF_WDT1_S_BASE             NULL
+#undef NRF_COMP_NS_BASE
+#define NRF_COMP_NS_BASE            NULL
+#undef NRF_LPCOMP_NS_BASE
+#define NRF_LPCOMP_NS_BASE          NULL
+#undef NRF_COMP_S_BASE
+#define NRF_COMP_S_BASE             NULL
+#undef NRF_LPCOMP_S_BASE
+#define NRF_LPCOMP_S_BASE           NULL
+#undef NRF_EGU0_NS_BASE
+#define NRF_EGU0_NS_BASE            NULL
+#undef NRF_EGU0_S_BASE
+#define NRF_EGU0_S_BASE             NULL
+#undef NRF_EGU1_NS_BASE
+#define NRF_EGU1_NS_BASE            NULL
+#undef NRF_EGU1_S_BASE
+#define NRF_EGU1_S_BASE             NULL
+#undef NRF_EGU2_NS_BASE
+#define NRF_EGU2_NS_BASE            NULL
+#undef NRF_EGU2_S_BASE
+#define NRF_EGU2_S_BASE             NULL
+#undef NRF_EGU3_NS_BASE
+#define NRF_EGU3_NS_BASE            NULL
+#undef NRF_EGU3_S_BASE
+#define NRF_EGU3_S_BASE             NULL
+#undef NRF_EGU4_NS_BASE
+#define NRF_EGU4_NS_BASE            NULL
+#undef NRF_EGU4_S_BASE
+#define NRF_EGU4_S_BASE             NULL
+#undef NRF_EGU5_NS_BASE
+#define NRF_EGU5_NS_BASE            NULL
+#undef NRF_EGU5_S_BASE
+#define NRF_EGU5_S_BASE             NULL
+#undef NRF_PWM0_NS_BASE
+#define NRF_PWM0_NS_BASE            NULL
+#undef NRF_PWM0_S_BASE
+#define NRF_PWM0_S_BASE             NULL
+#undef NRF_PWM1_NS_BASE
+#define NRF_PWM1_NS_BASE            NULL
+#undef NRF_PWM1_S_BASE
+#define NRF_PWM1_S_BASE             NULL
+#undef NRF_PWM2_NS_BASE
+#define NRF_PWM2_NS_BASE            NULL
+#undef NRF_PWM2_S_BASE
+#define NRF_PWM2_S_BASE             NULL
+#undef NRF_PWM3_NS_BASE
+#define NRF_PWM3_NS_BASE            NULL
+#undef NRF_PWM3_S_BASE
+#define NRF_PWM3_S_BASE             NULL
+#undef NRF_PDM0_NS_BASE
+#define NRF_PDM0_NS_BASE            NULL
+#undef NRF_PDM0_S_BASE
+#define NRF_PDM0_S_BASE             NULL
+#undef NRF_I2S0_NS_BASE
+#define NRF_I2S0_NS_BASE            NULL
+#undef NRF_I2S0_S_BASE
+#define NRF_I2S0_S_BASE             NULL
+#undef NRF_IPC_NS_BASE
+#define NRF_IPC_NS_BASE             NULL
+#undef NRF_IPC_S_BASE
+#define NRF_IPC_S_BASE              NULL
+#undef NRF_QSPI_NS_BASE
+#define NRF_QSPI_NS_BASE            NULL
+#undef NRF_QSPI_S_BASE
+#define NRF_QSPI_S_BASE             NULL
+#undef NRF_NFCT_NS_BASE
+#define NRF_NFCT_NS_BASE            NULL
+#undef NRF_NFCT_S_BASE
+#define NRF_NFCT_S_BASE             NULL
+#undef NRF_GPIOTE1_NS_BASE
+#define NRF_GPIOTE1_NS_BASE         NULL
+#undef NRF_MUTEX_NS_BASE
+#define NRF_MUTEX_NS_BASE           NULL
+#undef NRF_MUTEX_S_BASE
+#define NRF_MUTEX_S_BASE            NULL
+#undef NRF_QDEC0_NS_BASE
+#define NRF_QDEC0_NS_BASE           NULL
+#undef NRF_QDEC0_S_BASE
+#define NRF_QDEC0_S_BASE            NULL
+#undef NRF_QDEC1_NS_BASE
+#define NRF_QDEC1_NS_BASE           NULL
+#undef NRF_QDEC1_S_BASE
+#define NRF_QDEC1_S_BASE            NULL
+#undef NRF_USBD_NS_BASE
+#define NRF_USBD_NS_BASE            NULL
+#undef NRF_USBD_S_BASE
+#define NRF_USBD_S_BASE             NULL
+#undef NRF_USBREGULATOR_NS_BASE
+#define NRF_USBREGULATOR_NS_BASE    NULL
+#undef NRF_USBREGULATOR_S_BASE
+#define NRF_USBREGULATOR_S_BASE     NULL
+#undef NRF_KMU_NS_BASE
+#define NRF_KMU_NS_BASE             NULL
+#undef NRF_NVMC_NS_BASE
+#define NRF_NVMC_NS_BASE            NULL
+#undef NRF_KMU_S_BASE
+#define NRF_KMU_S_BASE              NULL
+#undef NRF_NVMC_S_BASE
+#define NRF_NVMC_S_BASE             NULL
+#undef NRF_P0_NS_BASE
+#define NRF_P0_NS_BASE              NULL
+#undef NRF_P1_NS_BASE
+#define NRF_P1_NS_BASE              NULL
+#undef NRF_P0_S_BASE
+#define NRF_P0_S_BASE               NULL
+#undef NRF_P1_S_BASE
+#define NRF_P1_S_BASE               NULL
+#undef NRF_CRYPTOCELL_S_BASE
+#define NRF_CRYPTOCELL_S_BASE       NULL
+#undef NRF_VMC_NS_BASE
+#define NRF_VMC_NS_BASE             NULL
+#undef NRF_VMC_S_BASE
+#define NRF_VMC_S_BASE              NULL
+
+# endif
+
 
 #ifdef __cplusplus
 }
