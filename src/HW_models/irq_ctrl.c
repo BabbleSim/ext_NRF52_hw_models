@@ -354,7 +354,7 @@ static void hw_irq_ctrl_timer_triggered(void)
   nsi_hws_find_next_event();
 }
 
-NSI_HW_EVENT(Timer_irq_ctrl, hw_irq_ctrl_timer_triggered, 2 /* Purposedly the 3rd */);
+NSI_HW_EVENT(Timer_irq_ctrl, hw_irq_ctrl_timer_triggered, 10 /* Purposely a low value */);
 
 const char *hw_irq_ctrl_get_name(unsigned int irq)
 {
