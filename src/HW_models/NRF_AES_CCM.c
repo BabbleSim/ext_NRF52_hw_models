@@ -198,7 +198,7 @@ static void signal_EVENTS_ENDKSGEN(void) {
 
   int inst = 0;
   if (CCM_INTEN & CCM_INTENSET_ENDKSGEN_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
                          nhw_ccm_irq_map[inst].int_nbr);
   }
 
@@ -213,7 +213,7 @@ static void signal_EVENTS_ENDCRYPT(void) {
 
   int inst = 0;
   if (CCM_INTEN & CCM_INTENSET_ENDCRYPT_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
                          nhw_ccm_irq_map[inst].int_nbr);
   }
 }
@@ -223,7 +223,7 @@ static void signal_EVENTS_ENDCRYPT(void) {
 	NRF_PPI_Event(CCM_EVENTS_ERROR);
 
 	if (CCM_INTEN & CCM_INTENSET_ERROR_Msk) {
-		nhw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
+		hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
 	}
 } */
 

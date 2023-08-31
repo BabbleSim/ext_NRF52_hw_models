@@ -300,7 +300,7 @@ static void nhw_rtc_signal_event(int rtc, ppi_event_types_t event, uint32_t mask
   }
 
   if (RTC_INTEN[rtc] & mask) {
-    nhw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc].cntl_inst,
                          nhw_rtc_irq_map[rtc].int_nbr);
   }
 }
@@ -514,7 +514,7 @@ void nrf_rtc_regw_sideeffect_INTENSET(int rtc_inst) {
     RTC_regs->INTENSET = RTC_INTEN[rtc_inst];
     for ( int cc = 0 ; cc < N_CC ; cc++, mask <<=1) {
       if (RTC_regs->EVENTS_COMPARE[cc] && (new_interrupts & mask)) {
-        nhw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc_inst].cntl_inst,
+        hw_irq_ctrl_set_irq(nhw_rtc_irq_map[rtc_inst].cntl_inst,
                              nhw_rtc_irq_map[rtc_inst].int_nbr);
       }
     }

@@ -1,11 +1,12 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef _IRQ_CTRL_H
-#define _IRQ_CTRL_H
+#ifndef _NRF_HW_MODEL_SRC_HW_MODELS_IRQ_CTRL_H
+#define _NRF_HW_MODEL_SRC_HW_MODELS_IRQ_CTRL_H
 
 #include <stdint.h>
 
@@ -13,29 +14,27 @@
 extern "C" {
 #endif
 
-void hw_irq_ctrl_raise_im(uint32_t irq);
-uint64_t hw_irq_ctrl_get_irq_status(void);
-void hw_irq_ctrl_clear_all_irqs(void);
-void hw_irq_ctrl_clear_irq(unsigned int irq);
-void hw_irq_ctrl_reeval_level_irq(unsigned int irq);
-void hw_irq_controller_set_irq_mask(uint64_t mask);
-uint64_t hw_irq_ctrl_get_irq_mask(void);
-void hw_irq_ctrl_enable_irq(unsigned int irq);
-void hw_irq_ctrl_disable_irq(unsigned int irq);
-int hw_irq_ctrl_is_irq_enabled(unsigned int irq);
-void nhw_irq_ctrl_set_irq(unsigned int ctl_inst, unsigned int irq);
-void nhw_irq_ctrl_raise_level_irq_line(unsigned int ctl_inst, unsigned int irq);
-void nhw_irq_ctrl_lower_level_irq_line(unsigned int ctl_inst, unsigned int irq);
-void hw_irq_ctrl_raise_im(unsigned int irq);
-void hw_irq_ctrl_raise_im_from_sw(unsigned int irq);
-uint32_t hw_irq_ctrl_get_current_lock(void);
-int hw_irq_ctrl_get_highest_prio_irq(void);
-int hw_irq_ctrl_get_cur_prio(void);
-void hw_irq_ctrl_set_cur_prio(int new);
-uint8_t hw_irq_ctrl_get_prio(unsigned int irq);
-void hw_irq_ctrl_prio_set(unsigned int irq, unsigned int prio);
-uint32_t hw_irq_ctrl_change_lock(uint32_t new_lock);
-const char *hw_irq_ctrl_get_name(unsigned int irq);
+void hw_irq_ctrl_clear_all_irqs(unsigned int inst);
+void hw_irq_ctrl_clear_irq(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_reeval_level_irq(unsigned int inst, unsigned int irq);
+void nhw_irq_controller_set_irq_mask(unsigned int inst, uint64_t mask);
+uint64_t hw_irq_ctrl_get_irq_mask(unsigned int inst);
+void hw_irq_ctrl_enable_irq(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_disable_irq(unsigned int inst, unsigned int irq);
+int hw_irq_ctrl_is_irq_enabled(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_raise_im(unsigned int inst, uint32_t irq);
+void hw_irq_ctrl_set_irq(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_raise_level_irq_line(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_lower_level_irq_line(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_raise_im_from_sw(unsigned int inst, unsigned int irq);
+uint32_t hw_irq_ctrl_get_current_lock(unsigned int inst);
+int hw_irq_ctrl_get_highest_prio_irq(unsigned int inst);
+int hw_irq_ctrl_get_cur_prio(unsigned int inst);
+void hw_irq_ctrl_set_cur_prio(unsigned int inst, int new);
+uint8_t hw_irq_ctrl_get_prio(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_prio_set(unsigned int inst, unsigned int irq, unsigned int prio);
+uint32_t hw_irq_ctrl_change_lock(unsigned int inst, uint32_t new_lock);
+const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq);
 
 /*
  * This interrupt will awake the CPU if IRQs are not locked,
@@ -50,10 +49,8 @@ const char *hw_irq_ctrl_get_name(unsigned int irq);
  */
 #define PHONY_HARD_IRQ 0xFFFF
 
-#define NRF_HW_NBR_IRQs 47
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* _NRF_HW_MODEL_SRC_HW_MODELS_IRQ_CTRL_H */

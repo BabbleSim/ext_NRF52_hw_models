@@ -5,18 +5,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 /*
- * HW IRQ controller model
+ * HW Interrupt Controller model
+ *
  * Note: In principle this should have been a model of the ARM NVIC
  *  http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.100166_0001_00_en/ric1417175922867.html
- * But so far it is just a quick thing that provides a reasonable emulation of its
- * used functionality in Zephyr
+ *
+ * But so far it is just a general INT controller that provides
+ * a reasonable emulation of the NVIC functionality used in Zephyr
+ *
+ * Implementation spec:
+ *   This file provides the implementation of a generic interrupt controller,
+ *   and instantiates N of them (and initializes them at startup),
+ *   as described in the configuration (NHW_config.h).
+ *
+ *   This interrupt controller must be paired with dedicated interrupt handling
+ *   code.
+ *
+ *   Each interrupt has a configurable priority (256 levels).
+ *   Interrupts can be individually masked, apart from interrupts globally locked.
+ *   With the appropriate interrupt handling code, interrupt nesting is supported.
+ *
+ *   The interrupt controller supports both level and edge/pulse interrupts.
+ *   The level interrupts "lines" must be raised and *lowered* by the peripherals.
+ *   ( hw_irq_ctrl_{raise|lower}_level_irq_line() )
+ *   Pulse/edge interrupts are just events that pend the interrupt
+ *   (calls to hw_irq_ctrl_set_irq()).
+ *
+ *   NOTE: At this point an interrupt controller may have at most 64 interrupt lines.
+ *   Generalizing this is pending.
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "nsi_internal.h"
-#include "nsi_cpu_if.h"
+#include "nsi_cpun_if.h"
 #include "bs_types.h"
 #include "bs_tracing.h"
 #include "irq_ctrl.h"
@@ -24,67 +48,72 @@
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
+#define ICTR_64s ((NHW_INTCTRL_MAX_INTLINES+63)/64)
+
+struct intctrl_status {
+  uint64_t irq_lines; /*Level of interrupt lines from peripherals*/
+  uint64_t irq_status;  /*pended and not masked interrupts*/
+  uint64_t irq_premask; /*pended interrupts before the mask*/
+  /*
+   * Mask of which interrupts will actually cause the cpu to vector into its
+   * irq handler
+   * If an interrupt is masked in this way, it will be pending in the premask in
+   * case it is enabled later before clearing it.
+   * If the irq_mask enables and interrupt pending in irq_premask, it will cause
+   * the controller to raise the interrupt immediately
+   */
+  uint64_t irq_mask;
+
+  uint8_t irq_prio[NHW_INTCTRL_MAX_INTLINES]; /*Priority of each interrupt*/
+  /*note that prio = 0 == highest, prio=255 == lowest*/
+
+  int currently_running_prio;
+
+  /*
+   * Interrupts lock/disable. When set, interrupts are registered
+   * (in the irq_status) but do not awake the cpu. if when unlocked,
+   * irq_status != 0 an interrupt will be raised immediately
+   */
+  bool irqs_locked;
+  bool lock_ignore; /*For the hard fake IRQ, temporarily ignore lock*/
+
+  bool awaking_CPU; /* Is this instance raising an interrupt to the CPU in a delta cycle */
+};
+
+static struct intctrl_status nhw_intctrl_st[NHW_INTCTRL_TOTAL_INST];
+
 static bs_time_t Timer_irq_ctrl = TIME_NEVER;
-
-static uint64_t irq_lines; /*Level of interrupt lines from peripherals*/
-static uint64_t irq_status;  /*pended and not masked interrupts*/
-static uint64_t irq_premask; /*pended interrupts before the mask*/
-
-/*
- * Mask of which interrupts will actually cause the cpu to vector into its
- * irq handler
- * If an interrupt is masked in this way, it will be pending in the premask in
- * case it is enabled later before clearing it.
- * If the irq_mask enables and interrupt pending in irq_premask, it will cause
- * the controller to raise the interrupt immediately
- */
-static uint64_t irq_mask;
-
-/*
- * Interrupts lock/disable. When set, interrupts are registered
- * (in the irq_status) but do not awake the cpu. if when unlocked,
- * irq_status != 0 an interrupt will be raised immediately
- */
-static bool irqs_locked;
-static bool lock_ignore; /*For the hard fake IRQ, temporarily ignore lock*/
-
-static uint8_t irq_prio[NRF_HW_NBR_IRQs]; /*Priority of each interrupt*/
-/*note that prio = 0 == highest, prio=255 == lowest*/
-
-static int currently_running_prio = 256; /*255 is the lowest prio interrupt*/
 
 static void hw_irq_ctrl_init(void)
 {
-	irq_mask = 0U; /* Let's assume all interrupts are disable at boot */
-	irq_premask = 0U;
-	irqs_locked = false;
-	lock_ignore = false;
+  for (int i= 0; i < NHW_INTCTRL_TOTAL_INST; i++) {
+    struct intctrl_status *el = &nhw_intctrl_st[i];
 
-	for (int i = 0 ; i < NRF_HW_NBR_IRQs; i++) {
-		irq_prio[i] = 255U;
-	}
+    memset(el->irq_prio, 255, NHW_INTCTRL_MAX_INTLINES);
+    el->currently_running_prio = 256; /*255 is the lowest prio interrupt*/
+  }
 }
 
 NSI_TASK(hw_irq_ctrl_init, HW_INIT, 100);
 
-void hw_irq_ctrl_set_cur_prio(int new)
+void hw_irq_ctrl_set_cur_prio(unsigned int inst, int new)
 {
-	currently_running_prio = new;
+  nhw_intctrl_st[inst].currently_running_prio = new;
 }
 
-int hw_irq_ctrl_get_cur_prio(void)
+int hw_irq_ctrl_get_cur_prio(unsigned int inst)
 {
-	return currently_running_prio;
+  return nhw_intctrl_st[inst].currently_running_prio;
 }
 
-void hw_irq_ctrl_prio_set(unsigned int irq, unsigned int prio)
+void hw_irq_ctrl_prio_set(unsigned int inst, unsigned int irq, unsigned int prio)
 {
-	irq_prio[irq] = prio;
+  nhw_intctrl_st[inst].irq_prio[irq] = prio;
 }
 
-uint8_t hw_irq_ctrl_get_prio(unsigned int irq)
+uint8_t hw_irq_ctrl_get_prio(unsigned int inst, unsigned int irq)
 {
-	return irq_prio[irq];
+  return nhw_intctrl_st[inst].irq_prio[irq];
 }
 
 /**
@@ -93,32 +122,34 @@ uint8_t hw_irq_ctrl_get_prio(unsigned int irq)
  *
  * If none, return -1
  */
-int hw_irq_ctrl_get_highest_prio_irq(void)
+int hw_irq_ctrl_get_highest_prio_irq(unsigned int inst)
 {
-	if (irqs_locked) {
-		return -1;
-	}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-	uint64_t irq_status = hw_irq_ctrl_get_irq_status();
-	int winner = -1;
-	int winner_prio = 256;
+  if (this->irqs_locked) {
+    return -1;
+  }
 
-	while (irq_status != 0U) {
-		int irq_nbr = nsi_find_lsb_set(irq_status) - 1;
+  uint64_t irq_status = this->irq_status;
+  int winner = -1;
+  int winner_prio = 256;
 
-		irq_status &= ~((uint64_t) 1 << irq_nbr);
-		if ((winner_prio > (int)irq_prio[irq_nbr])
-		   && (currently_running_prio > (int)irq_prio[irq_nbr])) {
-			winner = irq_nbr;
-			winner_prio = irq_prio[irq_nbr];
-		}
-	}
-	return winner;
+  while (irq_status != 0U) {
+    int irq_nbr = nsi_find_lsb_set(irq_status) - 1;
+
+    irq_status &= ~((uint64_t) 1 << irq_nbr);
+    if ((winner_prio > (int)this->irq_prio[irq_nbr])
+        && (this->currently_running_prio > (int)this->irq_prio[irq_nbr])) {
+      winner = irq_nbr;
+      winner_prio = this->irq_prio[irq_nbr];
+    }
+  }
+  return winner;
 }
 
-uint32_t hw_irq_ctrl_get_current_lock(void)
+uint32_t hw_irq_ctrl_get_current_lock(unsigned int inst)
 {
-	return irqs_locked;
+  return nhw_intctrl_st[inst].irqs_locked;
 }
 
 /*
@@ -126,65 +157,91 @@ uint32_t hw_irq_ctrl_get_current_lock(void)
  * The interrupt lock is a flag that provisionally disables all interrupts
  * without affecting their status or their ability to be pended in the meanwhile
  */
-uint32_t hw_irq_ctrl_change_lock(uint32_t new_lock)
+uint32_t hw_irq_ctrl_change_lock(unsigned int inst, uint32_t new_lock)
 {
-	uint32_t previous_lock = irqs_locked;
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+  uint32_t previous_lock = this->irqs_locked;
 
-	irqs_locked = new_lock;
+  this->irqs_locked = new_lock;
 
-	if ((previous_lock == true) && (new_lock == false)) {
-		if (irq_status != 0U) {
-			nsif_cpu0_irq_raised_from_sw();
-		}
-	}
-	return previous_lock;
+  if ((previous_lock == true) && (new_lock == false)) {
+    if (this->irq_status != 0U) {
+      nsif_cpun_irq_raised_from_sw(inst);
+    }
+  }
+  return previous_lock;
 }
 
-uint64_t hw_irq_ctrl_get_irq_status(void)
+void hw_irq_ctrl_clear_all_enabled_irqs(unsigned int inst)
 {
-	return irq_status;
-}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-void hw_irq_ctrl_clear_all_enabled_irqs(void)
-{
-	irq_status  = 0U;
-	irq_premask &= ~irq_mask;
-}
-
-void hw_irq_ctrl_clear_all_irqs(void)
-{
-	irq_status  = 0U;
-	irq_premask = 0U;
-}
-
-void hw_irq_ctrl_disable_irq(unsigned int irq)
-{
-	irq_mask &= ~((uint64_t)1<<irq);
-}
-
-int hw_irq_ctrl_is_irq_enabled(unsigned int irq)
-{
-	return (irq_mask & ((uint64_t)1 << irq))?1:0;
-}
-
-/**
- * Get the current interrupt enable mask
- */
-uint64_t hw_irq_ctrl_get_irq_mask(void)
-{
-	return irq_mask;
+  this->irq_status  = 0U;
+  this->irq_premask &= ~this->irq_mask;
 }
 
 /*
- * Un-pend an interrupt from the interrupt controller.
+ * Un-pend all interrupt from the interrupt controller.
+ * Note: For level interrupts, the interrupts may be re-pended soon after.
  *
  * This is an API between the MCU model/IRQ handling side and the IRQ controller
  * model (NVIC)
  */
-void hw_irq_ctrl_clear_irq(unsigned int irq)
+void hw_irq_ctrl_clear_all_irqs(unsigned int inst)
 {
-	irq_status  &= ~((uint64_t)1<<irq);
-	irq_premask &= ~((uint64_t)1<<irq);
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+
+  this->irq_status  = 0U;
+  this->irq_premask = 0U;
+}
+
+/*
+ * Disable (mask) one interrupt
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC)
+ */
+void hw_irq_ctrl_disable_irq(unsigned int inst, unsigned int irq)
+{
+  nhw_intctrl_st[inst].irq_mask &= ~((uint64_t)1<<irq);
+}
+
+/*
+ * Check if an interrupt is enabled (not masked) (But not necessarily pended)
+ * return 1 is enabled, 0 is disabled.
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC)
+ */
+int hw_irq_ctrl_is_irq_enabled(unsigned int inst, unsigned int irq)
+{
+  return (nhw_intctrl_st[inst].irq_mask & ((uint64_t)1 << irq))?1:0;
+}
+
+/**
+ * Get the current interrupt enable mask
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC)
+ */
+uint64_t hw_irq_ctrl_get_irq_mask(unsigned int inst)
+{
+  return nhw_intctrl_st[inst].irq_mask;
+}
+
+/*
+ * Un-pend an interrupt from the interrupt controller.
+ * Note: For level interrupts, the interrupt may be repended soon after.
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC)
+ */
+void hw_irq_ctrl_clear_irq(unsigned int inst, unsigned int irq)
+{
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+
+  this->irq_status  &= ~((uint64_t)1<<irq);
+  this->irq_premask &= ~((uint64_t)1<<irq);
 }
 
 /*
@@ -196,47 +253,54 @@ void hw_irq_ctrl_clear_irq(unsigned int irq)
  * To properly model an NVIC behavior call it only when the MCU is exiting
  * the interrupt handler for this irq
  */
-void hw_irq_ctrl_reeval_level_irq(unsigned int irq)
+void hw_irq_ctrl_reeval_level_irq(unsigned int inst, unsigned int irq)
 {
-	uint64_t irq_bit = ((uint64_t)1<<irq);
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+  uint64_t irq_bit = ((uint64_t)1<<irq);
 
-	if ((irq_lines & irq_bit) != 0) {
-		irq_premask |= irq_bit;
+  if ((this->irq_lines & irq_bit) != 0) {
+    this->irq_premask |= irq_bit;
 
-		if (irq_mask & irq_bit) {
-			irq_status |= irq_bit;
-		}
-	}
+    if (this->irq_mask & irq_bit) {
+      this->irq_status |= irq_bit;
+    }
+  }
 }
 
 /**
- *
  * Enable an interrupt
  *
  * This function may only be called from SW threads
  *
  * If the enabled interrupt is pending, it will immediately vector to its
  * interrupt handler and continue (maybe with some swap() before)
+ *
+ * This is an API between the MCU model/IRQ handling side and the IRQ controller
+ * model (NVIC).
  */
-void hw_irq_ctrl_enable_irq(unsigned int irq)
+void hw_irq_ctrl_enable_irq(unsigned int inst, unsigned int irq)
 {
-	irq_mask |= ((uint64_t)1<<irq);
-	if (irq_premask & ((uint64_t)1<<irq)) { /*if the interrupt is pending*/
-		hw_irq_ctrl_raise_im_from_sw(irq);
-	}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+
+  this->irq_mask |= ((uint64_t)1<<irq);
+  if (this->irq_premask & ((uint64_t)1<<irq)) { /*if the interrupt is pending*/
+    hw_irq_ctrl_raise_im_from_sw(inst, irq);
+  }
 }
 
-static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
+static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int inst, unsigned int irq)
 {
-	if ( irq < NRF_HW_NBR_IRQs ) {
-		irq_premask |= ((uint64_t)1<<irq);
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-		if (irq_mask & ((uint64_t)1 << irq)) {
-			irq_status |= ((uint64_t)1<<irq);
-		}
-	} else if (irq == PHONY_HARD_IRQ) {
-		lock_ignore = true;
-	}
+  if ( irq < NHW_INTCTRL_MAX_INTLINES ) {
+    this->irq_premask |= ((uint64_t)1<<irq);
+
+    if (this->irq_mask & ((uint64_t)1 << irq)) {
+      this->irq_status |= ((uint64_t)1<<irq);
+    }
+  } else if (irq == PHONY_HARD_IRQ) {
+    this->lock_ignore = true;
+  }
 }
 
 /**
@@ -247,21 +311,26 @@ static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int irq)
  *
  * Note that this is equivalent to a HW peripheral sending a *pulse* interrupt
  * to the interrupt controller
+ *
+ * This is an API towards the HW models. Embedded SW may not call it.
  */
-void nhw_irq_ctrl_set_irq(unsigned int ctl_inst, unsigned int irq)
+void hw_irq_ctrl_set_irq(unsigned int inst, unsigned int irq)
 {
-	hw_irq_ctrl_irq_raise_prefix(irq);
-	if ((irqs_locked == false) || (lock_ignore)) {
-		/*
-		 * Awake CPU in 1 delta
-		 * Note that we awake the CPU even if the IRQ is disabled
-		 * => we assume the CPU is always idling in a WFE() like
-		 * instruction and the CPU is allowed to awake just with the irq
-		 * being marked as pending
-		 */
-		Timer_irq_ctrl = nsi_hws_get_time();
-		nsi_hws_find_next_event();
-	}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+
+  hw_irq_ctrl_irq_raise_prefix(inst, irq);
+  if ((this->irqs_locked == false) || (this->lock_ignore)) {
+    /*
+     * Awake CPU in 1 delta
+     * Note that we awake the CPU even if the IRQ is disabled
+     * => we assume the CPU is always idling in a WFE() like
+     * instruction and the CPU is allowed to awake just with the irq
+     * being marked as pending
+     */
+    this->awaking_CPU = true;
+    Timer_irq_ctrl = nsi_hws_get_time();
+    nsi_hws_find_next_event();
+  }
 }
 
 /**
@@ -272,20 +341,24 @@ void nhw_irq_ctrl_set_irq(unsigned int ctl_inst, unsigned int irq)
  * An IRQ will be raised in one delta cycle from now
  *
  * Any call from the hardware models to this function must be eventually
- * followed by a call to nhw_irq_ctrl_lower_level_irq_line(), otherwise
+ * followed by a call to hw_irq_ctrl_lower_level_irq_line(), otherwise
  * the interrupt controller will keep interrupting the CPU and causing it to
  * re-enter the interrupt handler
+ *
+ * This is an API towards the HW models. Embedded SW may not call it.
  */
-void nhw_irq_ctrl_raise_level_irq_line(unsigned int ctl_inst, unsigned int irq)
+void hw_irq_ctrl_raise_level_irq_line(unsigned int inst, unsigned int irq)
 {
-	if ( irq >= NRF_HW_NBR_IRQs ) {
-		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
-	}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-	if ((irq_lines & ((uint64_t)1<<irq)) == 0) {
-		irq_lines |= ((uint64_t)1<<irq);
-		nhw_irq_ctrl_set_irq(ctl_inst, irq);
-	}
+  if ( irq >= NHW_INTCTRL_MAX_INTLINES ) {
+    bs_trace_error_line_time("Phony interrupts cannot use this API\n");
+  }
+
+  if ((this->irq_lines & ((uint64_t)1<<irq)) == 0) {
+    this->irq_lines |= ((uint64_t)1<<irq);
+    hw_irq_ctrl_set_irq(inst, irq);
+  }
 }
 
 /**
@@ -293,41 +366,46 @@ void nhw_irq_ctrl_raise_level_irq_line(unsigned int ctl_inst, unsigned int irq)
  *
  * This function is meant to be used only from a HW model which wants
  * to emulate level interrupts.
+ *
+ * This is an API towards the HW models. Embedded SW may not call it.
  */
-void nhw_irq_ctrl_lower_level_irq_line(unsigned int ctl_inst, unsigned int irq)
+void hw_irq_ctrl_lower_level_irq_line(unsigned int inst, unsigned int irq)
 {
-	if ( irq >= NRF_HW_NBR_IRQs ) {
-		bs_trace_error_line_time("Phony interrupts cannot use this API\n");
-	}
+  if ( irq >= NHW_INTCTRL_MAX_INTLINES ) {
+    bs_trace_error_line_time("Phony interrupts cannot use this API\n");
+  }
 
-	irq_lines &= ~((uint64_t)1<<irq);
+  nhw_intctrl_st[inst].irq_lines &= ~((uint64_t)1<<irq);
 }
 
 
-static void irq_raising_from_hw_now(void)
+static void irq_raising_from_hw_now(unsigned int inst)
 {
-	/*
-	 * We always awake the CPU even if the IRQ was masked,
-	 * but not if irqs are locked unless this is due to a
-	 * PHONY_HARD_IRQ
-	 */
-	if ((irqs_locked == false) || (lock_ignore)) {
-		lock_ignore = false;
-		nsif_cpu0_irq_raised();
-	}
+  struct intctrl_status *this = &nhw_intctrl_st[inst];
+  /*
+   * We always awake the CPU even if the IRQ was masked,
+   * but not if irqs are locked unless this is due to a
+   * PHONY_HARD_IRQ
+   */
+  if ((this->irqs_locked == false) || (this->lock_ignore)) {
+    this->lock_ignore = false;
+    nsif_cpun_irq_raised(inst);
+  }
 }
 
 /**
  * Set/Raise/Pend an interrupt immediately.
- * Like nhw_irq_ctrl_set_irq() but awake immediately the CPU instead of in
+ * Like hw_irq_ctrl_set_irq() but awake immediately the CPU instead of in
  * 1 delta cycle
  *
  * Call only from HW threads; Should be used with care
+ *
+ * This is an API towards the HW models. Embedded SW may not call it.
  */
-void hw_irq_ctrl_raise_im(unsigned int irq)
+void hw_irq_ctrl_raise_im(unsigned int inst, unsigned int irq)
 {
-	hw_irq_ctrl_irq_raise_prefix(irq);
-	irq_raising_from_hw_now();
+  hw_irq_ctrl_irq_raise_prefix(inst, irq);
+  irq_raising_from_hw_now(inst);
 }
 
 /**
@@ -335,13 +413,13 @@ void hw_irq_ctrl_raise_im(unsigned int irq)
  *
  * Call only from SW threads; Should be used with care
  */
-void hw_irq_ctrl_raise_im_from_sw(unsigned int irq)
+void hw_irq_ctrl_raise_im_from_sw(unsigned int inst, unsigned int irq)
 {
-	hw_irq_ctrl_irq_raise_prefix(irq);
+  hw_irq_ctrl_irq_raise_prefix(inst, irq);
 
-	if (irqs_locked == false) {
-		nsif_cpu0_irq_raised_from_sw();
-	}
+  if (nhw_intctrl_st[inst].irqs_locked == false) {
+    nsif_cpun_irq_raised_from_sw(inst);
+  }
 }
 
 /*
@@ -350,64 +428,30 @@ void hw_irq_ctrl_raise_im_from_sw(unsigned int irq)
 static void hw_irq_ctrl_timer_triggered(void)
 {
   Timer_irq_ctrl = TIME_NEVER;
-  irq_raising_from_hw_now();
+  for (int i = 0; i < NHW_INTCTRL_TOTAL_INST; i++) {
+    if (nhw_intctrl_st[i].awaking_CPU) {
+      nhw_intctrl_st[i].awaking_CPU = false;
+      irq_raising_from_hw_now(i);
+    }
+  }
   nsi_hws_find_next_event();
 }
 
 NSI_HW_EVENT(Timer_irq_ctrl, hw_irq_ctrl_timer_triggered, 10 /* Purposely a low value */);
 
-const char *hw_irq_ctrl_get_name(unsigned int irq)
+/*
+ * Get the name of an interrupt given the interrupt controller instance
+ * and the int line number.
+ *
+ * Only for debugging/logging/tracing purposes.
+ */
+const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq)
 {
-	/* The names are taken from the IRQn_Type in the MDK header.
-	 * with the suffix '_IRQn' removed.
-	 */
-	static const char *irqnames_nrf52833[] = {
-		[0]  = "POWER_CLOCK",
-		[1]  = "RADIO",
-		[2]  = "UARTE0_UART0",
-		[3]  = "SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0",
-		[4]  = "SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1",
-		[5]  = "NFCT",
-		[6]  = "GPIOTE",
-		[7]  = "SAADC",
-		[8]  = "TIMER0",
-		[9]  = "TIMER1",
-		[10] = "TIMER2",
-		[11] = "RTC0",
-		[12] = "TEMP",
-		[13] = "RNG",
-		[14] = "ECB",
-		[15] = "CCM_AAR",
-		[16] = "WDT",
-		[17] = "RTC1",
-		[18] = "QDEC",
-		[19] = "COMP_LPCOMP",
-		[20] = "SWI0_EGU0",
-		[21] = "SWI1_EGU1",
-		[22] = "SWI2_EGU2",
-		[23] = "SWI3_EGU3",
-		[24] = "SWI4_EGU4",
-		[25] = "SWI5_EGU5",
-		[26] = "TIMER3",
-		[27] = "TIMER4",
-		[28] = "PWM0",
-		[29] = "PDM",
-		[30] = "MWU",
-		[31] = "PWM1",
-		[32] = "PWM2",
-		[33] = "SPIM2_SPIS2_SPI2",
-		[34] = "RTC2",
-		[35] = "I2S",
-		[36] = "FPU",
-		[37] = "USBD",
-		[38] = "UARTE1",
-		[39] = "PWM3",
-		[40] = "SPIM3",
-	};
+  static const char *irqnames[NHW_INTCTRL_TOTAL_INST][NHW_INTCTRL_MAX_INTLINES] = NHW_INT_NAMES;
 
-	if (irq < sizeof(irqnames_nrf52833)/sizeof(irqnames_nrf52833[0])) {
-		return irqnames_nrf52833[irq];
-	} else {
-		return NULL;
-	}
+  if (irq < sizeof(irqnames)/sizeof(irqnames[0])) {
+    return irqnames[inst][irq];
+  } else {
+    return NULL;
+  }
 }

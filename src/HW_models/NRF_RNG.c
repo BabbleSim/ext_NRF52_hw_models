@@ -89,11 +89,11 @@ static void nhw_rng_eval_interrupt(uint inst) {
 
   if (rng_int_line[inst] == false && new_int_line == true) {
     rng_int_line[inst] = true;
-    nhw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
                                       nhw_rng_irq_map[inst].int_nbr);
   } else if (rng_int_line[inst] == true && new_int_line == false) {
     rng_int_line[inst] = false;
-    nhw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
                                       nhw_rng_irq_map[inst].int_nbr);
   }
 }

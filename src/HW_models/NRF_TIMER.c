@@ -181,12 +181,12 @@ static void nrf_timer_eval_interrupts(int t) {
 
   if (TIMER_int_line[t] == false && new_int_line == true) {
     TIMER_int_line[t] = true;
-    nhw_irq_ctrl_raise_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
+    hw_irq_ctrl_raise_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
                                       nhw_timer_irq_map[t].int_nbr);
   } else if (TIMER_int_line[t] == true && new_int_line == false) {
     TIMER_int_line[t] = false;
 
-    nhw_irq_ctrl_lower_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
+    hw_irq_ctrl_lower_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
                                       nhw_timer_irq_map[t].int_nbr);
   }
 }

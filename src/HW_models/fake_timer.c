@@ -44,7 +44,7 @@ static void fake_timer_triggered(void)
 	nsi_hws_find_next_event();
 
 	int inst = 0;
-	nhw_irq_ctrl_set_irq(nhw_faketimer_irq_map[inst].cntl_inst,
+	hw_irq_ctrl_set_irq(nhw_faketimer_irq_map[inst].cntl_inst,
 	                     PHONY_HARD_IRQ);
 }
 

@@ -150,7 +150,7 @@ static void nrf_temp_timer_triggered(void) {
 
   int inst = 0;
   if ( TEMP_INTEN ){
-    nhw_irq_ctrl_set_irq(nhw_temp_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_temp_irq_map[inst].cntl_inst,
                          nhw_temp_irq_map[inst].int_nbr);
   }
 }

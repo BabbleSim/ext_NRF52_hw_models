@@ -55,11 +55,11 @@ static void nrf_egu_eval_interrupt(int inst){
 
   if (new_egu_int_line && (egu_int_line[inst] == false)) {
     egu_int_line[inst] = true;
-    nhw_irq_ctrl_raise_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_raise_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
                                       nhw_egu_irq_map[inst].int_nbr);
   } else if ((new_egu_int_line == false) && egu_int_line[inst]) {
     egu_int_line[inst] = false;
-    nhw_irq_ctrl_lower_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_lower_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
                                       nhw_egu_irq_map[inst].int_nbr);
   }
 }

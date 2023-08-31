@@ -76,7 +76,7 @@ static void signal_ENDECB(void) {
 
 	int inst = 0;
 	if (ECB_INTEN & ECB_INTENSET_ENDECB_Msk){
-		nhw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
+		hw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
 				nhw_ecb_irq_map[inst].int_nbr);
 	}
 }
@@ -87,7 +87,7 @@ static void signal_ERRORECB(void) {
 
 	int inst = 0;
 	if (ECB_INTEN & ECB_INTENSET_ERRORECB_Msk){
-		nhw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
+		hw_irq_ctrl_set_irq(nhw_ecb_irq_map[inst].cntl_inst,
 				nhw_ecb_irq_map[inst].int_nbr);
 	}
 }

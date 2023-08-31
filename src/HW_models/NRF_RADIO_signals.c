@@ -41,7 +41,7 @@ void nrf_radio_signal_READY(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_READY_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -58,7 +58,7 @@ void nrf_radio_signal_ADDRESS(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_ADDRESS_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -68,7 +68,7 @@ void nrf_radio_signal_PAYLOAD(void) {
   nrf_ppi_event(RADIO_EVENTS_PAYLOAD);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_PAYLOAD_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -85,7 +85,7 @@ void nrf_radio_signal_END(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_END_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -121,7 +121,7 @@ void nrf_radio_signal_DISABLED(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_DISABLED_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -131,7 +131,7 @@ void nrf_radio_signal_DEVMATCH(void) {
   nrf_ppi_event(RADIO_EVENTS_DEVMATCH);
 
   if (NRF_RADIO_INTEN & RADIO_INTENSET_DEVMATCH_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -141,7 +141,7 @@ void nrf_radio_signal_DEVMISS(void) {
   nrf_ppi_event(RADIO_EVENTS_DEVMISS);
 
   if (NRF_RADIO_INTEN & RADIO_INTENSET_DEVMISS_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -151,7 +151,7 @@ void nrf_radio_signal_RSSIEND(void) {
   nrf_ppi_event(RADIO_EVENTS_RSSIEND);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_RSSIEND_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -161,7 +161,7 @@ void nrf_radio_signal_BCMATCH(void) {
   nrf_ppi_event(RADIO_EVENTS_BCMATCH);
 
   if (NRF_RADIO_INTEN & RADIO_INTENSET_BCMATCH_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -171,7 +171,7 @@ void nrf_radio_signal_CRCOK(void) {
   nrf_ppi_event(RADIO_EVENTS_CRCOK);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CRCOK_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -181,7 +181,7 @@ void nrf_radio_signal_CRCERROR(void) {
   nrf_ppi_event(RADIO_EVENTS_CRCERROR);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CRCERROR_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -195,7 +195,7 @@ void nrf_radio_signal_FRAMESTART(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_FRAMESTART_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -209,7 +209,7 @@ void nrf_radio_signal_EDEND(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_EDEND_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -219,7 +219,7 @@ void nrf_radio_signal_EDSTOPPED(void) {
   nrf_ppi_event(RADIO_EVENTS_EDSTOPPED);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_EDSTOPPED_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -236,7 +236,7 @@ void nrf_radio_signal_CCAIDLE(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCAIDLE_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -250,7 +250,7 @@ void nrf_radio_signal_CCABUSY(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCABUSY_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -260,7 +260,7 @@ void nrf_radio_signal_CCASTOPPED(void) {
   nrf_ppi_event(RADIO_EVENTS_CCASTOPPED);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CCASTOPPED_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -270,7 +270,7 @@ void nrf_radio_signal_RATEBOOST(void) {
   nrf_ppi_event(RADIO_EVENTS_RATEBOOST);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_RATEBOOST_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -284,7 +284,7 @@ void nrf_radio_signal_TXREADY(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_TXREADY_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -301,7 +301,7 @@ void nrf_radio_signal_RXREADY(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_RXREADY_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -311,7 +311,7 @@ void nrf_radio_signal_MHRMATCH(void) {
   nrf_ppi_event(RADIO_EVENTS_MHRMATCH);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_MHRMATCH_Msk ){
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -321,7 +321,7 @@ void nrf_radio_signal_SYNC(void) {
   nrf_ppi_event(RADIO_EVENTS_SYNC);
 
   if (NRF_RADIO_INTEN & RADIO_INTENSET_SYNC_Msk) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -338,7 +338,7 @@ void nrf_radio_signal_PHYEND(void) {
   }
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_PHYEND_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }
@@ -348,7 +348,7 @@ void nrf_radio_signal_CTEPRESENT(void) {
   nrf_ppi_event(RADIO_EVENTS_CTEPRESENT);
 
   if ( NRF_RADIO_INTEN & RADIO_INTENSET_CTEPRESENT_Msk ) {
-    nhw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_radio_irq_map[0].cntl_inst,
                          nhw_radio_irq_map[0].int_nbr);
   }
 }

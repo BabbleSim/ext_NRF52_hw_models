@@ -52,7 +52,7 @@ static void signal_EVENTS_END(void) {
 
   unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENSET_END_Msk){
-    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
                          nhw_aar_irq_map[inst].int_nbr);
   }
 }
@@ -63,7 +63,7 @@ static void signal_EVENTS_RESOLVED(void) {
 
   unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENCLR_RESOLVED_Msk){
-    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
                          nhw_aar_irq_map[inst].int_nbr);
   }
 }
@@ -74,7 +74,7 @@ static void signal_EVENTS_NOTRESOLVED(void) {
 
   unsigned int inst = 0;
   if (AAR_INTEN & AAR_INTENCLR_NOTRESOLVED_Msk){
-    nhw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
                          nhw_aar_irq_map[inst].int_nbr);
   }
 }

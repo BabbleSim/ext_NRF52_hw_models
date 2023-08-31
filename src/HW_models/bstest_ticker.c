@@ -14,8 +14,12 @@
 #include "nsi_tasks.h"
 #include "nsi_hw_scheduler.h"
 #include "nsi_hws_models_if.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
 
 static bs_time_t Timer_event_fw_test_ticker = TIME_NEVER;
+/* Mapping of peripheral instance to {int controller instance, int number} */
+static struct nhw_irq_mapping nhw_bsticker_irq_map[NHW_BSTICKER_TOTAL_INST] = NHW_BSTICKER_TIMER_INT_MAP;
 
 static uint8_t awake_cpu_asap = 0;
 static bs_time_t Timer_event_fw_test_ticker_internal = TIME_NEVER;
@@ -63,7 +67,10 @@ static void bst_ticker_triggered(void) {
 
   if ( awake_cpu_asap == 1 ) {
     awake_cpu_asap = 0;
-    hw_irq_ctrl_raise_im(PHONY_HARD_IRQ);
+
+    int inst = 0; //Pending to implement multiple instances
+    hw_irq_ctrl_raise_im(nhw_bsticker_irq_map[inst].cntl_inst,
+                         PHONY_HARD_IRQ);
   } else {
     if ( fw_test_ticker_tick_period != TIME_NEVER ){
       Timer_event_fw_test_ticker_internal = fw_test_ticker_tick_period + HW_time;

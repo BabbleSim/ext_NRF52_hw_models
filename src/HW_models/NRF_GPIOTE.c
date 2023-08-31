@@ -134,11 +134,11 @@ static void nrf_gpiote_eval_interrupt(void) {
 	int inst = 0;
 	if (gpiote_int_line == false && new_int_line == true) {
 		gpiote_int_line = true;
-		nhw_irq_ctrl_raise_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
+		hw_irq_ctrl_raise_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
 				nhw_gpiote_irq_map[inst].int_nbr);
 	} else if (gpiote_int_line == true && new_int_line == false) {
 		gpiote_int_line = false;
-		nhw_irq_ctrl_lower_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
+		hw_irq_ctrl_lower_level_irq_line(nhw_gpiote_irq_map[inst].cntl_inst,
 				nhw_gpiote_irq_map[inst].int_nbr);
 	}
 }

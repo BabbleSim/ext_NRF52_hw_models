@@ -115,11 +115,11 @@ static void nrf_clock_eval_interrupt(void) {
   int inst = 0;
   if (clock_int_line == false && new_int_line == true) {
     clock_int_line = true;
-    nhw_irq_ctrl_raise_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_raise_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
                                       nhw_clock_irq_map[inst].int_nbr);
   } else if (clock_int_line == true && new_int_line == false) {
     clock_int_line = false;
-    nhw_irq_ctrl_lower_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
+    hw_irq_ctrl_lower_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
                                       nhw_clock_irq_map[inst].int_nbr);
   }
 }
