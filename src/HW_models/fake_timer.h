@@ -13,7 +13,7 @@
 extern "C"{
 #endif
 
-void fake_timer_wake_in_time(bs_time_t time);
+void nhw_fake_timer_wake_in_time(unsigned int inst, bs_time_t time);
 
 #ifdef __cplusplus
 }
