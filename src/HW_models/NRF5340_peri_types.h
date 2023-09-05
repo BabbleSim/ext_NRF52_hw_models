@@ -522,6 +522,332 @@ typedef struct {                                /*!< (@ 0x41009000) RNG_NS Struc
 #define RNG_VALUE_VALUE_Msk (0xFFUL << RNG_VALUE_VALUE_Pos) /*!< Bit mask of VALUE field. */
 
 
+/* =========================================================================================================================== */
+/* ================                                         TIMER                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Timer/Counter 0 (TIMER0_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x4100C000) TIMER0_NS Structure                                        */
+  __OM  uint32_t  TASKS_START;                  /*!< (@ 0x00000000) Start Timer                                                */
+  __OM  uint32_t  TASKS_STOP;                   /*!< (@ 0x00000004) Stop Timer                                                 */
+  __OM  uint32_t  TASKS_COUNT;                  /*!< (@ 0x00000008) Increment Timer (Counter mode only)                        */
+  __OM  uint32_t  TASKS_CLEAR;                  /*!< (@ 0x0000000C) Clear time                                                 */
+  __OM  uint32_t  TASKS_SHUTDOWN;               /*!< (@ 0x00000010) Deprecated register - Shut down timer                      */
+  __IM  uint32_t  RESERVED[11];
+  __OM  uint32_t  TASKS_CAPTURE[8];             /*!< (@ 0x00000040) Description collection: Capture Timer value to
+                                                                    CC[n] register                                             */
+  __IM  uint32_t  RESERVED1[8];
+  __IOM uint32_t  SUBSCRIBE_START;              /*!< (@ 0x00000080) Subscribe configuration for task START                     */
+  __IOM uint32_t  SUBSCRIBE_STOP;               /*!< (@ 0x00000084) Subscribe configuration for task STOP                      */
+  __IOM uint32_t  SUBSCRIBE_COUNT;              /*!< (@ 0x00000088) Subscribe configuration for task COUNT                     */
+  __IOM uint32_t  SUBSCRIBE_CLEAR;              /*!< (@ 0x0000008C) Subscribe configuration for task CLEAR                     */
+  __IOM uint32_t  SUBSCRIBE_SHUTDOWN;           /*!< (@ 0x00000090) Deprecated register - Subscribe configuration
+                                                                    for task SHUTDOWN                                          */
+  __IM  uint32_t  RESERVED2[11];
+  __IOM uint32_t  SUBSCRIBE_CAPTURE[8];         /*!< (@ 0x000000C0) Description collection: Subscribe configuration
+                                                                    for task CAPTURE[n]                                        */
+  __IM  uint32_t  RESERVED3[24];
+  __IOM uint32_t  EVENTS_COMPARE[8];            /*!< (@ 0x00000140) Description collection: Compare event on CC[n]
+                                                                    match                                                      */
+  __IM  uint32_t  RESERVED4[24];
+  __IOM uint32_t  PUBLISH_COMPARE[8];           /*!< (@ 0x000001C0) Description collection: Publish configuration
+                                                                    for event COMPARE[n]                                       */
+  __IM  uint32_t  RESERVED5[8];
+  __IOM uint32_t  SHORTS;                       /*!< (@ 0x00000200) Shortcuts between local events and tasks                   */
+  __IM  uint32_t  RESERVED6[63];
+  __IOM uint32_t  INTEN;                        /*!< (@ 0x00000300) Enable or disable interrupt                                */
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED7[126];
+  __IOM uint32_t  MODE;                         /*!< (@ 0x00000504) Timer mode selection                                       */
+  __IOM uint32_t  BITMODE;                      /*!< (@ 0x00000508) Configure the number of bits used by the TIMER             */
+  __IM  uint32_t  RESERVED8;
+  __IOM uint32_t  PRESCALER;                    /*!< (@ 0x00000510) Timer prescaler register                                   */
+  __IM  uint32_t  RESERVED9[11];
+  __IOM uint32_t  CC[8];                        /*!< (@ 0x00000540) Description collection: Capture/Compare register
+                                                                    n                                                          */
+  __IM  uint32_t  RESERVED10[8];
+  __IOM uint32_t  ONESHOTEN[8];                 /*!< (@ 0x00000580) Description collection: Enable one-shot operation
+                                                                    for Capture/Compare channel n                              */
+} NRF_TIMER_Type;                               /*!< Size = 1440 (0x5a0)                                                       */
+
+
+/* Peripheral: TIMER */
+/* Description: Timer/Counter 0 */
+
+/* Register: TIMER_TASKS_START */
+/* Description: Start Timer */
+
+/* Bit 0 : Start Timer */
+#define TIMER_TASKS_START_TASKS_START_Pos (0UL) /*!< Position of TASKS_START field. */
+#define TIMER_TASKS_START_TASKS_START_Msk (0x1UL << TIMER_TASKS_START_TASKS_START_Pos) /*!< Bit mask of TASKS_START field. */
+#define TIMER_TASKS_START_TASKS_START_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_TASKS_STOP */
+/* Description: Stop Timer */
+
+/* Bit 0 : Stop Timer */
+#define TIMER_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
+#define TIMER_TASKS_STOP_TASKS_STOP_Msk (0x1UL << TIMER_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
+#define TIMER_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_TASKS_COUNT */
+/* Description: Increment Timer (Counter mode only) */
+
+/* Bit 0 : Increment Timer (Counter mode only) */
+#define TIMER_TASKS_COUNT_TASKS_COUNT_Pos (0UL) /*!< Position of TASKS_COUNT field. */
+#define TIMER_TASKS_COUNT_TASKS_COUNT_Msk (0x1UL << TIMER_TASKS_COUNT_TASKS_COUNT_Pos) /*!< Bit mask of TASKS_COUNT field. */
+#define TIMER_TASKS_COUNT_TASKS_COUNT_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_TASKS_CLEAR */
+/* Description: Clear time */
+
+/* Bit 0 : Clear time */
+#define TIMER_TASKS_CLEAR_TASKS_CLEAR_Pos (0UL) /*!< Position of TASKS_CLEAR field. */
+#define TIMER_TASKS_CLEAR_TASKS_CLEAR_Msk (0x1UL << TIMER_TASKS_CLEAR_TASKS_CLEAR_Pos) /*!< Bit mask of TASKS_CLEAR field. */
+#define TIMER_TASKS_CLEAR_TASKS_CLEAR_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_TASKS_SHUTDOWN */
+/* Description: Deprecated register - Shut down timer */
+
+/* Bit 0 : Deprecated field -  Shut down timer */
+#define TIMER_TASKS_SHUTDOWN_TASKS_SHUTDOWN_Pos (0UL) /*!< Position of TASKS_SHUTDOWN field. */
+#define TIMER_TASKS_SHUTDOWN_TASKS_SHUTDOWN_Msk (0x1UL << TIMER_TASKS_SHUTDOWN_TASKS_SHUTDOWN_Pos) /*!< Bit mask of TASKS_SHUTDOWN field. */
+#define TIMER_TASKS_SHUTDOWN_TASKS_SHUTDOWN_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_TASKS_CAPTURE */
+/* Description: Description collection: Capture Timer value to CC[n] register */
+
+/* Bit 0 : Capture Timer value to CC[n] register */
+#define TIMER_TASKS_CAPTURE_TASKS_CAPTURE_Pos (0UL) /*!< Position of TASKS_CAPTURE field. */
+#define TIMER_TASKS_CAPTURE_TASKS_CAPTURE_Msk (0x1UL << TIMER_TASKS_CAPTURE_TASKS_CAPTURE_Pos) /*!< Bit mask of TASKS_CAPTURE field. */
+#define TIMER_TASKS_CAPTURE_TASKS_CAPTURE_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TIMER_SUBSCRIBE_START */
+/* Description: Subscribe configuration for task START */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_START_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_START_EN_Msk (0x1UL << TIMER_SUBSCRIBE_START_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_START_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_START_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task START will subscribe to */
+#define TIMER_SUBSCRIBE_START_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_START_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_START_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SUBSCRIBE_STOP */
+/* Description: Subscribe configuration for task STOP */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_STOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_STOP_EN_Msk (0x1UL << TIMER_SUBSCRIBE_STOP_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_STOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_STOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOP will subscribe to */
+#define TIMER_SUBSCRIBE_STOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_STOP_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_STOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SUBSCRIBE_COUNT */
+/* Description: Subscribe configuration for task COUNT */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_COUNT_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_COUNT_EN_Msk (0x1UL << TIMER_SUBSCRIBE_COUNT_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_COUNT_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_COUNT_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task COUNT will subscribe to */
+#define TIMER_SUBSCRIBE_COUNT_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_COUNT_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_COUNT_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SUBSCRIBE_CLEAR */
+/* Description: Subscribe configuration for task CLEAR */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_CLEAR_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_CLEAR_EN_Msk (0x1UL << TIMER_SUBSCRIBE_CLEAR_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_CLEAR_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_CLEAR_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CLEAR will subscribe to */
+#define TIMER_SUBSCRIBE_CLEAR_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_CLEAR_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_CLEAR_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SUBSCRIBE_SHUTDOWN */
+/* Description: Deprecated register - Subscribe configuration for task SHUTDOWN */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_SHUTDOWN_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_SHUTDOWN_EN_Msk (0x1UL << TIMER_SUBSCRIBE_SHUTDOWN_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_SHUTDOWN_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_SHUTDOWN_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task SHUTDOWN will subscribe to */
+#define TIMER_SUBSCRIBE_SHUTDOWN_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_SHUTDOWN_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_SHUTDOWN_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SUBSCRIBE_CAPTURE */
+/* Description: Description collection: Subscribe configuration for task CAPTURE[n] */
+
+/* Bit 31 :   */
+#define TIMER_SUBSCRIBE_CAPTURE_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_SUBSCRIBE_CAPTURE_EN_Msk (0x1UL << TIMER_SUBSCRIBE_CAPTURE_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_SUBSCRIBE_CAPTURE_EN_Disabled (0UL) /*!< Disable subscription */
+#define TIMER_SUBSCRIBE_CAPTURE_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CAPTURE[n] will subscribe to */
+#define TIMER_SUBSCRIBE_CAPTURE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_SUBSCRIBE_CAPTURE_CHIDX_Msk (0xFFUL << TIMER_SUBSCRIBE_CAPTURE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_EVENTS_COMPARE */
+/* Description: Description collection: Compare event on CC[n] match */
+
+/* Bit 0 : Compare event on CC[n] match */
+#define TIMER_EVENTS_COMPARE_EVENTS_COMPARE_Pos (0UL) /*!< Position of EVENTS_COMPARE field. */
+#define TIMER_EVENTS_COMPARE_EVENTS_COMPARE_Msk (0x1UL << TIMER_EVENTS_COMPARE_EVENTS_COMPARE_Pos) /*!< Bit mask of EVENTS_COMPARE field. */
+#define TIMER_EVENTS_COMPARE_EVENTS_COMPARE_NotGenerated (0UL) /*!< Event not generated */
+#define TIMER_EVENTS_COMPARE_EVENTS_COMPARE_Generated (1UL) /*!< Event generated */
+
+/* Register: TIMER_PUBLISH_COMPARE */
+/* Description: Description collection: Publish configuration for event COMPARE[n] */
+
+/* Bit 31 :   */
+#define TIMER_PUBLISH_COMPARE_EN_Pos (31UL) /*!< Position of EN field. */
+#define TIMER_PUBLISH_COMPARE_EN_Msk (0x1UL << TIMER_PUBLISH_COMPARE_EN_Pos) /*!< Bit mask of EN field. */
+#define TIMER_PUBLISH_COMPARE_EN_Disabled (0UL) /*!< Disable publishing */
+#define TIMER_PUBLISH_COMPARE_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event COMPARE[n] will publish to. */
+#define TIMER_PUBLISH_COMPARE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TIMER_PUBLISH_COMPARE_CHIDX_Msk (0xFFUL << TIMER_PUBLISH_COMPARE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TIMER_SHORTS */
+/* Description: Shortcuts between local events and tasks */
+
+/* Bit 23 : Shortcut between event COMPARE[7] and task STOP */
+#define TIMER_SHORTS_COMPARE7_STOP_Pos (23UL) /*!< Position of COMPARE7_STOP field. */
+#define TIMER_SHORTS_COMPARE7_STOP_Msk (0x1UL << TIMER_SHORTS_COMPARE7_STOP_Pos) /*!< Bit mask of COMPARE7_STOP field. */
+#define TIMER_SHORTS_COMPARE7_STOP_Disabled (0UL) /*!< Disable shortcut */
+#define TIMER_SHORTS_COMPARE7_STOP_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 16 : Shortcut between event COMPARE[0] and task STOP */
+#define TIMER_SHORTS_COMPARE0_STOP_Pos (16UL) /*!< Position of COMPARE0_STOP field. */
+#define TIMER_SHORTS_COMPARE0_STOP_Msk (0x1UL << TIMER_SHORTS_COMPARE0_STOP_Pos) /*!< Bit mask of COMPARE0_STOP field. */
+#define TIMER_SHORTS_COMPARE0_STOP_Disabled (0UL) /*!< Disable shortcut */
+#define TIMER_SHORTS_COMPARE0_STOP_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 7 : Shortcut between event COMPARE[7] and task CLEAR */
+#define TIMER_SHORTS_COMPARE7_CLEAR_Pos (7UL) /*!< Position of COMPARE7_CLEAR field. */
+#define TIMER_SHORTS_COMPARE7_CLEAR_Msk (0x1UL << TIMER_SHORTS_COMPARE7_CLEAR_Pos) /*!< Bit mask of COMPARE7_CLEAR field. */
+#define TIMER_SHORTS_COMPARE7_CLEAR_Disabled (0UL) /*!< Disable shortcut */
+#define TIMER_SHORTS_COMPARE7_CLEAR_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 0 : Shortcut between event COMPARE[0] and task CLEAR */
+#define TIMER_SHORTS_COMPARE0_CLEAR_Pos (0UL) /*!< Position of COMPARE0_CLEAR field. */
+#define TIMER_SHORTS_COMPARE0_CLEAR_Msk (0x1UL << TIMER_SHORTS_COMPARE0_CLEAR_Pos) /*!< Bit mask of COMPARE0_CLEAR field. */
+#define TIMER_SHORTS_COMPARE0_CLEAR_Disabled (0UL) /*!< Disable shortcut */
+#define TIMER_SHORTS_COMPARE0_CLEAR_Enabled (1UL) /*!< Enable shortcut */
+
+/* Register: TIMER_INTEN */
+/* Description: Enable or disable interrupt */
+
+/* Bit 23 : Enable or disable interrupt for event COMPARE[7] */
+#define TIMER_INTEN_COMPARE7_Pos (23UL) /*!< Position of COMPARE7 field. */
+#define TIMER_INTEN_COMPARE7_Msk (0x1UL << TIMER_INTEN_COMPARE7_Pos) /*!< Bit mask of COMPARE7 field. */
+#define TIMER_INTEN_COMPARE7_Disabled (0UL) /*!< Disable */
+#define TIMER_INTEN_COMPARE7_Enabled (1UL) /*!< Enable */
+
+/* Bit 16 : Enable or disable interrupt for event COMPARE[0] */
+#define TIMER_INTEN_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define TIMER_INTEN_COMPARE0_Msk (0x1UL << TIMER_INTEN_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define TIMER_INTEN_COMPARE0_Disabled (0UL) /*!< Disable */
+#define TIMER_INTEN_COMPARE0_Enabled (1UL) /*!< Enable */
+
+/* Register: TIMER_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 23 : Write '1' to enable interrupt for event COMPARE[7] */
+#define TIMER_INTENSET_COMPARE7_Pos (23UL) /*!< Position of COMPARE7 field. */
+#define TIMER_INTENSET_COMPARE7_Msk (0x1UL << TIMER_INTENSET_COMPARE7_Pos) /*!< Bit mask of COMPARE7 field. */
+#define TIMER_INTENSET_COMPARE7_Disabled (0UL) /*!< Read: Disabled */
+#define TIMER_INTENSET_COMPARE7_Enabled (1UL) /*!< Read: Enabled */
+#define TIMER_INTENSET_COMPARE7_Set (1UL) /*!< Enable */
+
+/* Bit 16 : Write '1' to enable interrupt for event COMPARE[0] */
+#define TIMER_INTENSET_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define TIMER_INTENSET_COMPARE0_Msk (0x1UL << TIMER_INTENSET_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define TIMER_INTENSET_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define TIMER_INTENSET_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define TIMER_INTENSET_COMPARE0_Set (1UL) /*!< Enable */
+
+/* Register: TIMER_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 23 : Write '1' to disable interrupt for event COMPARE[7] */
+#define TIMER_INTENCLR_COMPARE7_Pos (23UL) /*!< Position of COMPARE7 field. */
+#define TIMER_INTENCLR_COMPARE7_Msk (0x1UL << TIMER_INTENCLR_COMPARE7_Pos) /*!< Bit mask of COMPARE7 field. */
+#define TIMER_INTENCLR_COMPARE7_Disabled (0UL) /*!< Read: Disabled */
+#define TIMER_INTENCLR_COMPARE7_Enabled (1UL) /*!< Read: Enabled */
+#define TIMER_INTENCLR_COMPARE7_Clear (1UL) /*!< Disable */
+
+/* Bit 16 : Write '1' to disable interrupt for event COMPARE[0] */
+#define TIMER_INTENCLR_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define TIMER_INTENCLR_COMPARE0_Msk (0x1UL << TIMER_INTENCLR_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define TIMER_INTENCLR_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define TIMER_INTENCLR_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define TIMER_INTENCLR_COMPARE0_Clear (1UL) /*!< Disable */
+
+/* Register: TIMER_MODE */
+/* Description: Timer mode selection */
+
+/* Bits 1..0 : Timer mode */
+#define TIMER_MODE_MODE_Pos (0UL) /*!< Position of MODE field. */
+#define TIMER_MODE_MODE_Msk (0x3UL << TIMER_MODE_MODE_Pos) /*!< Bit mask of MODE field. */
+#define TIMER_MODE_MODE_Timer (0UL) /*!< Select Timer mode */
+#define TIMER_MODE_MODE_Counter (1UL) /*!< Deprecated enumerator -  Select Counter mode */
+#define TIMER_MODE_MODE_LowPowerCounter (2UL) /*!< Select Low Power Counter mode */
+
+/* Register: TIMER_BITMODE */
+/* Description: Configure the number of bits used by the TIMER */
+
+/* Bits 1..0 : Timer bit width */
+#define TIMER_BITMODE_BITMODE_Pos (0UL) /*!< Position of BITMODE field. */
+#define TIMER_BITMODE_BITMODE_Msk (0x3UL << TIMER_BITMODE_BITMODE_Pos) /*!< Bit mask of BITMODE field. */
+#define TIMER_BITMODE_BITMODE_16Bit (0UL) /*!< 16 bit timer bit width */
+#define TIMER_BITMODE_BITMODE_08Bit (1UL) /*!< 8 bit timer bit width */
+#define TIMER_BITMODE_BITMODE_24Bit (2UL) /*!< 24 bit timer bit width */
+#define TIMER_BITMODE_BITMODE_32Bit (3UL) /*!< 32 bit timer bit width */
+
+/* Register: TIMER_PRESCALER */
+/* Description: Timer prescaler register */
+
+/* Bits 3..0 : Prescaler value */
+#define TIMER_PRESCALER_PRESCALER_Pos (0UL) /*!< Position of PRESCALER field. */
+#define TIMER_PRESCALER_PRESCALER_Msk (0xFUL << TIMER_PRESCALER_PRESCALER_Pos) /*!< Bit mask of PRESCALER field. */
+
+/* Register: TIMER_CC */
+/* Description: Description collection: Capture/Compare register n */
+
+/* Bits 31..0 : Capture/Compare value */
+#define TIMER_CC_CC_Pos (0UL) /*!< Position of CC field. */
+#define TIMER_CC_CC_Msk (0xFFFFFFFFUL << TIMER_CC_CC_Pos) /*!< Bit mask of CC field. */
+
+/* Register: TIMER_ONESHOTEN */
+/* Description: Description collection: Enable one-shot operation for Capture/Compare channel n */
+
+/* Bit 0 : Enable one-shot operation */
+#define TIMER_ONESHOTEN_ONESHOTEN_Pos (0UL) /*!< Position of ONESHOTEN field. */
+#define TIMER_ONESHOTEN_ONESHOTEN_Msk (0x1UL << TIMER_ONESHOTEN_ONESHOTEN_Pos) /*!< Bit mask of ONESHOTEN field. */
+#define TIMER_ONESHOTEN_ONESHOTEN_Disable (0UL) /*!< Disable one-shot operation */
+#define TIMER_ONESHOTEN_ONESHOTEN_Enable (1UL) /*!< Enable one-shot operation */
+
+
 
 #ifdef __cplusplus
 }

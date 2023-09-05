@@ -1,3 +1,4 @@
 src/nrfx/hal/nrf_dppi.c
 src/nrfx/hal/nrf_egu.c
 src/nrfx/hal/nrf_rng.c
+src/nrfx/hal/nrf_timer.c

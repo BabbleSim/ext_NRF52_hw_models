@@ -128,8 +128,6 @@ extern NRF_RNG_Type NRF_RNG_regs;
 #define NRF_GPIOTE_NS_BASE         NULL
 #undef NRF_WDT_NS_BASE
 #define NRF_WDT_NS_BASE            NULL
-#undef NRF_TIMER0_NS_BASE
-#define NRF_TIMER0_NS_BASE         NULL
 #undef NRF_ECB_NS_BASE
 #define NRF_ECB_NS_BASE            NULL
 #undef NRF_AAR_NS_BASE
@@ -160,10 +158,13 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_EGU0_NS_BASE           (&NRF_EGU_regs[NHW_EGU_NET0])
 #undef NRF_RTC1_NS_BASE
 #define NRF_RTC1_NS_BASE           NULL
+extern NRF_TIMER_Type NRF_TIMER_regs[];
+#undef NRF_TIMER0_NS_BASE
+#define NRF_TIMER0_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET0])
 #undef NRF_TIMER1_NS_BASE
-#define NRF_TIMER1_NS_BASE         NULL
+#define NRF_TIMER1_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET1])
 #undef NRF_TIMER2_NS_BASE
-#define NRF_TIMER2_NS_BASE         NULL
+#define NRF_TIMER2_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET2])
 #undef NRF_SWI0_NS_BASE
 #define NRF_SWI0_NS_BASE           NULL
 #undef NRF_SWI1_NS_BASE
@@ -330,18 +331,19 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_SAADC_NS_BASE           NULL
 #undef NRF_SAADC_S_BASE
 #define NRF_SAADC_S_BASE            NULL
+extern NRF_TIMER_Type NRF_TIMER_regs[];
 #undef NRF_TIMER0_NS_BASE
-#define NRF_TIMER0_NS_BASE          NULL
+#define NRF_TIMER0_NS_BASE          (&NRF_TIMER_regs[NHW_TIMER_APP0])
 #undef NRF_TIMER0_S_BASE
-#define NRF_TIMER0_S_BASE           NULL
+#define NRF_TIMER0_S_BASE           (&NRF_TIMER_regs[NHW_TIMER_APP0])
 #undef NRF_TIMER1_NS_BASE
-#define NRF_TIMER1_NS_BASE          NULL
+#define NRF_TIMER1_NS_BASE          (&NRF_TIMER_regs[NHW_TIMER_APP1])
 #undef NRF_TIMER1_S_BASE
-#define NRF_TIMER1_S_BASE           NULL
+#define NRF_TIMER1_S_BASE           (&NRF_TIMER_regs[NHW_TIMER_APP1])
 #undef NRF_TIMER2_NS_BASE
-#define NRF_TIMER2_NS_BASE          NULL
+#define NRF_TIMER2_NS_BASE          (&NRF_TIMER_regs[NHW_TIMER_APP2])
 #undef NRF_TIMER2_S_BASE
-#define NRF_TIMER2_S_BASE           NULL
+#define NRF_TIMER2_S_BASE           (&NRF_TIMER_regs[NHW_TIMER_APP2])
 #undef NRF_RTC0_NS_BASE
 #define NRF_RTC0_NS_BASE            NULL
 #undef NRF_RTC0_S_BASE

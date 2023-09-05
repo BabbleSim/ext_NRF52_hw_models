@@ -7,6 +7,7 @@
 /*
  * TIMER - Timer/counter
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/timer.html?cp=5_1_0_5_27
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/timer.html?cp=4_0_0_6_34
  */
 
 /**
@@ -28,56 +29,125 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_TIMER.h"
 #include "nsi_hw_scheduler.h"
-#include "NRF_PPI.h"
+#include "NHW_xPPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
+#include "bs_oswrap.h"
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
 #define N_TIMERS NHW_TIMER_TOTAL_INST
-#define N_MAX_CC 6
-#define N_TIMER_CC_REGS {4, 4, 4, 6, 6} /* Number CC registers for each Timer */
+#define N_MAX_CC NHW_TIMER_MAX_N_CC
 
-NRF_TIMER_Type NRF_TIMER_regs[N_TIMERS];
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_timer_irq_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_INT_MAP;
+struct timer_status {
+  NRF_TIMER_Type *NRF_TIMER_regs;
 
-static uint32_t TIMER_INTEN[N_TIMERS] = {0};
+  int n_CCs;  //Number of compare/capture registers in this timer instance
+  int base_freq; //Base frequency (in MHz) of the timer input clock
 
-static bool Timer_running[N_TIMERS] = {false};
+  bs_time_t *CC_timers; //[n_CCs] In timer mode: When each compare match is expected to happen
+  bool *oneshot_flag; //[n_CCs] The CC register has been written, and a compare event has not yet been generated
+  bs_time_t start_t; //Time when the timer was started (only for timer mode)
+  uint32_t Counter; //Internal count value. Used in count mode, and in Timer mode during stops.
+  uint32_t INTEN;
+  bool is_running;
 
-static int Timer_n_CCs[N_TIMERS] = N_TIMER_CC_REGS;
-
-static bs_time_t Timer_counter_startT[N_TIMERS] = {TIME_NEVER}; //Time when the timer was started (only for timer mode)
-static uint32_t Counter[N_TIMERS] = {0}; //Internal count value. Used in count mode, and in Timer mode during stops.
+#if (NHW_HAS_DPPI)
+  uint dppi_map;   //To which DPPI instance are this TIMER subscribe&publish ports connected to
+  //Which of the subscription ports are currently connected, and to which channel:
+  bool* subscribed_CAPTURE;   //[n_CCs]
+  uint* subscribed_CAPTURE_ch;//[n_CCs]
+  bool subscribed_START;
+  uint subscribed_START_ch;
+  bool subscribed_STOP;
+  uint subscribed_STOP_ch;
+  bool subscribed_COUNT;
+  uint subscribed_COUNT_ch;
+  bool subscribed_CLEAR;
+  uint subscribed_CLEAR_ch;
+  bool subscribed_SHUTDOWN;
+  uint subscribed_SHUTDOWN_ch;
+#endif
+};
 
 static bs_time_t Timer_TIMERs = TIME_NEVER;
-/* In timer mode: When each compare match is expected to happen: */
-static bs_time_t CC_timers[N_TIMERS][N_MAX_CC] = {{TIME_NEVER}};
+static struct timer_status nhw_timer_st[NHW_TIMER_TOTAL_INST];
+NRF_TIMER_Type NRF_TIMER_regs[NHW_TIMER_TOTAL_INST];
 
 /**
  * Initialize the TIMER model
  */
 static void nrf_hw_model_timer_init(void) {
+#if (NHW_HAS_DPPI)
+  /* Mapping of peripheral instance to DPPI instance */
+  uint nhw_timer_dppi_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_DPPI_MAP;
+#endif
+  int Timer_n_CCs[N_TIMERS] = NHW_TIMER_N_CC;
+  int Timer_freqs[N_TIMERS] = NHW_TIMER_FREQ;
+
   memset(NRF_TIMER_regs, 0, sizeof(NRF_TIMER_regs));
-  for (int t = 0; t < N_TIMERS ; t++ ){
-    TIMER_INTEN[t] = 0;
-    Timer_running[t] = false;
-    Timer_counter_startT[t] = TIME_NEVER;
-    Counter[t] = 0;
-    for ( int cc = 0 ; cc < Timer_n_CCs[t] ; cc++){
-      CC_timers[t][cc] = TIME_NEVER;
+
+  for (int t = 0; t < NHW_TIMER_TOTAL_INST ; t++) {
+    struct timer_status *t_st = &nhw_timer_st[t];
+
+    t_st->NRF_TIMER_regs = &NRF_TIMER_regs[t];
+
+    t_st->INTEN = 0;
+    t_st->is_running = false;
+    t_st->start_t = TIME_NEVER;
+    t_st->Counter = 0;
+
+    t_st->base_freq = Timer_freqs[t];
+    t_st->n_CCs = Timer_n_CCs[t];
+    t_st->CC_timers = (bs_time_t *)bs_malloc(sizeof(bs_time_t)*Timer_n_CCs[t]);
+    t_st->oneshot_flag = (bool *)bs_calloc(Timer_n_CCs[t], sizeof(bool));
+
+    for (int cc = 0; cc < t_st->n_CCs ; cc++) {
+      t_st->CC_timers[cc] = TIME_NEVER;
     }
+
+#if (NHW_HAS_DPPI)
+    t_st->dppi_map = nhw_timer_dppi_map[t];
+    t_st->subscribed_CAPTURE = (bool*)bs_calloc(Timer_n_CCs[t], sizeof(bool));
+    t_st->subscribed_CAPTURE_ch = (uint*)bs_calloc(Timer_n_CCs[t], sizeof(uint));
+#endif
   }
   Timer_TIMERs = TIME_NEVER;
 }
 
 NSI_TASK(nrf_hw_model_timer_init, HW_INIT, 100);
+
+/*
+ * Free all TIMER instances resources before program exit
+ */
+static void nhw_timer_free(void)
+{
+  for (int t = 0; t< NHW_TIMER_TOTAL_INST; t++) {
+    struct timer_status *t_st = &nhw_timer_st[t];
+
+    free(t_st->CC_timers);
+    t_st->CC_timers = NULL;
+
+    free(t_st->oneshot_flag);
+    t_st->oneshot_flag = NULL;
+
+#if (NHW_HAS_DPPI)
+    free(t_st->subscribed_CAPTURE);
+    t_st->subscribed_CAPTURE = NULL;
+
+    free(t_st->subscribed_CAPTURE_ch);
+    t_st->subscribed_CAPTURE_ch = NULL;
+#endif /* (NHW_HAS_DPPI) */
+  }
+}
+
+NSI_TASK(nhw_timer_free, ON_EXIT_PRE, 100);
 
 /**
  * Convert a time delta in us to the equivalent count accounting for the PRESCALER
@@ -124,7 +194,7 @@ static uint32_t mask_from_bitmode(int t){
  * given BITMODE
  */
 static uint64_t time_of_1_counter_wrap(int t){
-  return counter_to_time( (uint64_t)mask_from_bitmode(t) + 1,t);
+  return counter_to_time((uint64_t)mask_from_bitmode(t) + 1, t);
 }
 
 /**
@@ -132,11 +202,14 @@ static uint64_t time_of_1_counter_wrap(int t){
  */
 static void update_master_timer(void) {
   Timer_TIMERs = TIME_NEVER;
+
   for ( int t = 0 ; t < N_TIMERS ; t++){
-    if ( ( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
-      for ( int cc = 0 ; cc < Timer_n_CCs[t] ; cc++){
-        if ( CC_timers[t][cc] < Timer_TIMERs ){
-          Timer_TIMERs = CC_timers[t][cc];
+    struct timer_status *t_st = &nhw_timer_st[t];
+
+    if ((t_st->is_running == true) && (NRF_TIMER_regs[t].MODE == 0)) {
+      for (int cc = 0 ; cc < t_st->n_CCs ; cc++) {
+        if (t_st->CC_timers[cc] < Timer_TIMERs) {
+          Timer_TIMERs = t_st->CC_timers[cc];
         }
       }
     }
@@ -148,31 +221,37 @@ static void update_master_timer(void) {
  * Save in CC_timers[t][cc] the next time when this timer will match the CC[cc]
  * register
  */
-static void update_cc_timer(int t, int cc){
-  if ( ( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
-    bs_time_t next_match = Timer_counter_startT[t]
+static void update_cc_timer(int t, int cc) {
+  struct timer_status *this = &nhw_timer_st[t];
+
+  if ((this->is_running == true) && (NRF_TIMER_regs[t].MODE == 0)) {
+    bs_time_t next_match = this->start_t
                            + counter_to_time(NRF_TIMER_regs[t].CC[cc], t);
-    while ( next_match <= nsi_hws_get_time() ){
+    while (next_match <= nsi_hws_get_time()) {
       next_match += time_of_1_counter_wrap(t);
     }
-    CC_timers[t][cc] = next_match;
+    this->CC_timers[cc] = next_match;
   } else {
-    CC_timers[t][cc] = TIME_NEVER;
+    this->CC_timers[cc] = TIME_NEVER;
   }
 }
 
-static void update_all_cc_timers(int t){
-  for (int cc = 0 ; cc < Timer_n_CCs[t]; cc++){
-    update_cc_timer(t,cc);
+static void update_all_cc_timers(int t) {
+  for (int cc = 0 ; cc < nhw_timer_st[t].n_CCs; cc++) {
+    update_cc_timer(t, cc);
   }
 }
 
 static void nrf_timer_eval_interrupts(int t) {
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_timer_irq_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_INT_MAP;
   static bool TIMER_int_line[N_TIMERS]; /* Is the TIMER currently driving its interrupt line high */
+
+  struct timer_status *this = &nhw_timer_st[t];
   bool new_int_line = false;
 
-  for (int cc = 0; cc < Timer_n_CCs[t]; cc++) {
-    int mask = TIMER_INTEN[t] & (TIMER_INTENSET_COMPARE0_Msk << cc);
+  for (int cc = 0; cc < this->n_CCs; cc++) {
+    int mask = this->INTEN & (TIMER_INTENSET_COMPARE0_Msk << cc);
     if (NRF_TIMER_regs[t].EVENTS_COMPARE[cc] && mask) {
       new_int_line = true;
       break; /* No need to check more */
@@ -182,42 +261,48 @@ static void nrf_timer_eval_interrupts(int t) {
   if (TIMER_int_line[t] == false && new_int_line == true) {
     TIMER_int_line[t] = true;
     hw_irq_ctrl_raise_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
-                                      nhw_timer_irq_map[t].int_nbr);
+                                     nhw_timer_irq_map[t].int_nbr);
   } else if (TIMER_int_line[t] == true && new_int_line == false) {
     TIMER_int_line[t] = false;
 
     hw_irq_ctrl_lower_level_irq_line(nhw_timer_irq_map[t].cntl_inst,
-                                      nhw_timer_irq_map[t].int_nbr);
+                                     nhw_timer_irq_map[t].int_nbr);
   }
 }
 
 void nrf_timer_TASK_START(int t){
+  struct timer_status *this = &nhw_timer_st[t];
+
   //Note: STATUS is missing in NRF_TIMER_Type
-  if ( Timer_running[t] == false ) {
-    Timer_running[t] = true;
-    if ( NRF_TIMER_regs[t].MODE == 0 ){ //Timer mode
-      Timer_counter_startT[t] = nsi_hws_get_time() - counter_to_time(Counter[t], t); //If the counter is not zero at start, is like if the counter was started earlier
+  if (this->is_running == false) {
+    this->is_running = true;
+    if (NRF_TIMER_regs[t].MODE == 0) { //Timer mode
+      this->start_t = nsi_hws_get_time() - counter_to_time(this->Counter, t); //If the counter is not zero at start, is like if the counter was started earlier
       update_all_cc_timers(t);
       update_master_timer();
     }
   }
 }
 
-void nrf_timer_TASK_STOP(int t){
+void nrf_timer_TASK_STOP(int t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
   //Note: STATUS is missing in NRF_TIMER_Type
-  if (Timer_running[t] == true) {
-    Timer_running[t] = false;
-    if ( NRF_TIMER_regs[t].MODE == 0 ){ //Timer mode
-      Counter[t] = time_to_counter(nsi_hws_get_time() - Timer_counter_startT[t], t); //we save the value when the counter was stoped in case it is started again without clearing it
+  if (this->is_running == true) {
+    this->is_running = false;
+    if (NRF_TIMER_regs[t].MODE == 0) { //Timer mode
+      this->Counter = time_to_counter(nsi_hws_get_time() - this->start_t, t); //we save the value when the counter was stoped in case it is started again without clearing it
     }
-    for (int cc = 0 ; cc < Timer_n_CCs[t] ; cc++){
-      CC_timers[t][cc] = TIME_NEVER;
+    for (int cc = 0 ; cc < this->n_CCs ; cc++) {
+      this->CC_timers[cc] = TIME_NEVER;
     }
     update_master_timer();
   }
 }
 
-void nrf_timer_TASK_SHUTDOWN(int t){
+void nrf_timer_TASK_SHUTDOWN(int t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
   /*
    * TASK_SHUTDOWN is not documented in newer SOCs
    * In older ones it indicates it STOPS + it reduces power consumption
@@ -226,30 +311,32 @@ void nrf_timer_TASK_SHUTDOWN(int t){
    * Effectively making a SHUTDOWN logically equivalent to a STOP + CLEAR
    */
   //Note: STATUS is missing in NRF_TIMER_Type
-  Timer_running[t] = false;
-  Counter[t] = 0;
-  Timer_counter_startT[t] = TIME_NEVER;
-  for (int cc = 0 ; cc < Timer_n_CCs[t] ; cc++){
-    CC_timers[t][cc] = TIME_NEVER;
+  this->is_running = false;
+  this->Counter = 0;
+  this->start_t = TIME_NEVER;
+  for (int cc = 0 ; cc < this->n_CCs ; cc++){
+    this->CC_timers[cc] = TIME_NEVER;
   }
   update_master_timer();
 }
 
-void nrf_timer_TASK_CAPTURE(int t, int cc_n){
-  if (cc_n >= Timer_n_CCs[t]) {
+void nrf_timer_TASK_CAPTURE(int t, int cc_n) {
+  struct timer_status *this = &nhw_timer_st[t];
+
+  if (cc_n >= this->n_CCs) {
     bs_trace_error_line_time("%s: Attempted to access non existing task"
                              "TIMER%i.TASK_CAPTURE[%i] (>= %i)\n",
-                              t, cc_n, Timer_n_CCs[t]);
+                              t, cc_n, this->n_CCs);
   }
   if ( NRF_TIMER_regs[t].MODE != 0 ){ //Count mode
-    NRF_TIMER_regs[t].CC[cc_n] = Counter[t] & mask_from_bitmode(t);
+    NRF_TIMER_regs[t].CC[cc_n] = this->Counter & mask_from_bitmode(t);
   } else { //Timer mode:
-    if ( Timer_counter_startT[t] == TIME_NEVER ){
+    if ( this->start_t == TIME_NEVER ){
       bs_trace_warning_line_time("NRF HW TIMER%i TASK_CAPTURE[%i] "
-                                     "trigered on a timer which was never "
+                                     "triggered on a timer which was never "
                                      "started => you get garbage\n", t, cc_n);
     }
-    bs_time_t Elapsed = nsi_hws_get_time() - Timer_counter_startT[t];
+    bs_time_t Elapsed = nsi_hws_get_time() - this->start_t;
     NRF_TIMER_regs[t].CC[cc_n] = time_to_counter(Elapsed,t) & mask_from_bitmode(t);
 
     //The new CC causes a new possible CC match time:
@@ -258,29 +345,34 @@ void nrf_timer_TASK_CAPTURE(int t, int cc_n){
   }
 }
 
-void nrf_timer_TASK_CLEAR(int t) {
-  Counter[t] = 0;
+void nrf_timer_TASK_CLEAR(uint t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
+  this->Counter = 0;
   if (NRF_TIMER_regs[t].MODE == 0) {
     //Timer mode:
-    Timer_counter_startT[t] = nsi_hws_get_time();
+    this->start_t = nsi_hws_get_time();
     update_all_cc_timers(t);
     update_master_timer();
   }
 }
 
-static void nrf_timer_signal_COMPARE(int t, int cc) {
+static void nrf_timer_signal_COMPARE(uint t, uint cc) {
+  struct timer_status *this = &nhw_timer_st[t];
+  NRF_TIMER_Type *TIMER_regs = this->NRF_TIMER_regs;
 
-  if ( NRF_TIMER_regs[t].SHORTS & (TIMER_SHORTS_COMPARE0_CLEAR_Msk << cc) ) {
+  if (TIMER_regs->SHORTS & (TIMER_SHORTS_COMPARE0_CLEAR_Msk << cc)) {
     nrf_timer_TASK_CLEAR(t);
   }
-  if ( NRF_TIMER_regs[t].SHORTS & (TIMER_SHORTS_COMPARE0_STOP_Msk << cc) ) {
+  if (TIMER_regs->SHORTS & (TIMER_SHORTS_COMPARE0_STOP_Msk << cc)) {
     nrf_timer_TASK_STOP(t);
   }
 
-  NRF_TIMER_regs[t].EVENTS_COMPARE[cc] = 1;
+  TIMER_regs->EVENTS_COMPARE[cc] = 1;
 
   nrf_timer_eval_interrupts(t);
 
+#if (NHW_HAS_PPI)
   ppi_event_types_t event_cc;
   switch (t) {
   case 0:
@@ -301,91 +393,162 @@ static void nrf_timer_signal_COMPARE(int t, int cc) {
     break;
   }
   nrf_ppi_event(event_cc + cc);
+#elif (NHW_HAS_DPPI)
+  nhw_dppi_event_signal_if(this->dppi_map,
+                           TIMER_regs->PUBLISH_COMPARE[cc]);
+#endif
 }
 
-void nrf_timer_TASK_COUNT(int t) {
-  if ( (NRF_TIMER_regs[t].MODE != 0 /* Count mode */) && (Timer_running[t] == true) ) {
-    Counter[t] = (Counter[t] + 1) & mask_from_bitmode(t);
+static void nrf_timer_signal_COMPARE_if(uint t, uint cc_n) {
+  struct timer_status *this = &nhw_timer_st[t];
+#if (NHW_TIMER_HAS_ONE_SHOT)
+  if ((this->oneshot_flag[cc_n] == false) && this->NRF_TIMER_regs->ONESHOTEN[cc_n]) {
+    return;
+  }
+#endif
+  this->oneshot_flag[cc_n] = false;
+  nrf_timer_signal_COMPARE(t, cc_n);
+}
 
-    for (int cc_n = 0; cc_n < Timer_n_CCs[t]; cc_n++) {
-      if (Counter[t] == (NRF_TIMER_regs[t].CC[cc_n] & mask_from_bitmode(t))){
-        nrf_timer_signal_COMPARE(t, cc_n);
+void nrf_timer_TASK_COUNT(uint t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
+  if ((NRF_TIMER_regs[t].MODE != 0 /* Count mode */) && (this->is_running == true)) {
+    this->Counter = (this->Counter + 1) & mask_from_bitmode(t);
+
+    for (int cc_n = 0; cc_n < this->n_CCs; cc_n++) {
+      if (this->Counter == (NRF_TIMER_regs[t].CC[cc_n] & mask_from_bitmode(t))){
+        nrf_timer_signal_COMPARE_if(t, cc_n);
       }
     }
   } //Otherwise ignored
 }
 
-void nrf_timer_regw_sideeffects_TASKS_START(int t){
+void nrf_timer_regw_sideeffects_TASKS_START(uint t) {
   if ( NRF_TIMER_regs[t].TASKS_START ){
     NRF_TIMER_regs[t].TASKS_START = 0;
     nrf_timer_TASK_START(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_STOP(int t) {
+void nrf_timer_regw_sideeffects_TASKS_STOP(uint t) {
   if (NRF_TIMER_regs[t].TASKS_STOP) {
     NRF_TIMER_regs[t].TASKS_STOP = 0;
     nrf_timer_TASK_STOP(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(int t) {
+void nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(uint t) {
   if (NRF_TIMER_regs[t].TASKS_SHUTDOWN) {
     NRF_TIMER_regs[t].TASKS_SHUTDOWN = 0;
     nrf_timer_TASK_SHUTDOWN(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_CAPTURE(int t, int cc_n){
+void nrf_timer_regw_sideeffects_TASKS_CAPTURE(uint t, uint cc_n){
   if ( NRF_TIMER_regs[t].TASKS_CAPTURE[cc_n] ){
     NRF_TIMER_regs[t].TASKS_CAPTURE[cc_n] = 0;
     nrf_timer_TASK_CAPTURE(t,cc_n);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_CLEAR(int t) {
+void nrf_timer_regw_sideeffects_TASKS_CLEAR(uint t) {
   if (NRF_TIMER_regs[t].TASKS_CLEAR) {
     NRF_TIMER_regs[t].TASKS_CLEAR = 0;
     nrf_timer_TASK_CLEAR(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_COUNT(int t){
+void nrf_timer_regw_sideeffects_TASKS_COUNT(uint t) {
   if ( NRF_TIMER_regs[t].TASKS_COUNT ){
     NRF_TIMER_regs[t].TASKS_COUNT = 0;
     nrf_timer_TASK_COUNT(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_EVENTS_all(int t){
+#if (NHW_HAS_DPPI)
+
+static void nhw_timer_taskcapture_wrap(void* param) {
+  unsigned int inst = (uintptr_t)param >> 16;
+  uint cc_n = (uintptr_t)param & 0xFFFF;
+  nrf_timer_TASK_CAPTURE(inst, cc_n);
+}
+
+void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
+  struct timer_status *this = &nhw_timer_st[inst];
+
+  nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
+                                       this->NRF_TIMER_regs->SUBSCRIBE_CAPTURE[cc_n],
+                                       &this->subscribed_CAPTURE[cc_n],
+                                       &this->subscribed_CAPTURE_ch[cc_n],
+                                       nhw_timer_taskcapture_wrap,
+                                       (void*)((inst << 16) + cc_n));
+}
+
+#define NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
+  static void nhw_timer_task##TASK_N##_wrap(void* param)                            \
+  {                                                                                 \
+    nrf_timer_TASK_##TASK_N((int) param);                                           \
+  }                                                                                 \
+                                                                                    \
+  void nrf_timer_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
+  {                                                                                 \
+     struct timer_status *this = &nhw_timer_st[inst];                               \
+                                                                                    \
+     nhw_dppi_common_subscribe_sideeffect(this->dppi_map,                           \
+                                          this->NRF_TIMER_regs->SUBSCRIBE_##TASK_N, \
+                                          &this->subscribed_##TASK_N,               \
+                                          &this->subscribed_##TASK_N##_ch,          \
+                                          nhw_timer_task##TASK_N##_wrap,            \
+                                          (void*) inst);                            \
+  }
+
+NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(START)
+NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(STOP)
+NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(COUNT)
+NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(CLEAR)
+NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(SHUTDOWN)
+
+#endif /* NHW_HAS_DPPI */
+
+
+void nrf_timer_regw_sideeffects_EVENTS_all(uint t) {
   nrf_timer_eval_interrupts(t);
 }
 
-void nrf_timer_regw_sideeffects_INTENSET(int t){
+void nrf_timer_regw_sideeffects_INTENSET(uint t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
   if ( NRF_TIMER_regs[t].INTENSET ){
-    TIMER_INTEN[t] |= NRF_TIMER_regs[t].INTENSET;
-    NRF_TIMER_regs[t].INTENSET = TIMER_INTEN[t];
+    this->INTEN |= NRF_TIMER_regs[t].INTENSET;
+    NRF_TIMER_regs[t].INTENSET = this->INTEN;
     nrf_timer_eval_interrupts(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_INTENCLR(int t){
+void nrf_timer_regw_sideeffects_INTENCLR(uint t) {
+  struct timer_status *this = &nhw_timer_st[t];
+
   if ( NRF_TIMER_regs[t].INTENCLR ){
-    TIMER_INTEN[t]  &= ~NRF_TIMER_regs[t].INTENCLR;
-    NRF_TIMER_regs[t].INTENSET = TIMER_INTEN[t];
+    this->INTEN  &= ~NRF_TIMER_regs[t].INTENCLR;
+    NRF_TIMER_regs[t].INTENSET = this->INTEN;
     NRF_TIMER_regs[t].INTENCLR = 0;
     nrf_timer_eval_interrupts(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_CC(int t, int cc_n){
-  if (cc_n >= Timer_n_CCs[t]) {
+void nrf_timer_regw_sideeffects_CC(uint t, uint cc_n) {
+  struct timer_status *this = &nhw_timer_st[t];
+
+  if (cc_n >= this->n_CCs) {
     bs_trace_error_line_time("%s: Attempted to access non existing register "
                              "TIMER%i.CC[%i] (>= %i)\n",
-                              __func__, t, cc_n, Timer_n_CCs[t]);
+                              __func__, t, cc_n, this->n_CCs);
   }
 
-  if ( (Timer_running[t] == true) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
+  this->oneshot_flag[cc_n] = true;
+
+  if ( (this->is_running == true) && ( NRF_TIMER_regs[t].MODE == 0 ) ) {
     update_cc_timer(t, cc_n);
     update_master_timer();
   }
@@ -402,11 +565,13 @@ static void nrf_hw_model_timer_timer_triggered(void) {
   match.cnt = 0;
 
   for (t = 0 ; t < N_TIMERS ; t++) {
-    if ( !(( Timer_running[t] == true ) && ( NRF_TIMER_regs[t].MODE == 0 )) ) {
+    struct timer_status *t_st = &nhw_timer_st[t];
+
+    if ( !((t_st->is_running == true) && (NRF_TIMER_regs[t].MODE == 0)) ) {
       continue;
     }
-    for (cc = 0 ; cc < Timer_n_CCs[t] ; cc++) {
-      if ( CC_timers[t][cc] == Timer_TIMERs ){
+    for (cc = 0 ; cc < t_st->n_CCs ; cc++) {
+      if (t_st->CC_timers[cc] == Timer_TIMERs) {
         match.t[match.cnt] = t;
         match.cc[match.cnt] = cc;
         match.cnt++;
@@ -418,13 +583,14 @@ static void nrf_hw_model_timer_timer_triggered(void) {
     t = match.t[match.cnt];
     cc = match.cc[match.cnt];
     update_cc_timer(t,cc); //Next time it will match
-    nrf_timer_signal_COMPARE(t,cc);
+    nrf_timer_signal_COMPARE_if(t,cc);
   }
   update_master_timer();
 }
 
 NSI_HW_EVENT(Timer_TIMERs, nrf_hw_model_timer_timer_triggered, 50);
 
+#if (NHW_HAS_PPI)
 void nrf_timer0_TASK_START(void) { nrf_timer_TASK_START(0); }
 void nrf_timer1_TASK_START(void) { nrf_timer_TASK_START(1); }
 void nrf_timer2_TASK_START(void) { nrf_timer_TASK_START(2); }
@@ -477,3 +643,4 @@ void nrf_timer1_TASK_COUNT(void) { nrf_timer_TASK_COUNT(1); }
 void nrf_timer2_TASK_COUNT(void) { nrf_timer_TASK_COUNT(2); }
 void nrf_timer3_TASK_COUNT(void) { nrf_timer_TASK_COUNT(3); }
 void nrf_timer4_TASK_COUNT(void) { nrf_timer_TASK_COUNT(4); }
+#endif /* (NHW_HAS_PPI) */

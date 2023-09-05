@@ -141,7 +141,11 @@
                            {0 , 10}, \
                            {0 , 26}, \
                            {0 , 27}, \
-                          } /*Only core,TIMER0..4_IRQn*/
+                          } /* Only core, TIMER0..4_IRQn */
+#define NHW_TIMER_HAS_ONE_SHOT 0
+#define NHW_TIMER_N_CC {4, 4, 4, 6, 6}
+#define NHW_TIMER_MAX_N_CC 6
+#define NHW_TIMER_FREQ {16, 16, 16, 16, 16}
 
 #define NHW_BSTICKER_TOTAL_INST 1
 #define NHW_BSTICKER_TIMER_INT_MAP {{0 , 0}} /*Only core, -*/
@@ -273,6 +277,27 @@
 #define NHW_RNG_tRNG_START 128
 #define NHW_RNG_tRNG_RAW 32
 #define NHW_RNG_tRNG_BC 122
+
+#define NHW_TIMER_TOTAL_INST 6
+#define NHW_TIMER_APP0 0
+#define NHW_TIMER_APP1 1
+#define NHW_TIMER_APP2 2
+#define NHW_TIMER_NET0 3
+#define NHW_TIMER_NET1 4
+#define NHW_TIMER_NET2 5
+#define NHW_TIMER_INT_MAP {{0 , 15}, \
+                           {0 , 16}, \
+                           {0 , 17}, \
+                           {1 , 12}, \
+                           {1 , 24}, \
+                           {1 , 25}, \
+                          } /* AppCore, TIMER0..2_IRQn */
+                            /* NetCore, TIMER0..2_IRQn */
+#define NHW_TIMER_HAS_ONE_SHOT 1
+#define NHW_TIMER_N_CC {6, 6, 6, 8, 8, 8}
+#define NHW_TIMER_MAX_N_CC 8
+#define NHW_TIMER_FREQ {16, 16, 16, 16, 16, 16}
+#define NHW_TIMER_DPPI_MAP {0, 0, 0, 1, 1, 1} /*3xApp core, 3xNetwork core*/
 
 #define NHW_FAKE_TIMER_TOTAL_INST 2
 #define NHW_FAKE_TIMER_INT_MAP {{0 , 0}, \

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 Oticon A/S
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,44 +27,25 @@ void nrf_timer_cc_set(NRF_TIMER_Type * p_reg,
 }
 
 void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
-    nrf_timer_task_t task)
+                            nrf_timer_task_t task)
 {
   int i = timer_number_from_ptr(p_reg);
 
-  if ( task == NRF_TIMER_TASK_CAPTURE0) {
-    p_reg->TASKS_CAPTURE[0] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 0);
-  } else if ( task == NRF_TIMER_TASK_CAPTURE1) {
-    p_reg->TASKS_CAPTURE[1] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 1);
-  } else if ( task == NRF_TIMER_TASK_CAPTURE2) {
-    p_reg->TASKS_CAPTURE[2] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 2);
-  } else if ( task == NRF_TIMER_TASK_CAPTURE3) {
-    p_reg->TASKS_CAPTURE[3] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 3);
-#if defined(TIMER_INTENSET_COMPARE4_Msk)
-  } else if ( task == NRF_TIMER_TASK_CAPTURE4) {
-    p_reg->TASKS_CAPTURE[4] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 4);
-#endif
-#if defined(TIMER_INTENSET_COMPARE5_Msk)
-  } else if ( task == NRF_TIMER_TASK_CAPTURE5) {
-    p_reg->TASKS_CAPTURE[5] = 1;
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, 5);
-#endif
-  } else if ( task == NRF_TIMER_TASK_CLEAR) {
-    p_reg->TASKS_CLEAR = 1;
-    nrf_timer_regw_sideeffects_TASKS_CLEAR(i);
-  } else if ( task == NRF_TIMER_TASK_START) {
-    p_reg->TASKS_START = 1;
+  *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
+
+  if (task == NRF_TIMER_TASK_START) {
     nrf_timer_regw_sideeffects_TASKS_START(i);
-  } else if ( task == NRF_TIMER_TASK_STOP) {
-    p_reg->TASKS_STOP = 1;
+  } else if (task == NRF_TIMER_TASK_STOP) {
     nrf_timer_regw_sideeffects_TASKS_STOP(i);
-  } else if ( task == NRF_TIMER_TASK_SHUTDOWN) {
-    p_reg->TASKS_SHUTDOWN = 1;
+  } else if (task == NRF_TIMER_TASK_COUNT) {
+    nrf_timer_regw_sideeffects_TASKS_COUNT(i);
+  } else if (task == NRF_TIMER_TASK_CLEAR) {
+    nrf_timer_regw_sideeffects_TASKS_CLEAR(i);
+  } else if (task == NRF_TIMER_TASK_SHUTDOWN) {
     nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(i);
+  } else if (task >= NRF_TIMER_TASK_CAPTURE0) {
+    int task_nbr = (task - NRF_TIMER_TASK_CAPTURE0)/sizeof(uint32_t);
+    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, task_nbr);
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_timer%i\n",
                              (int) task);
@@ -77,7 +59,6 @@ void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
     int t = timer_number_from_ptr(p_reg);
     nrf_timer_regw_sideeffects_EVENTS_all(t);
 }
-
 
 void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
                           uint32_t         mask)
@@ -94,3 +75,47 @@ void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
     p_reg->INTENCLR = mask;
     nrf_timer_regw_sideeffects_INTENCLR(i);
 }
+
+#if defined(DPPI_PRESENT)
+
+static void nrf_timer_subscribe_common(NRF_TIMER_Type * p_reg,
+                                       nrf_timer_task_t task)
+{
+  int i = timer_number_from_ptr(p_reg);
+
+  if (task == NRF_TIMER_TASK_START) {
+    nrf_timer_regw_sideeffects_SUBSCRIBE_START(i);
+  } else if (task == NRF_TIMER_TASK_STOP) {
+    nrf_timer_regw_sideeffects_SUBSCRIBE_STOP(i);
+  } else if (task == NRF_TIMER_TASK_COUNT) {
+    nrf_timer_regw_sideeffects_SUBSCRIBE_COUNT(i);
+  } else if (task == NRF_TIMER_TASK_CLEAR) {
+    nrf_timer_regw_sideeffects_SUBSCRIBE_CLEAR(i);
+  } else if (task == NRF_TIMER_TASK_SHUTDOWN) {
+    nrf_timer_regw_sideeffects_SUBSCRIBE_SHUTDOWN(i);
+  } else if (task >= NRF_TIMER_TASK_CAPTURE0) {
+    int task_nbr = (task - NRF_TIMER_TASK_CAPTURE0)/sizeof(uint32_t);
+    nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(i, task_nbr);
+  } else {
+    bs_trace_error_line_time("Attempted to subscribe to a not-supported task in the nrf_timer (%i)\n",
+                             task);
+  }
+}
+
+void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
+                             nrf_timer_task_t task,
+                             uint8_t          channel)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
+            ((uint32_t)channel | NRF_SUBSCRIBE_PUBLISH_ENABLE);
+    nrf_timer_subscribe_common(p_reg, task);
+}
+
+void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
+                               nrf_timer_task_t task)
+{
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
+    nrf_timer_subscribe_common(p_reg, task);
+}
+
+#endif /* defined(DPPI_PRESENT) */
