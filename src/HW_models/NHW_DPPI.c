@@ -88,7 +88,7 @@ struct dppi_status {
 
   /* DPPI interface as a "normal peripheral" to a DPPI: */
   uint dppi_map; //To which DPPI instance are this DPPI subscription ports connected to
-  //Which of which subscriptions ports are currently connected, and to which channel:
+  //Which of the subscriptions ports are currently connected, and to which channel:
   bool *CHG_EN_subscribed;    //[n_chg]
   uint *CHG_EN_subscribe_ch;  //[n_chg]
   bool *CHG_DIS_subscribed;   //[n_chg]
