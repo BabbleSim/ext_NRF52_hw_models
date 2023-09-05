@@ -7,5 +7,6 @@ src/HW_models/irq_ctrl.c
 src/HW_models/bstest_ticker.c
 src/HW_models/bs_compat.c
 src/HW_models/NHW_DPPI.c
+src/HW_models/NRF_EGU.c
 src/HW_models/NRF_RNG.c
 src/HW_models/weak_stubs.c

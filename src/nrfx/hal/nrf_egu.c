@@ -49,3 +49,31 @@ void nrf_egu_int_disable(NRF_EGU_Type * p_reg, uint32_t mask)
   int i = egu_number_from_ptr(p_reg);
   nrf_egu_regw_sideeffect_INTENCLR(i);
 }
+
+#if defined(DPPI_PRESENT)
+void nrf_egu_subscribe_set(NRF_EGU_Type * p_reg,
+                           nrf_egu_task_t task,
+                           uint8_t        channel)
+{
+  NRFX_ASSERT(p_reg);
+  *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
+          ((uint32_t)channel | NRF_SUBSCRIBE_PUBLISH_ENABLE);
+
+  int i = egu_number_from_ptr(p_reg);
+  int task_nbr = (task - NRF_EGU_TASK_TRIGGER0)/sizeof(uint32_t);
+
+  nrf_egu_regw_sideeffects_SUBSCRIBE_TRIGGER(i, task_nbr);
+}
+
+void nrf_egu_subscribe_clear(NRF_EGU_Type * p_reg,
+                             nrf_egu_task_t task)
+{
+  NRFX_ASSERT(p_reg);
+  *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
+
+  int i = egu_number_from_ptr(p_reg);
+  int task_nbr = (task - NRF_EGU_TASK_TRIGGER0)/sizeof(uint32_t);
+
+  nrf_egu_regw_sideeffects_SUBSCRIBE_TRIGGER(i, task_nbr);
+}
+#endif // defined(DPPI_PRESENT)

@@ -155,8 +155,9 @@ extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #define NRF_TWIS0_NS_BASE          NULL
 #undef NRF_UARTE0_NS_BASE
 #define NRF_UARTE0_NS_BASE         NULL
+extern NRF_EGU_Type NRF_EGU_regs[];
 #undef NRF_EGU0_NS_BASE
-#define NRF_EGU0_NS_BASE           NULL
+#define NRF_EGU0_NS_BASE           (&NRF_EGU_regs[NHW_EGU_NET0])
 #undef NRF_RTC1_NS_BASE
 #define NRF_RTC1_NS_BASE           NULL
 #undef NRF_TIMER1_NS_BASE
@@ -370,30 +371,31 @@ extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #define NRF_COMP_S_BASE             NULL
 #undef NRF_LPCOMP_S_BASE
 #define NRF_LPCOMP_S_BASE           NULL
+extern NRF_EGU_Type NRF_EGU_regs[];
 #undef NRF_EGU0_NS_BASE
-#define NRF_EGU0_NS_BASE            NULL
+#define NRF_EGU0_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP0])
 #undef NRF_EGU0_S_BASE
-#define NRF_EGU0_S_BASE             NULL
+#define NRF_EGU0_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP0])
 #undef NRF_EGU1_NS_BASE
-#define NRF_EGU1_NS_BASE            NULL
+#define NRF_EGU1_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP1])
 #undef NRF_EGU1_S_BASE
-#define NRF_EGU1_S_BASE             NULL
+#define NRF_EGU1_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP1])
 #undef NRF_EGU2_NS_BASE
-#define NRF_EGU2_NS_BASE            NULL
+#define NRF_EGU2_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP2])
 #undef NRF_EGU2_S_BASE
-#define NRF_EGU2_S_BASE             NULL
+#define NRF_EGU2_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP2])
 #undef NRF_EGU3_NS_BASE
-#define NRF_EGU3_NS_BASE            NULL
+#define NRF_EGU3_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP3])
 #undef NRF_EGU3_S_BASE
-#define NRF_EGU3_S_BASE             NULL
+#define NRF_EGU3_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP3])
 #undef NRF_EGU4_NS_BASE
-#define NRF_EGU4_NS_BASE            NULL
+#define NRF_EGU4_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP4])
 #undef NRF_EGU4_S_BASE
-#define NRF_EGU4_S_BASE             NULL
+#define NRF_EGU4_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP4])
 #undef NRF_EGU5_NS_BASE
-#define NRF_EGU5_NS_BASE            NULL
+#define NRF_EGU5_NS_BASE           (&NRF_EGU_regs[NHW_EGU_APP5])
 #undef NRF_EGU5_S_BASE
-#define NRF_EGU5_S_BASE             NULL
+#define NRF_EGU5_S_BASE            (&NRF_EGU_regs[NHW_EGU_APP5])
 #undef NRF_PWM0_NS_BASE
 #define NRF_PWM0_NS_BASE            NULL
 #undef NRF_PWM0_S_BASE

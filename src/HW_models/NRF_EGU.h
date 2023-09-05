@@ -7,16 +7,21 @@
 #ifndef _NRF_HW_MODEL_EGU_H
 #define _NRF_HW_MODEL_EGU_H
 
+#include "bs_types.h"
+#include "NHW_config.h"
+
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-void nrf_egu_regw_sideeffects_TASK_TRIGGER(unsigned int inst, unsigned int task_nbr);
-void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(int inst, unsigned int event_nbr);
-void nrf_egu_regw_sideeffect_INTENSET(int inst);
-void nrf_egu_regw_sideeffect_INTENCLR(int inst);
-void nrf_egu_regw_sideeffect_INTEN(int inst);
+void nrf_egu_regw_sideeffects_TASK_TRIGGER(uint inst, uint task_nbr);
+void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(uint inst, uint event_nbr);
+void nrf_egu_regw_sideeffect_INTENSET(uint inst);
+void nrf_egu_regw_sideeffect_INTENCLR(uint inst);
+void nrf_egu_regw_sideeffect_INTEN(uint inst);
+void nrf_egu_regw_sideeffects_SUBSCRIBE_TRIGGER(uint inst, uint n);
 
+#if (NHW_HAS_PPI)
 /*
  * Trampolines to automatically call from the PPI
  */
@@ -116,6 +121,7 @@ void nrf_egu_5_TASK_TRIGGER_12(void);
 void nrf_egu_5_TASK_TRIGGER_13(void);
 void nrf_egu_5_TASK_TRIGGER_14(void);
 void nrf_egu_5_TASK_TRIGGER_15(void);
+#endif /* (NHW_HAS_PPI) */
 
 #ifdef __cplusplus
 }

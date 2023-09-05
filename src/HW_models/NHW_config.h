@@ -52,6 +52,7 @@
                          {0 , 24}, \
                          {0 , 25}, \
                         } /*Only core,SWI0..5_EGU0_IRQn*/
+#define NHW_EGU_N_EVENTS {16, 16, 16, 16, 16, 16}
 
 #define NHW_GPIOTE_TOTAL_INST 1
 #define NHW_GPIOTE_0 0
@@ -161,6 +162,32 @@
 #define NHW_HAS_PPI  0
 #define NHW_HAS_DPPI 1
 #define NHW_USE_MDK_TYPES 0
+
+#define NHW_EGU_TOTAL_INST 7
+#define NHW_EGU_APP0 0
+#define NHW_EGU_APP1 1
+#define NHW_EGU_APP2 2
+#define NHW_EGU_APP3 3
+#define NHW_EGU_APP4 4
+#define NHW_EGU_APP5 5
+#define NHW_EGU_NET0 5
+#define NHW_EGU_INT_MAP {{0 , 27}, \
+                         {0 , 28}, \
+                         {0 , 29}, \
+                         {0 , 30}, \
+                         {0 , 31}, \
+                         {0 , 32}, \
+                         {1 , 20}, \
+                        }
+                        /* {App, EGU0}
+                         * ..
+                         * {App, EGU5}
+                         * {Network, EGU0}
+                         * */
+#define NHW_EGU_DPPI_MAP {0, 0, 0, 0, 0, 0,\
+                          1}
+#define NHW_EGU_N_EVENTS {16, 16, 16, 16, 16, 16,\
+                          16}
 
 #define NHW_DPPI_TOTAL_INST 2
 #define NHW_DPPI_APP_0 0

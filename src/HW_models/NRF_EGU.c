@@ -7,46 +7,104 @@
 /*
  * EGU - Event generator unit
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/egu.html?cp=5_1_0_5_6
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/egu.html#concept_x4j_fx1_lr
+ *
+ * This file provides the implementation of the EGU peripherals,
+ * and instantiates N of them (and initializes them at startup and frees them on exit),
+ * as described in the configuration (NHW_config.h)
+ *
+ * Each EGU instance has a configurable number of tasks/events (up to 32)
  */
 
 #include <string.h>
 #include "bs_tracing.h"
+#include "bs_oswrap.h"
 #include "irq_ctrl.h"
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
+#include "NHW_xPPI.h"
 #include "NRF_EGU.h"
-#include "NRF_PPI.h"
 #include "nsi_tasks.h"
 
-#define N_EGU NHW_EGU_TOTAL_INST
-#define N_EGU_EVENTS 16
-NRF_EGU_Type NRF_EGU_regs[N_EGU];
-static bool egu_int_line[N_EGU] = {false}; //Is the EGU currently driving this interrupt line high
 
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_egu_irq_map[NHW_EGU_TOTAL_INST] = NHW_EGU_INT_MAP;
+struct egu_status {
+  NRF_EGU_Type *NRF_EGU_regs;
+  uint n_events;  /* Number of events configured in this EGU instance */
+
+#if (NHW_HAS_DPPI)
+  uint dppi_map;   //To which DPPI instance are this EGU subscribe&publish ports connected to
+  //Which of the subscription ports are currently connected, and to which channel:
+  bool* subscribed;   //[n_events]
+  uint* subscribed_ch;//[n_events]
+#endif
+};
+
+static struct egu_status nhw_egu_st[NHW_EGU_TOTAL_INST];
+NRF_EGU_Type NRF_EGU_regs[NHW_EGU_TOTAL_INST];
 
 /**
  * Initialize the EGU model
  */
 static void nrf_egu_init(void) {
-  memset(NRF_EGU_regs, 0, sizeof(NRF_EGU_Type)*N_EGU);
-  memset(egu_int_line, 0, sizeof(egu_int_line));
+#if (NHW_HAS_DPPI)
+  /* Mapping of peripheral instance to DPPI instance */
+  uint nhw_egu_dppi_map[NHW_EGU_TOTAL_INST] = NHW_EGU_DPPI_MAP;
+#endif
+
+  uint nhw_egu_n_events[NHW_EGU_TOTAL_INST] = NHW_EGU_N_EVENTS;
+
+  memset(NRF_EGU_regs, 0, sizeof(NRF_EGU_Type) * NHW_EGU_TOTAL_INST);
+
+  for (int i = 0; i< NHW_EGU_TOTAL_INST; i++) {
+    nhw_egu_st[i].NRF_EGU_regs = &NRF_EGU_regs[i];
+    nhw_egu_st[i].n_events = nhw_egu_n_events[i];
+
+#if (NHW_HAS_DPPI)
+    nhw_egu_st[i].dppi_map = nhw_egu_dppi_map[i];
+    nhw_egu_st[i].subscribed = (bool*)bs_calloc(nhw_egu_n_events[i], sizeof(bool));
+    nhw_egu_st[i].subscribed_ch = (uint*)bs_calloc(nhw_egu_n_events[i], sizeof(uint));
+#endif
+  }
 }
 
 NSI_TASK(nrf_egu_init, HW_INIT, 100);
+
+#if (NHW_HAS_DPPI)
+/*
+ * Free all EGU instances resources before program exit
+ */
+static void nhw_egu_free(void)
+{
+  for (int i = 0; i< NHW_EGU_TOTAL_INST; i++) {
+    free(nhw_egu_st[i].subscribed);
+    nhw_egu_st[i].subscribed = NULL;
+
+    free(nhw_egu_st[i].subscribed_ch);
+    nhw_egu_st[i].subscribed_ch = NULL;
+  }
+}
+
+NSI_TASK(nhw_egu_free, ON_EXIT_PRE, 100);
+#endif /* (NHW_HAS_DPPI) */
 
 /**
  * Check if the interrupt line for EGU instance needs to be raised or lowered
  * (as a result of either the interrupt mask or the event register having
  * been modified)
  */
-static void nrf_egu_eval_interrupt(int inst){
-  NRF_EGU_Type *EGU_regs = &NRF_EGU_regs[inst];
+static void nrf_egu_eval_interrupt(uint inst)
+{
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_egu_irq_map[NHW_EGU_TOTAL_INST] = NHW_EGU_INT_MAP;
+  static bool egu_int_line[NHW_EGU_TOTAL_INST] = {false}; //Is the EGU currently driving this interrupt line high
+
+  struct egu_status *this = &nhw_egu_st[inst];
+
+  NRF_EGU_Type *EGU_regs = this->NRF_EGU_regs;
   bool new_egu_int_line = false;
 
-  for (int i = 0; i < N_EGU_EVENTS; i++) {
+  for (int i = 0; i < this->n_events; i++) {
     int int_mask = (EGU_regs->INTEN >> i) & 1;
     if (int_mask && EGU_regs->EVENTS_TRIGGERED[i]) {
       new_egu_int_line = true;
@@ -56,31 +114,33 @@ static void nrf_egu_eval_interrupt(int inst){
   if (new_egu_int_line && (egu_int_line[inst] == false)) {
     egu_int_line[inst] = true;
     hw_irq_ctrl_raise_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
-                                      nhw_egu_irq_map[inst].int_nbr);
+                                     nhw_egu_irq_map[inst].int_nbr);
   } else if ((new_egu_int_line == false) && egu_int_line[inst]) {
     egu_int_line[inst] = false;
     hw_irq_ctrl_lower_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
-                                      nhw_egu_irq_map[inst].int_nbr);
+                                     nhw_egu_irq_map[inst].int_nbr);
   }
 }
 
-static inline void nrf_egu_check_inst_event(uint egu_inst, uint nbr, const char *type){
-  if ((egu_inst >= N_EGU) || (nbr >= N_EGU_EVENTS) ) {
-    bs_trace_error_time_line("Attempted to access non existent %s %u in EGU instance %u\n", type, nbr, egu_inst);
+static inline void nrf_egu_check_inst_event(uint egu_inst, uint nbr, const char *type)
+{
+  if ((egu_inst >= NHW_EGU_TOTAL_INST) || (nbr >= nhw_egu_st[egu_inst].n_events) ) {
+    bs_trace_error_time_line("Attempted to access non existent %s %u (>= %u) in EGU instance %u\n",
+                             type, nbr, nhw_egu_st[egu_inst].n_events, egu_inst);
   }
 }
 
-/**
- * Do whatever is needed after the task has been triggered
- */
-void nrf_egu_TASK_TRIGGER(uint inst, uint task_nbr){
-  nrf_egu_check_inst_event(inst, task_nbr, "task");
+static void nrf_egu_signal_EVENTS_TRIGGERED(uint inst, uint event_nbr)
+{
+  struct egu_status *this = &nhw_egu_st[inst];
+  NRF_EGU_Type *EGU_regs = this->NRF_EGU_regs;
 
-  NRF_EGU_regs[inst].EVENTS_TRIGGERED[task_nbr] = 1;
+  EGU_regs->EVENTS_TRIGGERED[event_nbr] = 1;
   nrf_egu_eval_interrupt(inst);
 
+#if (NHW_HAS_PPI)
   { //Signal the PPI
-    const ppi_event_types_t PPI_EGU_EVENTS_base[N_EGU]  = {
+    const ppi_event_types_t PPI_EGU_EVENTS_base[NHW_EGU_TOTAL_INST] = {
       EGU0_EVENTS_TRIGGERED_0,
       EGU1_EVENTS_TRIGGERED_0,
       EGU2_EVENTS_TRIGGERED_0,
@@ -89,11 +149,45 @@ void nrf_egu_TASK_TRIGGER(uint inst, uint task_nbr){
       EGU5_EVENTS_TRIGGERED_0,
     }; //The events for each EGU instance are assumed consecutive
 
-    nrf_ppi_event(PPI_EGU_EVENTS_base[inst]+ task_nbr);
+    nrf_ppi_event(PPI_EGU_EVENTS_base[inst]+ event_nbr);
   }
+#elif (NHW_HAS_DPPI)
+  nhw_dppi_event_signal_if(this->dppi_map,
+                           EGU_regs->PUBLISH_TRIGGERED[event_nbr]);
+#endif
 }
 
-void nrf_egu_regw_sideeffect_INTENSET(int inst) {
+/**
+ * Do whatever is needed after the task has been triggered
+ */
+void nrf_egu_TASK_TRIGGER(uint inst, uint task_nbr)
+{
+  nrf_egu_check_inst_event(inst, task_nbr, "task");
+  nrf_egu_signal_EVENTS_TRIGGERED(inst, task_nbr);
+}
+
+#if (NHW_HAS_DPPI)
+static void nhw_egu_tasktrigger_wrap(void* param) {
+  unsigned int inst = (uintptr_t)param >> 16;
+  uint n = (uintptr_t)param & 0xFFFF;
+  nrf_egu_TASK_TRIGGER(inst, n);
+}
+
+void nrf_egu_regw_sideeffects_SUBSCRIBE_TRIGGER(uint inst, uint n) {
+  struct egu_status *this = &nhw_egu_st[inst];
+
+  nrf_egu_check_inst_event(inst, n, "subscribe");
+
+  nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
+                                       this->NRF_EGU_regs->SUBSCRIBE_TRIGGER[n],
+                                       &this->subscribed[n],
+                                       &this->subscribed_ch[n],
+                                       nhw_egu_tasktrigger_wrap,
+                                       (void*)((inst << 16) + n));
+}
+#endif /* NHW_HAS_DPPI */
+
+void nrf_egu_regw_sideeffect_INTENSET(uint inst) {
   NRF_EGU_Type *EGU_regs = &NRF_EGU_regs[inst];
   if ( EGU_regs->INTENSET ) {
     EGU_regs->INTEN   |= EGU_regs->INTENSET;
@@ -103,7 +197,7 @@ void nrf_egu_regw_sideeffect_INTENSET(int inst) {
   }
 }
 
-void nrf_egu_regw_sideeffect_INTENCLR(int inst) {
+void nrf_egu_regw_sideeffect_INTENCLR(uint inst) {
   NRF_EGU_Type *EGU_regs = &NRF_EGU_regs[inst];
   if ( EGU_regs->INTENCLR ) {
     EGU_regs->INTEN   &= ~EGU_regs->INTENCLR;
@@ -114,13 +208,13 @@ void nrf_egu_regw_sideeffect_INTENCLR(int inst) {
   }
 }
 
-void nrf_egu_regw_sideeffect_INTEN(int inst) {
+void nrf_egu_regw_sideeffect_INTEN(uint inst) {
   NRF_EGU_Type *EGU_regs = &NRF_EGU_regs[inst];
   EGU_regs->INTENSET = EGU_regs->INTEN;
   nrf_egu_eval_interrupt(inst);
 }
 
-void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(int inst, uint event_nbr) {
+void nrf_egu_regw_sideeffect_EVENTS_TRIGGERED(uint inst, uint event_nbr) {
   nrf_egu_check_inst_event(inst, event_nbr, "event");
   nrf_egu_eval_interrupt(inst);
 }
