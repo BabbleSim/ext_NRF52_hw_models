@@ -29,8 +29,6 @@ void nrf_clock_reqw_sideeffects_TASKS_CTSTOP(void);
 /* Side-effecting function when any event register is written: */
 void nrf_clock_regw_sideeffects_EVENTS_all(void);
 
-#define LF_CLOCK_PERIOD  15625 /*in a fixed point format with 9 bits per us, the LF clock period*/
-
 #ifdef __cplusplus
 }
 #endif

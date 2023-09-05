@@ -139,8 +139,11 @@ extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #define NRF_DPPIC_NS_BASE          (&NRF_DPPIC_regs[NHW_DPPI_NET_0])
 #undef NRF_TEMP_NS_BASE
 #define NRF_TEMP_NS_BASE           NULL
+extern NRF_RTC_Type NRF_RTC_regs[];
 #undef NRF_RTC0_NS_BASE
-#define NRF_RTC0_NS_BASE           NULL
+#define NRF_RTC0_NS_BASE           (&NRF_RTC_regs[NHW_RTC_NET0])
+#undef NRF_RTC1_NS_BASE
+#define NRF_RTC1_NS_BASE           (&NRF_RTC_regs[NHW_RTC_NET1])
 #undef NRF_IPC_NS_BASE
 #define NRF_IPC_NS_BASE            NULL
 #undef NRF_SPIM0_NS_BASE
@@ -156,8 +159,6 @@ extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 extern NRF_EGU_Type NRF_EGU_regs[];
 #undef NRF_EGU0_NS_BASE
 #define NRF_EGU0_NS_BASE           (&NRF_EGU_regs[NHW_EGU_NET0])
-#undef NRF_RTC1_NS_BASE
-#define NRF_RTC1_NS_BASE           NULL
 extern NRF_TIMER_Type NRF_TIMER_regs[];
 #undef NRF_TIMER0_NS_BASE
 #define NRF_TIMER0_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET0])
@@ -344,14 +345,15 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #define NRF_TIMER2_NS_BASE          (&NRF_TIMER_regs[NHW_TIMER_APP2])
 #undef NRF_TIMER2_S_BASE
 #define NRF_TIMER2_S_BASE           (&NRF_TIMER_regs[NHW_TIMER_APP2])
+extern NRF_RTC_Type NRF_RTC_regs[];
 #undef NRF_RTC0_NS_BASE
-#define NRF_RTC0_NS_BASE            NULL
+#define NRF_RTC0_NS_BASE            (&NRF_RTC_regs[NHW_RTC_APP0])
 #undef NRF_RTC0_S_BASE
-#define NRF_RTC0_S_BASE             NULL
+#define NRF_RTC0_S_BASE             (&NRF_RTC_regs[NHW_RTC_APP0])
 #undef NRF_RTC1_NS_BASE
-#define NRF_RTC1_NS_BASE            NULL
+#define NRF_RTC1_NS_BASE            (&NRF_RTC_regs[NHW_RTC_APP1])
 #undef NRF_RTC1_S_BASE
-#define NRF_RTC1_S_BASE             NULL
+#define NRF_RTC1_S_BASE             (&NRF_RTC_regs[NHW_RTC_APP1])
 extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #undef NRF_DPPIC_NS_BASE
 #define NRF_DPPIC_NS_BASE           (&NRF_DPPIC_regs[NHW_DPPI_APP_0])

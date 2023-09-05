@@ -521,6 +521,424 @@ typedef struct {                                /*!< (@ 0x41009000) RNG_NS Struc
 #define RNG_VALUE_VALUE_Pos (0UL) /*!< Position of VALUE field. */
 #define RNG_VALUE_VALUE_Msk (0xFFUL << RNG_VALUE_VALUE_Pos) /*!< Bit mask of VALUE field. */
 
+/* =========================================================================================================================== */
+/* ================                                          RTC                                              ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Real-time counter 0 (RTC0_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x41011000) RTC0_NS Structure                                          */
+  __OM  uint32_t  TASKS_START;                  /*!< (@ 0x00000000) Start RTC counter                                          */
+  __OM  uint32_t  TASKS_STOP;                   /*!< (@ 0x00000004) Stop RTC counter                                           */
+  __OM  uint32_t  TASKS_CLEAR;                  /*!< (@ 0x00000008) Clear RTC counter                                          */
+  __OM  uint32_t  TASKS_TRIGOVRFLW;             /*!< (@ 0x0000000C) Set counter to 0xFFFFF0                                    */
+  __IM  uint32_t  RESERVED[12];
+  __OM  uint32_t  TASKS_CAPTURE[4];             /*!< (@ 0x00000040) Description collection: Capture RTC counter to
+                                                                    CC[n] register                                             */
+  __IM  uint32_t  RESERVED1[12];
+  __IOM uint32_t  SUBSCRIBE_START;              /*!< (@ 0x00000080) Subscribe configuration for task START                     */
+  __IOM uint32_t  SUBSCRIBE_STOP;               /*!< (@ 0x00000084) Subscribe configuration for task STOP                      */
+  __IOM uint32_t  SUBSCRIBE_CLEAR;              /*!< (@ 0x00000088) Subscribe configuration for task CLEAR                     */
+  __IOM uint32_t  SUBSCRIBE_TRIGOVRFLW;         /*!< (@ 0x0000008C) Subscribe configuration for task TRIGOVRFLW                */
+  __IM  uint32_t  RESERVED2[12];
+  __IOM uint32_t  SUBSCRIBE_CAPTURE[4];         /*!< (@ 0x000000C0) Description collection: Subscribe configuration
+                                                                    for task CAPTURE[n]                                        */
+  __IM  uint32_t  RESERVED3[12];
+  __IOM uint32_t  EVENTS_TICK;                  /*!< (@ 0x00000100) Event on counter increment                                 */
+  __IOM uint32_t  EVENTS_OVRFLW;                /*!< (@ 0x00000104) Event on counter overflow                                  */
+  __IM  uint32_t  RESERVED4[14];
+  __IOM uint32_t  EVENTS_COMPARE[4];            /*!< (@ 0x00000140) Description collection: Compare event on CC[n]
+                                                                    match                                                      */
+  __IM  uint32_t  RESERVED5[12];
+  __IOM uint32_t  PUBLISH_TICK;                 /*!< (@ 0x00000180) Publish configuration for event TICK                       */
+  __IOM uint32_t  PUBLISH_OVRFLW;               /*!< (@ 0x00000184) Publish configuration for event OVRFLW                     */
+  __IM  uint32_t  RESERVED6[14];
+  __IOM uint32_t  PUBLISH_COMPARE[4];           /*!< (@ 0x000001C0) Description collection: Publish configuration
+                                                                    for event COMPARE[n]                                       */
+  __IM  uint32_t  RESERVED7[12];
+  __IOM uint32_t  SHORTS;                       /*!< (@ 0x00000200) Shortcuts between local events and tasks                   */
+  __IM  uint32_t  RESERVED8[64];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED9[13];
+  __IOM uint32_t  EVTEN;                        /*!< (@ 0x00000340) Enable or disable event routing                            */
+  __IOM uint32_t  EVTENSET;                     /*!< (@ 0x00000344) Enable event routing                                       */
+  __IOM uint32_t  EVTENCLR;                     /*!< (@ 0x00000348) Disable event routing                                      */
+  __IM  uint32_t  RESERVED10[110];
+  __IM  uint32_t  COUNTER;                      /*!< (@ 0x00000504) Current counter value                                      */
+  __IOM uint32_t  PRESCALER;                    /*!< (@ 0x00000508) 12-bit prescaler for counter frequency (32768
+                                                                    / (PRESCALER + 1)). Must be written when
+                                                                    RTC is stopped.                                            */
+  __IM  uint32_t  RESERVED11[13];
+  __IOM uint32_t  CC[4];                        /*!< (@ 0x00000540) Description collection: Compare register n                 */
+} NRF_RTC_Type;                                 /*!< Size = 1360 (0x550)                                                       */
+
+
+/* Peripheral: RTC */
+/* Description: Real-time counter 0 */
+
+/* Register: RTC_TASKS_START */
+/* Description: Start RTC counter */
+
+/* Bit 0 : Start RTC counter */
+#define RTC_TASKS_START_TASKS_START_Pos (0UL) /*!< Position of TASKS_START field. */
+#define RTC_TASKS_START_TASKS_START_Msk (0x1UL << RTC_TASKS_START_TASKS_START_Pos) /*!< Bit mask of TASKS_START field. */
+#define RTC_TASKS_START_TASKS_START_Trigger (1UL) /*!< Trigger task */
+
+/* Register: RTC_TASKS_STOP */
+/* Description: Stop RTC counter */
+
+/* Bit 0 : Stop RTC counter */
+#define RTC_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
+#define RTC_TASKS_STOP_TASKS_STOP_Msk (0x1UL << RTC_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
+#define RTC_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: RTC_TASKS_CLEAR */
+/* Description: Clear RTC counter */
+
+/* Bit 0 : Clear RTC counter */
+#define RTC_TASKS_CLEAR_TASKS_CLEAR_Pos (0UL) /*!< Position of TASKS_CLEAR field. */
+#define RTC_TASKS_CLEAR_TASKS_CLEAR_Msk (0x1UL << RTC_TASKS_CLEAR_TASKS_CLEAR_Pos) /*!< Bit mask of TASKS_CLEAR field. */
+#define RTC_TASKS_CLEAR_TASKS_CLEAR_Trigger (1UL) /*!< Trigger task */
+
+/* Register: RTC_TASKS_TRIGOVRFLW */
+/* Description: Set counter to 0xFFFFF0 */
+
+/* Bit 0 : Set counter to 0xFFFFF0 */
+#define RTC_TASKS_TRIGOVRFLW_TASKS_TRIGOVRFLW_Pos (0UL) /*!< Position of TASKS_TRIGOVRFLW field. */
+#define RTC_TASKS_TRIGOVRFLW_TASKS_TRIGOVRFLW_Msk (0x1UL << RTC_TASKS_TRIGOVRFLW_TASKS_TRIGOVRFLW_Pos) /*!< Bit mask of TASKS_TRIGOVRFLW field. */
+#define RTC_TASKS_TRIGOVRFLW_TASKS_TRIGOVRFLW_Trigger (1UL) /*!< Trigger task */
+
+/* Register: RTC_TASKS_CAPTURE */
+/* Description: Description collection: Capture RTC counter to CC[n] register */
+
+/* Bit 0 : Capture RTC counter to CC[n] register */
+#define RTC_TASKS_CAPTURE_TASKS_CAPTURE_Pos (0UL) /*!< Position of TASKS_CAPTURE field. */
+#define RTC_TASKS_CAPTURE_TASKS_CAPTURE_Msk (0x1UL << RTC_TASKS_CAPTURE_TASKS_CAPTURE_Pos) /*!< Bit mask of TASKS_CAPTURE field. */
+#define RTC_TASKS_CAPTURE_TASKS_CAPTURE_Trigger (1UL) /*!< Trigger task */
+
+/* Register: RTC_SUBSCRIBE_START */
+/* Description: Subscribe configuration for task START */
+
+/* Bit 31 :   */
+#define RTC_SUBSCRIBE_START_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_SUBSCRIBE_START_EN_Msk (0x1UL << RTC_SUBSCRIBE_START_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_SUBSCRIBE_START_EN_Disabled (0UL) /*!< Disable subscription */
+#define RTC_SUBSCRIBE_START_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task START will subscribe to */
+#define RTC_SUBSCRIBE_START_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_SUBSCRIBE_START_CHIDX_Msk (0xFFUL << RTC_SUBSCRIBE_START_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_SUBSCRIBE_STOP */
+/* Description: Subscribe configuration for task STOP */
+
+/* Bit 31 :   */
+#define RTC_SUBSCRIBE_STOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_SUBSCRIBE_STOP_EN_Msk (0x1UL << RTC_SUBSCRIBE_STOP_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_SUBSCRIBE_STOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define RTC_SUBSCRIBE_STOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOP will subscribe to */
+#define RTC_SUBSCRIBE_STOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_SUBSCRIBE_STOP_CHIDX_Msk (0xFFUL << RTC_SUBSCRIBE_STOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_SUBSCRIBE_CLEAR */
+/* Description: Subscribe configuration for task CLEAR */
+
+/* Bit 31 :   */
+#define RTC_SUBSCRIBE_CLEAR_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_SUBSCRIBE_CLEAR_EN_Msk (0x1UL << RTC_SUBSCRIBE_CLEAR_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_SUBSCRIBE_CLEAR_EN_Disabled (0UL) /*!< Disable subscription */
+#define RTC_SUBSCRIBE_CLEAR_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CLEAR will subscribe to */
+#define RTC_SUBSCRIBE_CLEAR_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_SUBSCRIBE_CLEAR_CHIDX_Msk (0xFFUL << RTC_SUBSCRIBE_CLEAR_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_SUBSCRIBE_TRIGOVRFLW */
+/* Description: Subscribe configuration for task TRIGOVRFLW */
+
+/* Bit 31 :   */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_EN_Msk (0x1UL << RTC_SUBSCRIBE_TRIGOVRFLW_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_EN_Disabled (0UL) /*!< Disable subscription */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task TRIGOVRFLW will subscribe to */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_SUBSCRIBE_TRIGOVRFLW_CHIDX_Msk (0xFFUL << RTC_SUBSCRIBE_TRIGOVRFLW_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_SUBSCRIBE_CAPTURE */
+/* Description: Description collection: Subscribe configuration for task CAPTURE[n] */
+
+/* Bit 31 :   */
+#define RTC_SUBSCRIBE_CAPTURE_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_SUBSCRIBE_CAPTURE_EN_Msk (0x1UL << RTC_SUBSCRIBE_CAPTURE_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_SUBSCRIBE_CAPTURE_EN_Disabled (0UL) /*!< Disable subscription */
+#define RTC_SUBSCRIBE_CAPTURE_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CAPTURE[n] will subscribe to */
+#define RTC_SUBSCRIBE_CAPTURE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_SUBSCRIBE_CAPTURE_CHIDX_Msk (0xFFUL << RTC_SUBSCRIBE_CAPTURE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_EVENTS_TICK */
+/* Description: Event on counter increment */
+
+/* Bit 0 : Event on counter increment */
+#define RTC_EVENTS_TICK_EVENTS_TICK_Pos (0UL) /*!< Position of EVENTS_TICK field. */
+#define RTC_EVENTS_TICK_EVENTS_TICK_Msk (0x1UL << RTC_EVENTS_TICK_EVENTS_TICK_Pos) /*!< Bit mask of EVENTS_TICK field. */
+#define RTC_EVENTS_TICK_EVENTS_TICK_NotGenerated (0UL) /*!< Event not generated */
+#define RTC_EVENTS_TICK_EVENTS_TICK_Generated (1UL) /*!< Event generated */
+
+/* Register: RTC_EVENTS_OVRFLW */
+/* Description: Event on counter overflow */
+
+/* Bit 0 : Event on counter overflow */
+#define RTC_EVENTS_OVRFLW_EVENTS_OVRFLW_Pos (0UL) /*!< Position of EVENTS_OVRFLW field. */
+#define RTC_EVENTS_OVRFLW_EVENTS_OVRFLW_Msk (0x1UL << RTC_EVENTS_OVRFLW_EVENTS_OVRFLW_Pos) /*!< Bit mask of EVENTS_OVRFLW field. */
+#define RTC_EVENTS_OVRFLW_EVENTS_OVRFLW_NotGenerated (0UL) /*!< Event not generated */
+#define RTC_EVENTS_OVRFLW_EVENTS_OVRFLW_Generated (1UL) /*!< Event generated */
+
+/* Register: RTC_EVENTS_COMPARE */
+/* Description: Description collection: Compare event on CC[n] match */
+
+/* Bit 0 : Compare event on CC[n] match */
+#define RTC_EVENTS_COMPARE_EVENTS_COMPARE_Pos (0UL) /*!< Position of EVENTS_COMPARE field. */
+#define RTC_EVENTS_COMPARE_EVENTS_COMPARE_Msk (0x1UL << RTC_EVENTS_COMPARE_EVENTS_COMPARE_Pos) /*!< Bit mask of EVENTS_COMPARE field. */
+#define RTC_EVENTS_COMPARE_EVENTS_COMPARE_NotGenerated (0UL) /*!< Event not generated */
+#define RTC_EVENTS_COMPARE_EVENTS_COMPARE_Generated (1UL) /*!< Event generated */
+
+/* Register: RTC_PUBLISH_TICK */
+/* Description: Publish configuration for event TICK */
+
+/* Bit 31 :   */
+#define RTC_PUBLISH_TICK_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_PUBLISH_TICK_EN_Msk (0x1UL << RTC_PUBLISH_TICK_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_PUBLISH_TICK_EN_Disabled (0UL) /*!< Disable publishing */
+#define RTC_PUBLISH_TICK_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event TICK will publish to. */
+#define RTC_PUBLISH_TICK_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_PUBLISH_TICK_CHIDX_Msk (0xFFUL << RTC_PUBLISH_TICK_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_PUBLISH_OVRFLW */
+/* Description: Publish configuration for event OVRFLW */
+
+/* Bit 31 :   */
+#define RTC_PUBLISH_OVRFLW_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_PUBLISH_OVRFLW_EN_Msk (0x1UL << RTC_PUBLISH_OVRFLW_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_PUBLISH_OVRFLW_EN_Disabled (0UL) /*!< Disable publishing */
+#define RTC_PUBLISH_OVRFLW_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event OVRFLW will publish to. */
+#define RTC_PUBLISH_OVRFLW_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_PUBLISH_OVRFLW_CHIDX_Msk (0xFFUL << RTC_PUBLISH_OVRFLW_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_PUBLISH_COMPARE */
+/* Description: Description collection: Publish configuration for event COMPARE[n] */
+
+/* Bit 31 :   */
+#define RTC_PUBLISH_COMPARE_EN_Pos (31UL) /*!< Position of EN field. */
+#define RTC_PUBLISH_COMPARE_EN_Msk (0x1UL << RTC_PUBLISH_COMPARE_EN_Pos) /*!< Bit mask of EN field. */
+#define RTC_PUBLISH_COMPARE_EN_Disabled (0UL) /*!< Disable publishing */
+#define RTC_PUBLISH_COMPARE_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event COMPARE[n] will publish to. */
+#define RTC_PUBLISH_COMPARE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define RTC_PUBLISH_COMPARE_CHIDX_Msk (0xFFUL << RTC_PUBLISH_COMPARE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: RTC_SHORTS */
+/* Description: Shortcuts between local events and tasks */
+
+/* Bit 3 : Shortcut between event COMPARE[3] and task CLEAR */
+#define RTC_SHORTS_COMPARE3_CLEAR_Pos (3UL) /*!< Position of COMPARE3_CLEAR field. */
+#define RTC_SHORTS_COMPARE3_CLEAR_Msk (0x1UL << RTC_SHORTS_COMPARE3_CLEAR_Pos) /*!< Bit mask of COMPARE3_CLEAR field. */
+#define RTC_SHORTS_COMPARE3_CLEAR_Disabled (0UL) /*!< Disable shortcut */
+#define RTC_SHORTS_COMPARE3_CLEAR_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 0 : Shortcut between event COMPARE[0] and task CLEAR */
+#define RTC_SHORTS_COMPARE0_CLEAR_Pos (0UL) /*!< Position of COMPARE0_CLEAR field. */
+#define RTC_SHORTS_COMPARE0_CLEAR_Msk (0x1UL << RTC_SHORTS_COMPARE0_CLEAR_Pos) /*!< Bit mask of COMPARE0_CLEAR field. */
+#define RTC_SHORTS_COMPARE0_CLEAR_Disabled (0UL) /*!< Disable shortcut */
+#define RTC_SHORTS_COMPARE0_CLEAR_Enabled (1UL) /*!< Enable shortcut */
+
+/* Register: RTC_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 19 : Write '1' to enable interrupt for event COMPARE[3] */
+#define RTC_INTENSET_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
+#define RTC_INTENSET_COMPARE3_Msk (0x1UL << RTC_INTENSET_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
+#define RTC_INTENSET_COMPARE3_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENSET_COMPARE3_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENSET_COMPARE3_Set (1UL) /*!< Enable */
+
+/* Bit 16 : Write '1' to enable interrupt for event COMPARE[0] */
+#define RTC_INTENSET_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define RTC_INTENSET_COMPARE0_Msk (0x1UL << RTC_INTENSET_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define RTC_INTENSET_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENSET_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENSET_COMPARE0_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable interrupt for event OVRFLW */
+#define RTC_INTENSET_OVRFLW_Pos (1UL) /*!< Position of OVRFLW field. */
+#define RTC_INTENSET_OVRFLW_Msk (0x1UL << RTC_INTENSET_OVRFLW_Pos) /*!< Bit mask of OVRFLW field. */
+#define RTC_INTENSET_OVRFLW_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENSET_OVRFLW_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENSET_OVRFLW_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event TICK */
+#define RTC_INTENSET_TICK_Pos (0UL) /*!< Position of TICK field. */
+#define RTC_INTENSET_TICK_Msk (0x1UL << RTC_INTENSET_TICK_Pos) /*!< Bit mask of TICK field. */
+#define RTC_INTENSET_TICK_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENSET_TICK_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENSET_TICK_Set (1UL) /*!< Enable */
+
+/* Register: RTC_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 19 : Write '1' to disable interrupt for event COMPARE[3] */
+#define RTC_INTENCLR_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
+#define RTC_INTENCLR_COMPARE3_Msk (0x1UL << RTC_INTENCLR_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
+#define RTC_INTENCLR_COMPARE3_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENCLR_COMPARE3_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENCLR_COMPARE3_Clear (1UL) /*!< Disable */
+
+/* Bit 16 : Write '1' to disable interrupt for event COMPARE[0] */
+#define RTC_INTENCLR_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define RTC_INTENCLR_COMPARE0_Msk (0x1UL << RTC_INTENCLR_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define RTC_INTENCLR_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENCLR_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENCLR_COMPARE0_Clear (1UL) /*!< Disable */
+
+/* Bit 1 : Write '1' to disable interrupt for event OVRFLW */
+#define RTC_INTENCLR_OVRFLW_Pos (1UL) /*!< Position of OVRFLW field. */
+#define RTC_INTENCLR_OVRFLW_Msk (0x1UL << RTC_INTENCLR_OVRFLW_Pos) /*!< Bit mask of OVRFLW field. */
+#define RTC_INTENCLR_OVRFLW_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENCLR_OVRFLW_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENCLR_OVRFLW_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable interrupt for event TICK */
+#define RTC_INTENCLR_TICK_Pos (0UL) /*!< Position of TICK field. */
+#define RTC_INTENCLR_TICK_Msk (0x1UL << RTC_INTENCLR_TICK_Pos) /*!< Bit mask of TICK field. */
+#define RTC_INTENCLR_TICK_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_INTENCLR_TICK_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_INTENCLR_TICK_Clear (1UL) /*!< Disable */
+
+/* Register: RTC_EVTEN */
+/* Description: Enable or disable event routing */
+
+/* Bit 19 : Enable or disable event routing for event COMPARE[3] */
+#define RTC_EVTEN_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
+#define RTC_EVTEN_COMPARE3_Msk (0x1UL << RTC_EVTEN_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
+#define RTC_EVTEN_COMPARE3_Disabled (0UL) /*!< Disable */
+#define RTC_EVTEN_COMPARE3_Enabled (1UL) /*!< Enable */
+
+/* Bit 16 : Enable or disable event routing for event COMPARE[0] */
+#define RTC_EVTEN_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define RTC_EVTEN_COMPARE0_Msk (0x1UL << RTC_EVTEN_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define RTC_EVTEN_COMPARE0_Disabled (0UL) /*!< Disable */
+#define RTC_EVTEN_COMPARE0_Enabled (1UL) /*!< Enable */
+
+/* Bit 1 : Enable or disable event routing for event OVRFLW */
+#define RTC_EVTEN_OVRFLW_Pos (1UL) /*!< Position of OVRFLW field. */
+#define RTC_EVTEN_OVRFLW_Msk (0x1UL << RTC_EVTEN_OVRFLW_Pos) /*!< Bit mask of OVRFLW field. */
+#define RTC_EVTEN_OVRFLW_Disabled (0UL) /*!< Disable */
+#define RTC_EVTEN_OVRFLW_Enabled (1UL) /*!< Enable */
+
+/* Bit 0 : Enable or disable event routing for event TICK */
+#define RTC_EVTEN_TICK_Pos (0UL) /*!< Position of TICK field. */
+#define RTC_EVTEN_TICK_Msk (0x1UL << RTC_EVTEN_TICK_Pos) /*!< Bit mask of TICK field. */
+#define RTC_EVTEN_TICK_Disabled (0UL) /*!< Disable */
+#define RTC_EVTEN_TICK_Enabled (1UL) /*!< Enable */
+
+/* Register: RTC_EVTENSET */
+/* Description: Enable event routing */
+
+/* Bit 19 : Write '1' to enable event routing for event COMPARE[3] */
+#define RTC_EVTENSET_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
+#define RTC_EVTENSET_COMPARE3_Msk (0x1UL << RTC_EVTENSET_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
+#define RTC_EVTENSET_COMPARE3_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENSET_COMPARE3_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENSET_COMPARE3_Set (1UL) /*!< Enable */
+
+/* Bit 16 : Write '1' to enable event routing for event COMPARE[0] */
+#define RTC_EVTENSET_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define RTC_EVTENSET_COMPARE0_Msk (0x1UL << RTC_EVTENSET_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define RTC_EVTENSET_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENSET_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENSET_COMPARE0_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable event routing for event OVRFLW */
+#define RTC_EVTENSET_OVRFLW_Pos (1UL) /*!< Position of OVRFLW field. */
+#define RTC_EVTENSET_OVRFLW_Msk (0x1UL << RTC_EVTENSET_OVRFLW_Pos) /*!< Bit mask of OVRFLW field. */
+#define RTC_EVTENSET_OVRFLW_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENSET_OVRFLW_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENSET_OVRFLW_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable event routing for event TICK */
+#define RTC_EVTENSET_TICK_Pos (0UL) /*!< Position of TICK field. */
+#define RTC_EVTENSET_TICK_Msk (0x1UL << RTC_EVTENSET_TICK_Pos) /*!< Bit mask of TICK field. */
+#define RTC_EVTENSET_TICK_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENSET_TICK_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENSET_TICK_Set (1UL) /*!< Enable */
+
+/* Register: RTC_EVTENCLR */
+/* Description: Disable event routing */
+
+/* Bit 19 : Write '1' to disable event routing for event COMPARE[3] */
+#define RTC_EVTENCLR_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
+#define RTC_EVTENCLR_COMPARE3_Msk (0x1UL << RTC_EVTENCLR_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
+#define RTC_EVTENCLR_COMPARE3_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENCLR_COMPARE3_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENCLR_COMPARE3_Clear (1UL) /*!< Disable */
+
+/* Bit 16 : Write '1' to disable event routing for event COMPARE[0] */
+#define RTC_EVTENCLR_COMPARE0_Pos (16UL) /*!< Position of COMPARE0 field. */
+#define RTC_EVTENCLR_COMPARE0_Msk (0x1UL << RTC_EVTENCLR_COMPARE0_Pos) /*!< Bit mask of COMPARE0 field. */
+#define RTC_EVTENCLR_COMPARE0_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENCLR_COMPARE0_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENCLR_COMPARE0_Clear (1UL) /*!< Disable */
+
+/* Bit 1 : Write '1' to disable event routing for event OVRFLW */
+#define RTC_EVTENCLR_OVRFLW_Pos (1UL) /*!< Position of OVRFLW field. */
+#define RTC_EVTENCLR_OVRFLW_Msk (0x1UL << RTC_EVTENCLR_OVRFLW_Pos) /*!< Bit mask of OVRFLW field. */
+#define RTC_EVTENCLR_OVRFLW_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENCLR_OVRFLW_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENCLR_OVRFLW_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable event routing for event TICK */
+#define RTC_EVTENCLR_TICK_Pos (0UL) /*!< Position of TICK field. */
+#define RTC_EVTENCLR_TICK_Msk (0x1UL << RTC_EVTENCLR_TICK_Pos) /*!< Bit mask of TICK field. */
+#define RTC_EVTENCLR_TICK_Disabled (0UL) /*!< Read: Disabled */
+#define RTC_EVTENCLR_TICK_Enabled (1UL) /*!< Read: Enabled */
+#define RTC_EVTENCLR_TICK_Clear (1UL) /*!< Disable */
+
+/* Register: RTC_COUNTER */
+/* Description: Current counter value */
+
+/* Bits 23..0 : Counter value */
+#define RTC_COUNTER_COUNTER_Pos (0UL) /*!< Position of COUNTER field. */
+#define RTC_COUNTER_COUNTER_Msk (0xFFFFFFUL << RTC_COUNTER_COUNTER_Pos) /*!< Bit mask of COUNTER field. */
+
+/* Register: RTC_PRESCALER */
+/* Description: 12-bit prescaler for counter frequency (32768 / (PRESCALER + 1)). Must be written when RTC is stopped. */
+
+/* Bits 11..0 : Prescaler value */
+#define RTC_PRESCALER_PRESCALER_Pos (0UL) /*!< Position of PRESCALER field. */
+#define RTC_PRESCALER_PRESCALER_Msk (0xFFFUL << RTC_PRESCALER_PRESCALER_Pos) /*!< Bit mask of PRESCALER field. */
+
+/* Register: RTC_CC */
+/* Description: Description collection: Compare register n */
+
+/* Bits 23..0 : Compare value */
+#define RTC_CC_COMPARE_Pos (0UL) /*!< Position of COMPARE field. */
+#define RTC_CC_COMPARE_Msk (0xFFFFFFUL << RTC_CC_COMPARE_Pos) /*!< Bit mask of COMPARE field. */
+
+
 
 /* =========================================================================================================================== */
 /* ================                                         TIMER                                             ================ */

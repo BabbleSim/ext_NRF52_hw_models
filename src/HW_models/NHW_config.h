@@ -125,6 +125,9 @@
                          {0 , 17}, \
                          {0 , 36}, \
                          } /*Only core,RTC0..2_IRQn*/
+#define NHW_RTC_HAS_CAPTURE 0
+#define NHW_RTC_HAS_SHORT_COMP_CLEAR 0
+#define NHW_RTC_N_CC {3, 4, 4}
 
 #define NHW_TEMP_TOTAL_INST 1
 #define NHW_TEMP_0 0
@@ -277,6 +280,21 @@
 #define NHW_RNG_tRNG_START 128
 #define NHW_RNG_tRNG_RAW 32
 #define NHW_RNG_tRNG_BC 122
+
+#define NHW_RTC_TOTAL_INST 4
+#define NHW_RTC_APP0 0
+#define NHW_RTC_APP1 1
+#define NHW_RTC_NET0 2
+#define NHW_RTC_NET1 3
+#define NHW_RTC_INT_MAP {{0 , 17}, \
+                         {0 , 22}, \
+                         {1 , 20}, \
+                         {1 , 21}, \
+                         } /*Only core,RTC0..2_IRQn*/
+#define NHW_RTC_DPPI_MAP {0, 0, 1, 1} /*2xApp core, 2xNetwork core*/
+#define NHW_RTC_HAS_CAPTURE 1
+#define NHW_RTC_HAS_SHORT_COMP_CLEAR 1
+#define NHW_RTC_N_CC {4, 4, 4, 4}
 
 #define NHW_TIMER_TOTAL_INST 6
 #define NHW_TIMER_APP0 0
