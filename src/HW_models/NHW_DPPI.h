@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "bs_types.h"
+#include "NHW_common_types.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -32,8 +33,7 @@ void nhw_dppi_event_signal_if(unsigned int  dppi_inst, uint32_t publish_reg);
 
 void nhw_dppi_common_subscribe_sideeffect(unsigned int  dppi_inst,
                                           uint32_t SUBSCRIBE_reg,
-                                          bool *is_subscribed,
-                                          uint32_t *subscribed_ch,
+                                          struct nhw_subsc_mem *last,
                                           dppi_callback_t callback,
                                           void *param);
 

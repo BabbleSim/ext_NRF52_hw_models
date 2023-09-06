@@ -135,25 +135,21 @@ void nrf_rng_regw_sideeffects_TASK_STOP(void) {
 
 #if (NHW_HAS_DPPI)
 void nrf_rng_regw_sideeffects_SUBSCRIBE_START(unsigned int inst) {
-  static bool START_subscribed[NHW_RNG_TOTAL_INST];
-  static unsigned int START_subscribe_ch[NHW_RNG_TOTAL_INST];
+  static struct nhw_subsc_mem START_subscribed[NHW_RNG_TOTAL_INST];
 
   nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
                                        NRF_RNG_regs.SUBSCRIBE_START,
                                        &START_subscribed[inst],
-                                       &START_subscribe_ch[inst],
                                        (dppi_callback_t)nrf_rng_task_start,
                                        DPPI_CB_NO_PARAM);
 }
 
 void nrf_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
-  static bool STOP_subscribed[NHW_RNG_TOTAL_INST];
-  static unsigned int STOP_subscribe_ch[NHW_RNG_TOTAL_INST];
+  static struct nhw_subsc_mem STOP_subscribed[NHW_RNG_TOTAL_INST];
 
   nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
                                        NRF_RNG_regs.SUBSCRIBE_START,
                                        &STOP_subscribed[inst],
-                                       &STOP_subscribe_ch[inst],
                                        (dppi_callback_t)nrf_rng_task_stop,
                                        DPPI_CB_NO_PARAM);
 }

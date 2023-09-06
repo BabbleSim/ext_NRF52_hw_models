@@ -61,18 +61,12 @@ struct timer_status {
 #if (NHW_HAS_DPPI)
   uint dppi_map;   //To which DPPI instance are this TIMER subscribe&publish ports connected to
   //Which of the subscription ports are currently connected, and to which channel:
-  bool* subscribed_CAPTURE;   //[n_CCs]
-  uint* subscribed_CAPTURE_ch;//[n_CCs]
-  bool subscribed_START;
-  uint subscribed_START_ch;
-  bool subscribed_STOP;
-  uint subscribed_STOP_ch;
-  bool subscribed_COUNT;
-  uint subscribed_COUNT_ch;
-  bool subscribed_CLEAR;
-  uint subscribed_CLEAR_ch;
-  bool subscribed_SHUTDOWN;
-  uint subscribed_SHUTDOWN_ch;
+  struct nhw_subsc_mem* subscribed_CAPTURE;   //[n_CCs]
+  struct nhw_subsc_mem subscribed_START;
+  struct nhw_subsc_mem subscribed_STOP;
+  struct nhw_subsc_mem subscribed_COUNT;
+  struct nhw_subsc_mem subscribed_CLEAR;
+  struct nhw_subsc_mem subscribed_SHUTDOWN;
 #endif
 };
 
@@ -114,8 +108,7 @@ static void nrf_hw_model_timer_init(void) {
 
 #if (NHW_HAS_DPPI)
     t_st->dppi_map = nhw_timer_dppi_map[t];
-    t_st->subscribed_CAPTURE = (bool*)bs_calloc(Timer_n_CCs[t], sizeof(bool));
-    t_st->subscribed_CAPTURE_ch = (uint*)bs_calloc(Timer_n_CCs[t], sizeof(uint));
+    t_st->subscribed_CAPTURE = (struct nhw_subsc_mem*)bs_calloc(Timer_n_CCs[t], sizeof(struct nhw_subsc_mem));
 #endif
   }
   Timer_TIMERs = TIME_NEVER;
@@ -140,9 +133,6 @@ static void nhw_timer_free(void)
 #if (NHW_HAS_DPPI)
     free(t_st->subscribed_CAPTURE);
     t_st->subscribed_CAPTURE = NULL;
-
-    free(t_st->subscribed_CAPTURE_ch);
-    t_st->subscribed_CAPTURE_ch = NULL;
 #endif /* (NHW_HAS_DPPI) */
   }
 }
@@ -480,7 +470,6 @@ void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
                                        this->NRF_TIMER_regs->SUBSCRIBE_CAPTURE[cc_n],
                                        &this->subscribed_CAPTURE[cc_n],
-                                       &this->subscribed_CAPTURE_ch[cc_n],
                                        nhw_timer_taskcapture_wrap,
                                        (void*)((inst << 16) + cc_n));
 }
@@ -498,7 +487,6 @@ void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
      nhw_dppi_common_subscribe_sideeffect(this->dppi_map,                           \
                                           this->NRF_TIMER_regs->SUBSCRIBE_##TASK_N, \
                                           &this->subscribed_##TASK_N,               \
-                                          &this->subscribed_##TASK_N##_ch,          \
                                           nhw_timer_task##TASK_N##_wrap,            \
                                           (void*) inst);                            \
   }

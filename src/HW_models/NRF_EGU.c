@@ -35,8 +35,7 @@ struct egu_status {
 #if (NHW_HAS_DPPI)
   uint dppi_map;   //To which DPPI instance are this EGU subscribe&publish ports connected to
   //Which of the subscription ports are currently connected, and to which channel:
-  bool* subscribed;   //[n_events]
-  uint* subscribed_ch;//[n_events]
+  struct nhw_subsc_mem* subscribed;   //[n_events]
 #endif
 };
 
@@ -62,8 +61,7 @@ static void nrf_egu_init(void) {
 
 #if (NHW_HAS_DPPI)
     nhw_egu_st[i].dppi_map = nhw_egu_dppi_map[i];
-    nhw_egu_st[i].subscribed = (bool*)bs_calloc(nhw_egu_n_events[i], sizeof(bool));
-    nhw_egu_st[i].subscribed_ch = (uint*)bs_calloc(nhw_egu_n_events[i], sizeof(uint));
+    nhw_egu_st[i].subscribed = (struct nhw_subsc_mem*)bs_calloc(nhw_egu_n_events[i], sizeof(struct nhw_subsc_mem));
 #endif
   }
 }
@@ -79,9 +77,6 @@ static void nhw_egu_free(void)
   for (int i = 0; i< NHW_EGU_TOTAL_INST; i++) {
     free(nhw_egu_st[i].subscribed);
     nhw_egu_st[i].subscribed = NULL;
-
-    free(nhw_egu_st[i].subscribed_ch);
-    nhw_egu_st[i].subscribed_ch = NULL;
   }
 }
 
@@ -181,7 +176,6 @@ void nrf_egu_regw_sideeffects_SUBSCRIBE_TRIGGER(uint inst, uint n) {
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
                                        this->NRF_EGU_regs->SUBSCRIBE_TRIGGER[n],
                                        &this->subscribed[n],
-                                       &this->subscribed_ch[n],
                                        nhw_egu_tasktrigger_wrap,
                                        (void*)((inst << 16) + n));
 }

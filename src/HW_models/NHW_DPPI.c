@@ -89,10 +89,8 @@ struct dppi_status {
   /* DPPI interface as a "normal peripheral" to a DPPI: */
   uint dppi_map; //To which DPPI instance are this DPPI subscription ports connected to
   //Which of the subscriptions ports are currently connected, and to which channel:
-  bool *CHG_EN_subscribed;    //[n_chg]
-  uint *CHG_EN_subscribe_ch;  //[n_chg]
-  bool *CHG_DIS_subscribed;   //[n_chg]
-  uint *CHG_DIS_subscribe_ch; //[n_chg]
+  struct nhw_subsc_mem *CHG_EN_subscribed; //[n_chg]
+  struct nhw_subsc_mem *CHG_DIS_subscribed; //[n_chg]
 
   uint32_t *shadow_CHG; /*[n_chg] Shadowed/internal version of the CHG register to allow
                                   ignoring/reverting disabled writes to CHG */
@@ -130,10 +128,8 @@ static void nhw_dppi_init(void) {
     int n_chg = nhw_dppi_n_chg[i];
 
     el->dppi_map = nhw_dppi_dppi_map[i];
-    el->CHG_EN_subscribed = (bool*)bs_calloc(n_chg, sizeof(bool));
-    el->CHG_DIS_subscribed = (bool*)bs_calloc(n_chg, sizeof(bool));
-    el->CHG_EN_subscribe_ch = (uint*)bs_calloc(n_chg, sizeof(uint));
-    el->CHG_DIS_subscribe_ch = (uint*)bs_calloc(n_chg, sizeof(uint));
+    el->CHG_EN_subscribed = (struct nhw_subsc_mem*)bs_calloc(n_chg, sizeof(struct nhw_subsc_mem));
+    el->CHG_DIS_subscribed = (struct nhw_subsc_mem*)bs_calloc(n_chg, sizeof(struct nhw_subsc_mem));
 
     el->shadow_CHG = (uint32_t*)bs_calloc(n_chg, sizeof(uint32_t));
   }
@@ -168,12 +164,6 @@ static void nhw_dppi_free(void)
 
     free(nhw_dppi_st[i].CHG_DIS_subscribed);
     nhw_dppi_st[i].CHG_DIS_subscribed = NULL;
-
-    free(nhw_dppi_st[i].CHG_EN_subscribe_ch);
-    nhw_dppi_st[i].CHG_EN_subscribe_ch = NULL;
-
-    free(nhw_dppi_st[i].CHG_DIS_subscribe_ch);
-    nhw_dppi_st[i].CHG_DIS_subscribe_ch = NULL;
 
     free(nhw_dppi_st[i].shadow_CHG);
     nhw_dppi_st[i].shadow_CHG = NULL;
@@ -415,7 +405,6 @@ void nhw_dppi_regw_sideeffects_SUBSCRIBE_CHG_EN(unsigned int dppi_inst, uint n)
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
                                        regs->SUBSCRIBE_CHG[n].EN,
                                        &this->CHG_EN_subscribed[n],
-                                       &this->CHG_EN_subscribe_ch[n],
                                        nhw_dppi_taskwrap_chg_en,
                                        (void*)((dppi_inst << 16) + n));
 }
@@ -430,7 +419,6 @@ void nhw_dppi_regw_sideeffects_SUBSCRIBE_CHG_DIS(unsigned int dppi_inst, uint n)
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
                                        regs->SUBSCRIBE_CHG[n].DIS,
                                        &this->CHG_DIS_subscribed[n],
-                                       &this->CHG_DIS_subscribe_ch[n],
                                        nhw_dppi_taskwrap_chg_dis,
                                        (void*)((dppi_inst << 16) + n));
 }
@@ -520,40 +508,38 @@ void nhw_dppi_event_signal_if(uint dppi_inst, uint32_t publish_reg) {
  * NOTE: This is not a DPPI function per se, but a common function
  * for all peripherals to handle the side-effects of any write to a SUBSCRIBE register
  *
- * dppi_inst:     Which DPPI the peripheral is connected to
- * SUBSCRIBE_reg: Value of the SUBSCRIBE_<EVENT> register written by SW
- * is_subscribed: Pointer to an static storage in the peripheral, which keeps
- *                a "is/was subscribed" flag.
- * subscribed_ch: Pointer to an static storage in the peripheral, which keeps
- *                the last channel the task is/was subscribed to.
+ * dppi_inst      Which DPPI the peripheral is connected to
+ * SUBSCRIBE_reg  Value of the SUBSCRIBE_<EVENT> register written by SW
+ * last           Pointer to an static storage in the peripheral, which keeps
+ *                the status of the subscription (is/wast it subscribed,
+ *                and to which channel)
  *
  * callback & param: Parameters for nhw_dppi_channel_subscribe()
  *
  */
 void nhw_dppi_common_subscribe_sideeffect(unsigned int dppi_inst,
                                           uint32_t SUBSCRIBE_reg,
-                                          bool *is_subscribed,
-                                          uint32_t *subscribed_ch,
+                                          struct nhw_subsc_mem *last,
                                           dppi_callback_t callback,
                                           void *param)
 {
   bool new_is_subs = SUBSCRIBE_reg & SUBSCRIBE_EN_MASK;
   unsigned int new_channel = SUBSCRIBE_reg & SUBSCRIBE_CHIDX_MASK;
 
-  if ((*is_subscribed == new_is_subs)
-    && (*subscribed_ch == new_channel)) {
+  if ((last->is_subscribed == new_is_subs)
+    && (last->subscribed_ch == new_channel)) {
     //Nothing has changed
     return;
   }
 
-  if (*is_subscribed == true) {
+  if (last->is_subscribed == true) {
     nhw_dppi_channel_unsubscribe(dppi_inst,
-                                 *subscribed_ch,
+                                 last->subscribed_ch,
                                  callback,
                                  param);
   }
-  *is_subscribed = new_is_subs;
-  *subscribed_ch = new_channel;
+  last->is_subscribed = new_is_subs;
+  last->subscribed_ch = new_channel;
   if (new_is_subs) {
     nhw_dppi_channel_subscribe(dppi_inst,
                                new_channel,
