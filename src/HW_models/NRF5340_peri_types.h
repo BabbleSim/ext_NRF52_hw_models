@@ -78,6 +78,777 @@ typedef struct {
 } DPPIC_SUBSCRIBE_CHG_Type;                     /*!< Size = 8 (0x8)                                                            */
 
 
+/**
+  * @brief CLOCK_HFCLKAUDIO [HFCLKAUDIO] (Unspecified)
+  */
+typedef struct {
+  __IOM uint32_t  FREQUENCY;                    /*!< (@ 0x00000000) Audio PLL frequency in 11.176 MHz - 11.402 MHz
+                                                                    or 12.165 MHz - 12.411 MHz frequency bands                 */
+} CLOCK_HFCLKAUDIO_Type;                        /*!< Size = 4 (0x4)                                                            */
+
+
+/**
+  * @brief RESET_NETWORK [NETWORK] (ULP network core control)
+  */
+typedef struct {
+  __IM  uint32_t  RESERVED;
+  __IOM uint32_t  FORCEOFF;                     /*!< (@ 0x00000004) Force network core off                                     */
+} RESET_NETWORK_Type;                           /*!< Size = 8 (0x8)                                                            */
+
+
+/* =========================================================================================================================== */
+/* ================                                         CLOCK                                          ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Clock management (CLOCK)
+  */
+
+typedef struct {                                /*!< (@ 0x40005000) CLOCK_NS Structure                                         */
+  __OM  uint32_t  TASKS_HFCLKSTART;             /*!< (@ 0x00000000) Start HFCLK128M/HFCLK64M source as selected in
+                                                                    HFCLKSRC                                                   */
+  __OM  uint32_t  TASKS_HFCLKSTOP;              /*!< (@ 0x00000004) Stop HFCLK128M/HFCLK64M source                             */
+  __OM  uint32_t  TASKS_LFCLKSTART;             /*!< (@ 0x00000008) Start LFCLK source as selected in LFCLKSRC                 */
+  __OM  uint32_t  TASKS_LFCLKSTOP;              /*!< (@ 0x0000000C) Stop LFCLK source                                          */
+  __OM  uint32_t  TASKS_CAL;                    /*!< (@ 0x00000010) Start calibration of LFRC oscillator                       */
+  __IM  uint32_t  RESERVED;
+  __OM  uint32_t  TASKS_HFCLKAUDIOSTART;        /*!< (@ 0x00000018) Start HFCLKAUDIO source                                    */
+  __OM  uint32_t  TASKS_HFCLKAUDIOSTOP;         /*!< (@ 0x0000001C) Stop HFCLKAUDIO source                                     */
+  __OM  uint32_t  TASKS_HFCLK192MSTART;         /*!< (@ 0x00000020) Start HFCLK192M source as selected in HFCLK192MSRC         */
+  __OM  uint32_t  TASKS_HFCLK192MSTOP;          /*!< (@ 0x00000024) Stop HFCLK192M source                                      */
+  __IM  uint32_t  RESERVED1[22];
+  __IOM uint32_t  SUBSCRIBE_HFCLKSTART;         /*!< (@ 0x00000080) Subscribe configuration for task HFCLKSTART                */
+  __IOM uint32_t  SUBSCRIBE_HFCLKSTOP;          /*!< (@ 0x00000084) Subscribe configuration for task HFCLKSTOP                 */
+  __IOM uint32_t  SUBSCRIBE_LFCLKSTART;         /*!< (@ 0x00000088) Subscribe configuration for task LFCLKSTART                */
+  __IOM uint32_t  SUBSCRIBE_LFCLKSTOP;          /*!< (@ 0x0000008C) Subscribe configuration for task LFCLKSTOP                 */
+  __IOM uint32_t  SUBSCRIBE_CAL;                /*!< (@ 0x00000090) Subscribe configuration for task CAL                       */
+  __IM  uint32_t  RESERVED2;
+  __IOM uint32_t  SUBSCRIBE_HFCLKAUDIOSTART;    /*!< (@ 0x00000098) Subscribe configuration for task HFCLKAUDIOSTART           */
+  __IOM uint32_t  SUBSCRIBE_HFCLKAUDIOSTOP;     /*!< (@ 0x0000009C) Subscribe configuration for task HFCLKAUDIOSTOP            */
+  __IOM uint32_t  SUBSCRIBE_HFCLK192MSTART;     /*!< (@ 0x000000A0) Subscribe configuration for task HFCLK192MSTART            */
+  __IOM uint32_t  SUBSCRIBE_HFCLK192MSTOP;      /*!< (@ 0x000000A4) Subscribe configuration for task HFCLK192MSTOP             */
+  __IM  uint32_t  RESERVED3[22];
+  __IOM uint32_t  EVENTS_HFCLKSTARTED;          /*!< (@ 0x00000100) HFCLK128M/HFCLK64M source started                          */
+  __IOM uint32_t  EVENTS_LFCLKSTARTED;          /*!< (@ 0x00000104) LFCLK source started                                       */
+  __IM  uint32_t  RESERVED4[5];
+  __IOM uint32_t  EVENTS_DONE;                  /*!< (@ 0x0000011C) Calibration of LFRC oscillator complete event              */
+  __IOM uint32_t  EVENTS_HFCLKAUDIOSTARTED;     /*!< (@ 0x00000120) HFCLKAUDIO source started                                  */
+  __IOM uint32_t  EVENTS_HFCLK192MSTARTED;      /*!< (@ 0x00000124) HFCLK192M source started                                   */
+  __IM  uint32_t  RESERVED5[22];
+  __IOM uint32_t  PUBLISH_HFCLKSTARTED;         /*!< (@ 0x00000180) Publish configuration for event HFCLKSTARTED               */
+  __IOM uint32_t  PUBLISH_LFCLKSTARTED;         /*!< (@ 0x00000184) Publish configuration for event LFCLKSTARTED               */
+  __IM  uint32_t  RESERVED6[5];
+  __IOM uint32_t  PUBLISH_DONE;                 /*!< (@ 0x0000019C) Publish configuration for event DONE                       */
+  __IOM uint32_t  PUBLISH_HFCLKAUDIOSTARTED;    /*!< (@ 0x000001A0) Publish configuration for event HFCLKAUDIOSTARTED          */
+  __IOM uint32_t  PUBLISH_HFCLK192MSTARTED;     /*!< (@ 0x000001A4) Publish configuration for event HFCLK192MSTARTED           */
+  __IM  uint32_t  RESERVED7[86];
+  __IOM uint32_t  INTEN;                        /*!< (@ 0x00000300) Enable or disable interrupt                                */
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  INTPEND;                      /*!< (@ 0x0000030C) Pending interrupts                                         */
+  __IM  uint32_t  RESERVED8[62];
+  __IM  uint32_t  HFCLKRUN;                     /*!< (@ 0x00000408) Status indicating that HFCLKSTART task has been
+                                                                    triggered                                                  */
+  __IM  uint32_t  HFCLKSTAT;                    /*!< (@ 0x0000040C) Status indicating which HFCLK128M/HFCLK64M source
+                                                                    is running This register value in any CLOCK
+                                                                    instance reflects status only due to configurations/action
+                                                                    in that CLOCK instance.                                    */
+  __IM  uint32_t  RESERVED9;
+  __IM  uint32_t  LFCLKRUN;                     /*!< (@ 0x00000414) Status indicating that LFCLKSTART task has been
+                                                                    triggered                                                  */
+  __IM  uint32_t  LFCLKSTAT;                    /*!< (@ 0x00000418) Status indicating which LFCLK source is running
+                                                                    This register value in any CLOCK instance
+                                                                    reflects status only due to configurations/actions
+                                                                    in that CLOCK instance.                                    */
+  __IM  uint32_t  LFCLKSRCCOPY;                 /*!< (@ 0x0000041C) Copy of LFCLKSRC register, set when LFCLKSTART
+                                                                    task was triggered                                         */
+  __IM  uint32_t  RESERVED10[12];
+  __IM  uint32_t  HFCLKAUDIORUN;                /*!< (@ 0x00000450) Status indicating that HFCLKAUDIOSTART task has
+                                                                    been triggered                                             */
+  __IM  uint32_t  HFCLKAUDIOSTAT;               /*!< (@ 0x00000454) Status indicating which HFCLKAUDIO source is
+                                                                    running                                                    */
+  __IM  uint32_t  HFCLK192MRUN;                 /*!< (@ 0x00000458) Status indicating that HFCLK192MSTART task has
+                                                                    been triggered                                             */
+  __IM  uint32_t  HFCLK192MSTAT;                /*!< (@ 0x0000045C) Status indicating which HFCLK192M source is running        */
+  __IM  uint32_t  RESERVED11[45];
+  __IOM uint32_t  HFCLKSRC;                     /*!< (@ 0x00000514) Clock source for HFCLK128M/HFCLK64M                        */
+  __IOM uint32_t  LFCLKSRC;                     /*!< (@ 0x00000518) Clock source for LFCLK                                     */
+  __IM  uint32_t  RESERVED12[15];
+  __IOM uint32_t  HFCLKCTRL;                    /*!< (@ 0x00000558) HFCLK128M frequency configuration                          */
+  __IOM CLOCK_HFCLKAUDIO_Type HFCLKAUDIO;       /*!< (@ 0x0000055C) Unspecified                                                */
+  __IM  uint32_t  RESERVED13[4];
+  __IOM uint32_t  HFCLKALWAYSRUN;               /*!< (@ 0x00000570) Automatic or manual control of HFCLK128M/HFCLK64M          */
+  __IOM uint32_t  LFCLKALWAYSRUN;               /*!< (@ 0x00000574) Automatic or manual control of LFCLK                       */
+  __IM  uint32_t  RESERVED14;
+  __IOM uint32_t  HFCLKAUDIOALWAYSRUN;          /*!< (@ 0x0000057C) Automatic or manual control of HFCLKAUDIO                  */
+  __IOM uint32_t  HFCLK192MSRC;                 /*!< (@ 0x00000580) Clock source for HFCLK192M                                 */
+  __IOM uint32_t  HFCLK192MALWAYSRUN;           /*!< (@ 0x00000584) Automatic or manual control of HFCLK192M                   */
+  __IM  uint32_t  RESERVED15[12];
+  __IOM uint32_t  HFCLK192MCTRL;                /*!< (@ 0x000005B8) HFCLK192M frequency configuration                          */
+} NRF_CLOCK_Type;                               /*!< Size = 1468 (0x5bc)                                                       */
+
+
+/* Peripheral: CLOCK */
+/* Description: Clock management 0 */
+
+/* Register: CLOCK_TASKS_HFCLKSTART */
+/* Description: Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC */
+
+/* Bit 0 : Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC */
+#define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Pos (0UL) /*!< Position of TASKS_HFCLKSTART field. */
+#define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Msk (0x1UL << CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Pos) /*!< Bit mask of TASKS_HFCLKSTART field. */
+#define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_HFCLKSTOP */
+/* Description: Stop HFCLK128M/HFCLK64M source */
+
+/* Bit 0 : Stop HFCLK128M/HFCLK64M source */
+#define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Pos (0UL) /*!< Position of TASKS_HFCLKSTOP field. */
+#define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Msk (0x1UL << CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Pos) /*!< Bit mask of TASKS_HFCLKSTOP field. */
+#define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_LFCLKSTART */
+/* Description: Start LFCLK source as selected in LFCLKSRC */
+
+/* Bit 0 : Start LFCLK source as selected in LFCLKSRC */
+#define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Pos (0UL) /*!< Position of TASKS_LFCLKSTART field. */
+#define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Msk (0x1UL << CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Pos) /*!< Bit mask of TASKS_LFCLKSTART field. */
+#define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_LFCLKSTOP */
+/* Description: Stop LFCLK source */
+
+/* Bit 0 : Stop LFCLK source */
+#define CLOCK_TASKS_LFCLKSTOP_TASKS_LFCLKSTOP_Pos (0UL) /*!< Position of TASKS_LFCLKSTOP field. */
+#define CLOCK_TASKS_LFCLKSTOP_TASKS_LFCLKSTOP_Msk (0x1UL << CLOCK_TASKS_LFCLKSTOP_TASKS_LFCLKSTOP_Pos) /*!< Bit mask of TASKS_LFCLKSTOP field. */
+#define CLOCK_TASKS_LFCLKSTOP_TASKS_LFCLKSTOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_CAL */
+/* Description: Start calibration of LFRC oscillator */
+
+/* Bit 0 : Start calibration of LFRC oscillator */
+#define CLOCK_TASKS_CAL_TASKS_CAL_Pos (0UL) /*!< Position of TASKS_CAL field. */
+#define CLOCK_TASKS_CAL_TASKS_CAL_Msk (0x1UL << CLOCK_TASKS_CAL_TASKS_CAL_Pos) /*!< Bit mask of TASKS_CAL field. */
+#define CLOCK_TASKS_CAL_TASKS_CAL_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_HFCLKAUDIOSTART */
+/* Description: Start HFCLKAUDIO source */
+
+/* Bit 0 : Start HFCLKAUDIO source */
+#define CLOCK_TASKS_HFCLKAUDIOSTART_TASKS_HFCLKAUDIOSTART_Pos (0UL) /*!< Position of TASKS_HFCLKAUDIOSTART field. */
+#define CLOCK_TASKS_HFCLKAUDIOSTART_TASKS_HFCLKAUDIOSTART_Msk (0x1UL << CLOCK_TASKS_HFCLKAUDIOSTART_TASKS_HFCLKAUDIOSTART_Pos) /*!< Bit mask of TASKS_HFCLKAUDIOSTART field. */
+#define CLOCK_TASKS_HFCLKAUDIOSTART_TASKS_HFCLKAUDIOSTART_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_HFCLKAUDIOSTOP */
+/* Description: Stop HFCLKAUDIO source */
+
+/* Bit 0 : Stop HFCLKAUDIO source */
+#define CLOCK_TASKS_HFCLKAUDIOSTOP_TASKS_HFCLKAUDIOSTOP_Pos (0UL) /*!< Position of TASKS_HFCLKAUDIOSTOP field. */
+#define CLOCK_TASKS_HFCLKAUDIOSTOP_TASKS_HFCLKAUDIOSTOP_Msk (0x1UL << CLOCK_TASKS_HFCLKAUDIOSTOP_TASKS_HFCLKAUDIOSTOP_Pos) /*!< Bit mask of TASKS_HFCLKAUDIOSTOP field. */
+#define CLOCK_TASKS_HFCLKAUDIOSTOP_TASKS_HFCLKAUDIOSTOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_HFCLK192MSTART */
+/* Description: Start HFCLK192M source as selected in HFCLK192MSRC */
+
+/* Bit 0 : Start HFCLK192M source as selected in HFCLK192MSRC */
+#define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Pos (0UL) /*!< Position of TASKS_HFCLK192MSTART field. */
+#define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Msk (0x1UL << CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Pos) /*!< Bit mask of TASKS_HFCLK192MSTART field. */
+#define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_TASKS_HFCLK192MSTOP */
+/* Description: Stop HFCLK192M source */
+
+/* Bit 0 : Stop HFCLK192M source */
+#define CLOCK_TASKS_HFCLK192MSTOP_TASKS_HFCLK192MSTOP_Pos (0UL) /*!< Position of TASKS_HFCLK192MSTOP field. */
+#define CLOCK_TASKS_HFCLK192MSTOP_TASKS_HFCLK192MSTOP_Msk (0x1UL << CLOCK_TASKS_HFCLK192MSTOP_TASKS_HFCLK192MSTOP_Pos) /*!< Bit mask of TASKS_HFCLK192MSTOP field. */
+#define CLOCK_TASKS_HFCLK192MSTOP_TASKS_HFCLK192MSTOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLKSTART */
+/* Description: Subscribe configuration for task HFCLKSTART */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLKSTART_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLKSTART will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTART_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLKSTART_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLKSTOP */
+/* Description: Subscribe configuration for task HFCLKSTOP */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLKSTOP_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLKSTOP will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLKSTOP_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLKSTOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_LFCLKSTART */
+/* Description: Subscribe configuration for task LFCLKSTART */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_LFCLKSTART_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task LFCLKSTART will subscribe to */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTART_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_LFCLKSTART_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_LFCLKSTOP */
+/* Description: Subscribe configuration for task LFCLKSTOP */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_LFCLKSTOP_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task LFCLKSTOP will subscribe to */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_LFCLKSTOP_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_LFCLKSTOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_CAL */
+/* Description: Subscribe configuration for task CAL */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_CAL_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_CAL_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_CAL_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_CAL_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_CAL_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CAL will subscribe to */
+#define CLOCK_SUBSCRIBE_CAL_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_CAL_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_CAL_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLKAUDIOSTART */
+/* Description: Subscribe configuration for task HFCLKAUDIOSTART */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLKAUDIOSTART will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLKAUDIOSTART_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP */
+/* Description: Subscribe configuration for task HFCLKAUDIOSTOP */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLKAUDIOSTOP will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLKAUDIOSTOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLK192MSTART */
+/* Description: Subscribe configuration for task HFCLK192MSTART */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLK192MSTART_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLK192MSTART will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTART_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLK192MSTART_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_SUBSCRIBE_HFCLK192MSTOP */
+/* Description: Subscribe configuration for task HFCLK192MSTOP */
+
+/* Bit 31 :   */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_EN_Msk (0x1UL << CLOCK_SUBSCRIBE_HFCLK192MSTOP_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task HFCLK192MSTOP will subscribe to */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_SUBSCRIBE_HFCLK192MSTOP_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLK192MSTOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_EVENTS_HFCLKSTARTED */
+/* Description: HFCLK128M/HFCLK64M source started */
+
+/* Bit 0 : HFCLK128M/HFCLK64M source started */
+#define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Pos (0UL) /*!< Position of EVENTS_HFCLKSTARTED field. */
+#define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Msk (0x1UL << CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Pos) /*!< Bit mask of EVENTS_HFCLKSTARTED field. */
+#define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_NotGenerated (0UL) /*!< Event not generated */
+#define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Generated (1UL) /*!< Event generated */
+
+/* Register: CLOCK_EVENTS_LFCLKSTARTED */
+/* Description: LFCLK source started */
+
+/* Bit 0 : LFCLK source started */
+#define CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_Pos (0UL) /*!< Position of EVENTS_LFCLKSTARTED field. */
+#define CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_Msk (0x1UL << CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_Pos) /*!< Bit mask of EVENTS_LFCLKSTARTED field. */
+#define CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_NotGenerated (0UL) /*!< Event not generated */
+#define CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_Generated (1UL) /*!< Event generated */
+
+/* Register: CLOCK_EVENTS_DONE */
+/* Description: Calibration of LFRC oscillator complete event */
+
+/* Bit 0 : Calibration of LFRC oscillator complete event */
+#define CLOCK_EVENTS_DONE_EVENTS_DONE_Pos (0UL) /*!< Position of EVENTS_DONE field. */
+#define CLOCK_EVENTS_DONE_EVENTS_DONE_Msk (0x1UL << CLOCK_EVENTS_DONE_EVENTS_DONE_Pos) /*!< Bit mask of EVENTS_DONE field. */
+#define CLOCK_EVENTS_DONE_EVENTS_DONE_NotGenerated (0UL) /*!< Event not generated */
+#define CLOCK_EVENTS_DONE_EVENTS_DONE_Generated (1UL) /*!< Event generated */
+
+/* Register: CLOCK_EVENTS_HFCLKAUDIOSTARTED */
+/* Description: HFCLKAUDIO source started */
+
+/* Bit 0 : HFCLKAUDIO source started */
+#define CLOCK_EVENTS_HFCLKAUDIOSTARTED_EVENTS_HFCLKAUDIOSTARTED_Pos (0UL) /*!< Position of EVENTS_HFCLKAUDIOSTARTED field. */
+#define CLOCK_EVENTS_HFCLKAUDIOSTARTED_EVENTS_HFCLKAUDIOSTARTED_Msk (0x1UL << CLOCK_EVENTS_HFCLKAUDIOSTARTED_EVENTS_HFCLKAUDIOSTARTED_Pos) /*!< Bit mask of EVENTS_HFCLKAUDIOSTARTED field. */
+#define CLOCK_EVENTS_HFCLKAUDIOSTARTED_EVENTS_HFCLKAUDIOSTARTED_NotGenerated (0UL) /*!< Event not generated */
+#define CLOCK_EVENTS_HFCLKAUDIOSTARTED_EVENTS_HFCLKAUDIOSTARTED_Generated (1UL) /*!< Event generated */
+
+/* Register: CLOCK_EVENTS_HFCLK192MSTARTED */
+/* Description: HFCLK192M source started */
+
+/* Bit 0 : HFCLK192M source started */
+#define CLOCK_EVENTS_HFCLK192MSTARTED_EVENTS_HFCLK192MSTARTED_Pos (0UL) /*!< Position of EVENTS_HFCLK192MSTARTED field. */
+#define CLOCK_EVENTS_HFCLK192MSTARTED_EVENTS_HFCLK192MSTARTED_Msk (0x1UL << CLOCK_EVENTS_HFCLK192MSTARTED_EVENTS_HFCLK192MSTARTED_Pos) /*!< Bit mask of EVENTS_HFCLK192MSTARTED field. */
+#define CLOCK_EVENTS_HFCLK192MSTARTED_EVENTS_HFCLK192MSTARTED_NotGenerated (0UL) /*!< Event not generated */
+#define CLOCK_EVENTS_HFCLK192MSTARTED_EVENTS_HFCLK192MSTARTED_Generated (1UL) /*!< Event generated */
+
+/* Register: CLOCK_PUBLISH_HFCLKSTARTED */
+/* Description: Publish configuration for event HFCLKSTARTED */
+
+/* Bit 31 :   */
+#define CLOCK_PUBLISH_HFCLKSTARTED_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_PUBLISH_HFCLKSTARTED_EN_Msk (0x1UL << CLOCK_PUBLISH_HFCLKSTARTED_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_PUBLISH_HFCLKSTARTED_EN_Disabled (0UL) /*!< Disable publishing */
+#define CLOCK_PUBLISH_HFCLKSTARTED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event HFCLKSTARTED will publish to. */
+#define CLOCK_PUBLISH_HFCLKSTARTED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_PUBLISH_HFCLKSTARTED_CHIDX_Msk (0xFFUL << CLOCK_PUBLISH_HFCLKSTARTED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_PUBLISH_LFCLKSTARTED */
+/* Description: Publish configuration for event LFCLKSTARTED */
+
+/* Bit 31 :   */
+#define CLOCK_PUBLISH_LFCLKSTARTED_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_PUBLISH_LFCLKSTARTED_EN_Msk (0x1UL << CLOCK_PUBLISH_LFCLKSTARTED_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_PUBLISH_LFCLKSTARTED_EN_Disabled (0UL) /*!< Disable publishing */
+#define CLOCK_PUBLISH_LFCLKSTARTED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event LFCLKSTARTED will publish to. */
+#define CLOCK_PUBLISH_LFCLKSTARTED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_PUBLISH_LFCLKSTARTED_CHIDX_Msk (0xFFUL << CLOCK_PUBLISH_LFCLKSTARTED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_PUBLISH_DONE */
+/* Description: Publish configuration for event DONE */
+
+/* Bit 31 :   */
+#define CLOCK_PUBLISH_DONE_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_PUBLISH_DONE_EN_Msk (0x1UL << CLOCK_PUBLISH_DONE_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_PUBLISH_DONE_EN_Disabled (0UL) /*!< Disable publishing */
+#define CLOCK_PUBLISH_DONE_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event DONE will publish to. */
+#define CLOCK_PUBLISH_DONE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_PUBLISH_DONE_CHIDX_Msk (0xFFUL << CLOCK_PUBLISH_DONE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_PUBLISH_HFCLKAUDIOSTARTED */
+/* Description: Publish configuration for event HFCLKAUDIOSTARTED */
+
+/* Bit 31 :   */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_EN_Msk (0x1UL << CLOCK_PUBLISH_HFCLKAUDIOSTARTED_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_EN_Disabled (0UL) /*!< Disable publishing */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event HFCLKAUDIOSTARTED will publish to. */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_PUBLISH_HFCLKAUDIOSTARTED_CHIDX_Msk (0xFFUL << CLOCK_PUBLISH_HFCLKAUDIOSTARTED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_PUBLISH_HFCLK192MSTARTED */
+/* Description: Publish configuration for event HFCLK192MSTARTED */
+
+/* Bit 31 :   */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_EN_Pos (31UL) /*!< Position of EN field. */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_EN_Msk (0x1UL << CLOCK_PUBLISH_HFCLK192MSTARTED_EN_Pos) /*!< Bit mask of EN field. */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_EN_Disabled (0UL) /*!< Disable publishing */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event HFCLK192MSTARTED will publish to. */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CLOCK_PUBLISH_HFCLK192MSTARTED_CHIDX_Msk (0xFFUL << CLOCK_PUBLISH_HFCLK192MSTARTED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CLOCK_INTEN */
+/* Description: Enable or disable interrupt */
+
+/* Bit 9 : Enable or disable interrupt for event HFCLK192MSTARTED */
+#define CLOCK_INTEN_HFCLK192MSTARTED_Pos (9UL) /*!< Position of HFCLK192MSTARTED field. */
+#define CLOCK_INTEN_HFCLK192MSTARTED_Msk (0x1UL << CLOCK_INTEN_HFCLK192MSTARTED_Pos) /*!< Bit mask of HFCLK192MSTARTED field. */
+#define CLOCK_INTEN_HFCLK192MSTARTED_Disabled (0UL) /*!< Disable */
+#define CLOCK_INTEN_HFCLK192MSTARTED_Enabled (1UL) /*!< Enable */
+
+/* Bit 8 : Enable or disable interrupt for event HFCLKAUDIOSTARTED */
+#define CLOCK_INTEN_HFCLKAUDIOSTARTED_Pos (8UL) /*!< Position of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTEN_HFCLKAUDIOSTARTED_Msk (0x1UL << CLOCK_INTEN_HFCLKAUDIOSTARTED_Pos) /*!< Bit mask of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTEN_HFCLKAUDIOSTARTED_Disabled (0UL) /*!< Disable */
+#define CLOCK_INTEN_HFCLKAUDIOSTARTED_Enabled (1UL) /*!< Enable */
+
+/* Bit 7 : Enable or disable interrupt for event DONE */
+#define CLOCK_INTEN_DONE_Pos (7UL) /*!< Position of DONE field. */
+#define CLOCK_INTEN_DONE_Msk (0x1UL << CLOCK_INTEN_DONE_Pos) /*!< Bit mask of DONE field. */
+#define CLOCK_INTEN_DONE_Disabled (0UL) /*!< Disable */
+#define CLOCK_INTEN_DONE_Enabled (1UL) /*!< Enable */
+
+/* Bit 1 : Enable or disable interrupt for event LFCLKSTARTED */
+#define CLOCK_INTEN_LFCLKSTARTED_Pos (1UL) /*!< Position of LFCLKSTARTED field. */
+#define CLOCK_INTEN_LFCLKSTARTED_Msk (0x1UL << CLOCK_INTEN_LFCLKSTARTED_Pos) /*!< Bit mask of LFCLKSTARTED field. */
+#define CLOCK_INTEN_LFCLKSTARTED_Disabled (0UL) /*!< Disable */
+#define CLOCK_INTEN_LFCLKSTARTED_Enabled (1UL) /*!< Enable */
+
+/* Bit 0 : Enable or disable interrupt for event HFCLKSTARTED */
+#define CLOCK_INTEN_HFCLKSTARTED_Pos (0UL) /*!< Position of HFCLKSTARTED field. */
+#define CLOCK_INTEN_HFCLKSTARTED_Msk (0x1UL << CLOCK_INTEN_HFCLKSTARTED_Pos) /*!< Bit mask of HFCLKSTARTED field. */
+#define CLOCK_INTEN_HFCLKSTARTED_Disabled (0UL) /*!< Disable */
+#define CLOCK_INTEN_HFCLKSTARTED_Enabled (1UL) /*!< Enable */
+
+/* Register: CLOCK_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 9 : Write '1' to enable interrupt for event HFCLK192MSTARTED */
+#define CLOCK_INTENSET_HFCLK192MSTARTED_Pos (9UL) /*!< Position of HFCLK192MSTARTED field. */
+#define CLOCK_INTENSET_HFCLK192MSTARTED_Msk (0x1UL << CLOCK_INTENSET_HFCLK192MSTARTED_Pos) /*!< Bit mask of HFCLK192MSTARTED field. */
+#define CLOCK_INTENSET_HFCLK192MSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENSET_HFCLK192MSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENSET_HFCLK192MSTARTED_Set (1UL) /*!< Enable */
+
+/* Bit 8 : Write '1' to enable interrupt for event HFCLKAUDIOSTARTED */
+#define CLOCK_INTENSET_HFCLKAUDIOSTARTED_Pos (8UL) /*!< Position of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTENSET_HFCLKAUDIOSTARTED_Msk (0x1UL << CLOCK_INTENSET_HFCLKAUDIOSTARTED_Pos) /*!< Bit mask of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTENSET_HFCLKAUDIOSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENSET_HFCLKAUDIOSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENSET_HFCLKAUDIOSTARTED_Set (1UL) /*!< Enable */
+
+/* Bit 7 : Write '1' to enable interrupt for event DONE */
+#define CLOCK_INTENSET_DONE_Pos (7UL) /*!< Position of DONE field. */
+#define CLOCK_INTENSET_DONE_Msk (0x1UL << CLOCK_INTENSET_DONE_Pos) /*!< Bit mask of DONE field. */
+#define CLOCK_INTENSET_DONE_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENSET_DONE_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENSET_DONE_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable interrupt for event LFCLKSTARTED */
+#define CLOCK_INTENSET_LFCLKSTARTED_Pos (1UL) /*!< Position of LFCLKSTARTED field. */
+#define CLOCK_INTENSET_LFCLKSTARTED_Msk (0x1UL << CLOCK_INTENSET_LFCLKSTARTED_Pos) /*!< Bit mask of LFCLKSTARTED field. */
+#define CLOCK_INTENSET_LFCLKSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENSET_LFCLKSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENSET_LFCLKSTARTED_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event HFCLKSTARTED */
+#define CLOCK_INTENSET_HFCLKSTARTED_Pos (0UL) /*!< Position of HFCLKSTARTED field. */
+#define CLOCK_INTENSET_HFCLKSTARTED_Msk (0x1UL << CLOCK_INTENSET_HFCLKSTARTED_Pos) /*!< Bit mask of HFCLKSTARTED field. */
+#define CLOCK_INTENSET_HFCLKSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENSET_HFCLKSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENSET_HFCLKSTARTED_Set (1UL) /*!< Enable */
+
+/* Register: CLOCK_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 9 : Write '1' to disable interrupt for event HFCLK192MSTARTED */
+#define CLOCK_INTENCLR_HFCLK192MSTARTED_Pos (9UL) /*!< Position of HFCLK192MSTARTED field. */
+#define CLOCK_INTENCLR_HFCLK192MSTARTED_Msk (0x1UL << CLOCK_INTENCLR_HFCLK192MSTARTED_Pos) /*!< Bit mask of HFCLK192MSTARTED field. */
+#define CLOCK_INTENCLR_HFCLK192MSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENCLR_HFCLK192MSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENCLR_HFCLK192MSTARTED_Clear (1UL) /*!< Disable */
+
+/* Bit 8 : Write '1' to disable interrupt for event HFCLKAUDIOSTARTED */
+#define CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Pos (8UL) /*!< Position of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Msk (0x1UL << CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Pos) /*!< Bit mask of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENCLR_HFCLKAUDIOSTARTED_Clear (1UL) /*!< Disable */
+
+/* Bit 7 : Write '1' to disable interrupt for event DONE */
+#define CLOCK_INTENCLR_DONE_Pos (7UL) /*!< Position of DONE field. */
+#define CLOCK_INTENCLR_DONE_Msk (0x1UL << CLOCK_INTENCLR_DONE_Pos) /*!< Bit mask of DONE field. */
+#define CLOCK_INTENCLR_DONE_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENCLR_DONE_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENCLR_DONE_Clear (1UL) /*!< Disable */
+
+/* Bit 1 : Write '1' to disable interrupt for event LFCLKSTARTED */
+#define CLOCK_INTENCLR_LFCLKSTARTED_Pos (1UL) /*!< Position of LFCLKSTARTED field. */
+#define CLOCK_INTENCLR_LFCLKSTARTED_Msk (0x1UL << CLOCK_INTENCLR_LFCLKSTARTED_Pos) /*!< Bit mask of LFCLKSTARTED field. */
+#define CLOCK_INTENCLR_LFCLKSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENCLR_LFCLKSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENCLR_LFCLKSTARTED_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable interrupt for event HFCLKSTARTED */
+#define CLOCK_INTENCLR_HFCLKSTARTED_Pos (0UL) /*!< Position of HFCLKSTARTED field. */
+#define CLOCK_INTENCLR_HFCLKSTARTED_Msk (0x1UL << CLOCK_INTENCLR_HFCLKSTARTED_Pos) /*!< Bit mask of HFCLKSTARTED field. */
+#define CLOCK_INTENCLR_HFCLKSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define CLOCK_INTENCLR_HFCLKSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define CLOCK_INTENCLR_HFCLKSTARTED_Clear (1UL) /*!< Disable */
+
+/* Register: CLOCK_INTPEND */
+/* Description: Pending interrupts */
+
+/* Bit 9 : Read pending status of interrupt for event HFCLK192MSTARTED */
+#define CLOCK_INTPEND_HFCLK192MSTARTED_Pos (9UL) /*!< Position of HFCLK192MSTARTED field. */
+#define CLOCK_INTPEND_HFCLK192MSTARTED_Msk (0x1UL << CLOCK_INTPEND_HFCLK192MSTARTED_Pos) /*!< Bit mask of HFCLK192MSTARTED field. */
+#define CLOCK_INTPEND_HFCLK192MSTARTED_NotPending (0UL) /*!< Read: Not pending */
+#define CLOCK_INTPEND_HFCLK192MSTARTED_Pending (1UL) /*!< Read: Pending */
+
+/* Bit 8 : Read pending status of interrupt for event HFCLKAUDIOSTARTED */
+#define CLOCK_INTPEND_HFCLKAUDIOSTARTED_Pos (8UL) /*!< Position of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTPEND_HFCLKAUDIOSTARTED_Msk (0x1UL << CLOCK_INTPEND_HFCLKAUDIOSTARTED_Pos) /*!< Bit mask of HFCLKAUDIOSTARTED field. */
+#define CLOCK_INTPEND_HFCLKAUDIOSTARTED_NotPending (0UL) /*!< Read: Not pending */
+#define CLOCK_INTPEND_HFCLKAUDIOSTARTED_Pending (1UL) /*!< Read: Pending */
+
+/* Bit 7 : Read pending status of interrupt for event DONE */
+#define CLOCK_INTPEND_DONE_Pos (7UL) /*!< Position of DONE field. */
+#define CLOCK_INTPEND_DONE_Msk (0x1UL << CLOCK_INTPEND_DONE_Pos) /*!< Bit mask of DONE field. */
+#define CLOCK_INTPEND_DONE_NotPending (0UL) /*!< Read: Not pending */
+#define CLOCK_INTPEND_DONE_Pending (1UL) /*!< Read: Pending */
+
+/* Bit 1 : Read pending status of interrupt for event LFCLKSTARTED */
+#define CLOCK_INTPEND_LFCLKSTARTED_Pos (1UL) /*!< Position of LFCLKSTARTED field. */
+#define CLOCK_INTPEND_LFCLKSTARTED_Msk (0x1UL << CLOCK_INTPEND_LFCLKSTARTED_Pos) /*!< Bit mask of LFCLKSTARTED field. */
+#define CLOCK_INTPEND_LFCLKSTARTED_NotPending (0UL) /*!< Read: Not pending */
+#define CLOCK_INTPEND_LFCLKSTARTED_Pending (1UL) /*!< Read: Pending */
+
+/* Bit 0 : Read pending status of interrupt for event HFCLKSTARTED */
+#define CLOCK_INTPEND_HFCLKSTARTED_Pos (0UL) /*!< Position of HFCLKSTARTED field. */
+#define CLOCK_INTPEND_HFCLKSTARTED_Msk (0x1UL << CLOCK_INTPEND_HFCLKSTARTED_Pos) /*!< Bit mask of HFCLKSTARTED field. */
+#define CLOCK_INTPEND_HFCLKSTARTED_NotPending (0UL) /*!< Read: Not pending */
+#define CLOCK_INTPEND_HFCLKSTARTED_Pending (1UL) /*!< Read: Pending */
+
+/* Register: CLOCK_HFCLKRUN */
+/* Description: Status indicating that HFCLKSTART task has been triggered */
+
+/* Bit 0 : HFCLKSTART task triggered or not */
+#define CLOCK_HFCLKRUN_STATUS_Pos (0UL) /*!< Position of STATUS field. */
+#define CLOCK_HFCLKRUN_STATUS_Msk (0x1UL << CLOCK_HFCLKRUN_STATUS_Pos) /*!< Bit mask of STATUS field. */
+#define CLOCK_HFCLKRUN_STATUS_NotTriggered (0UL) /*!< Task not triggered */
+#define CLOCK_HFCLKRUN_STATUS_Triggered (1UL) /*!< Task triggered */
+
+/* Register: CLOCK_HFCLKSTAT */
+/* Description: Status indicating which HFCLK128M/HFCLK64M source is running This register value in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance. */
+
+/* Bit 16 : HFCLK state */
+#define CLOCK_HFCLKSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
+#define CLOCK_HFCLKSTAT_STATE_Msk (0x1UL << CLOCK_HFCLKSTAT_STATE_Pos) /*!< Bit mask of STATE field. */
+#define CLOCK_HFCLKSTAT_STATE_NotRunning (0UL) /*!< HFCLK not running */
+#define CLOCK_HFCLKSTAT_STATE_Running (1UL) /*!< HFCLK running */
+
+/* Bit 4 : ALWAYSRUN activated */
+#define CLOCK_HFCLKSTAT_ALWAYSRUNNING_Pos (4UL) /*!< Position of ALWAYSRUNNING field. */
+#define CLOCK_HFCLKSTAT_ALWAYSRUNNING_Msk (0x1UL << CLOCK_HFCLKSTAT_ALWAYSRUNNING_Pos) /*!< Bit mask of ALWAYSRUNNING field. */
+#define CLOCK_HFCLKSTAT_ALWAYSRUNNING_NotRunning (0UL) /*!< Automatic clock control enabled */
+#define CLOCK_HFCLKSTAT_ALWAYSRUNNING_Running (1UL) /*!< Oscillator is always running */
+
+/* Bit 0 : Active clock source */
+#define CLOCK_HFCLKSTAT_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_HFCLKSTAT_SRC_Msk (0x1UL << CLOCK_HFCLKSTAT_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_HFCLKSTAT_SRC_HFINT (0UL) /*!< Clock source: HFINT - 128 MHz on-chip oscillator */
+#define CLOCK_HFCLKSTAT_SRC_HFXO (1UL) /*!< Clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator */
+
+/* Register: CLOCK_LFCLKRUN */
+/* Description: Status indicating that LFCLKSTART task has been triggered */
+
+/* Bit 0 : LFCLKSTART task triggered or not */
+#define CLOCK_LFCLKRUN_STATUS_Pos (0UL) /*!< Position of STATUS field. */
+#define CLOCK_LFCLKRUN_STATUS_Msk (0x1UL << CLOCK_LFCLKRUN_STATUS_Pos) /*!< Bit mask of STATUS field. */
+#define CLOCK_LFCLKRUN_STATUS_NotTriggered (0UL) /*!< Task not triggered */
+#define CLOCK_LFCLKRUN_STATUS_Triggered (1UL) /*!< Task triggered */
+
+/* Register: CLOCK_LFCLKSTAT */
+/* Description: Status indicating which LFCLK source is running This register value in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance. */
+
+/* Bit 16 : LFCLK state */
+#define CLOCK_LFCLKSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
+#define CLOCK_LFCLKSTAT_STATE_Msk (0x1UL << CLOCK_LFCLKSTAT_STATE_Pos) /*!< Bit mask of STATE field. */
+#define CLOCK_LFCLKSTAT_STATE_NotRunning (0UL) /*!< LFCLK not running */
+#define CLOCK_LFCLKSTAT_STATE_Running (1UL) /*!< LFCLK running */
+
+/* Bit 4 : ALWAYSRUN activated */
+#define CLOCK_LFCLKSTAT_ALWAYSRUNNING_Pos (4UL) /*!< Position of ALWAYSRUNNING field. */
+#define CLOCK_LFCLKSTAT_ALWAYSRUNNING_Msk (0x1UL << CLOCK_LFCLKSTAT_ALWAYSRUNNING_Pos) /*!< Bit mask of ALWAYSRUNNING field. */
+#define CLOCK_LFCLKSTAT_ALWAYSRUNNING_NotRunning (0UL) /*!< Automatic clock control enabled */
+#define CLOCK_LFCLKSTAT_ALWAYSRUNNING_Running (1UL) /*!< Oscillator is always running */
+
+/* Bits 1..0 : Active clock source */
+#define CLOCK_LFCLKSTAT_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_LFCLKSTAT_SRC_Msk (0x3UL << CLOCK_LFCLKSTAT_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_LFCLKSTAT_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
+#define CLOCK_LFCLKSTAT_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
+#define CLOCK_LFCLKSTAT_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
+
+/* Register: CLOCK_LFCLKSRCCOPY */
+/* Description: Copy of LFCLKSRC register, set when LFCLKSTART task was triggered */
+
+/* Bits 1..0 : Clock source */
+#define CLOCK_LFCLKSRCCOPY_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_LFCLKSRCCOPY_SRC_Msk (0x3UL << CLOCK_LFCLKSRCCOPY_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_LFCLKSRCCOPY_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
+#define CLOCK_LFCLKSRCCOPY_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
+#define CLOCK_LFCLKSRCCOPY_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
+
+/* Register: CLOCK_HFCLKAUDIORUN */
+/* Description: Status indicating that HFCLKAUDIOSTART task has been triggered */
+
+/* Bit 0 : HFCLKAUDIOSTART task triggered or not */
+#define CLOCK_HFCLKAUDIORUN_STATUS_Pos (0UL) /*!< Position of STATUS field. */
+#define CLOCK_HFCLKAUDIORUN_STATUS_Msk (0x1UL << CLOCK_HFCLKAUDIORUN_STATUS_Pos) /*!< Bit mask of STATUS field. */
+#define CLOCK_HFCLKAUDIORUN_STATUS_NotTriggered (0UL) /*!< Task not triggered */
+#define CLOCK_HFCLKAUDIORUN_STATUS_Triggered (1UL) /*!< Task triggered */
+
+/* Register: CLOCK_HFCLKAUDIOSTAT */
+/* Description: Status indicating which HFCLKAUDIO source is running */
+
+/* Bit 16 : HFCLKAUDIO state */
+#define CLOCK_HFCLKAUDIOSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
+#define CLOCK_HFCLKAUDIOSTAT_STATE_Msk (0x1UL << CLOCK_HFCLKAUDIOSTAT_STATE_Pos) /*!< Bit mask of STATE field. */
+#define CLOCK_HFCLKAUDIOSTAT_STATE_NotRunning (0UL) /*!< HFCLKAUDIO not running */
+#define CLOCK_HFCLKAUDIOSTAT_STATE_Running (1UL) /*!< HFCLKAUDIO running */
+
+/* Bit 4 : ALWAYSRUN activated */
+#define CLOCK_HFCLKAUDIOSTAT_ALWAYSRUNNING_Pos (4UL) /*!< Position of ALWAYSRUNNING field. */
+#define CLOCK_HFCLKAUDIOSTAT_ALWAYSRUNNING_Msk (0x1UL << CLOCK_HFCLKAUDIOSTAT_ALWAYSRUNNING_Pos) /*!< Bit mask of ALWAYSRUNNING field. */
+#define CLOCK_HFCLKAUDIOSTAT_ALWAYSRUNNING_NotRunning (0UL) /*!< Automatic clock control enabled */
+#define CLOCK_HFCLKAUDIOSTAT_ALWAYSRUNNING_Running (1UL) /*!< Oscillator is always running */
+
+/* Register: CLOCK_HFCLK192MRUN */
+/* Description: Status indicating that HFCLK192MSTART task has been triggered */
+
+/* Bit 0 : HFCLK192MSTART task triggered or not */
+#define CLOCK_HFCLK192MRUN_STATUS_Pos (0UL) /*!< Position of STATUS field. */
+#define CLOCK_HFCLK192MRUN_STATUS_Msk (0x1UL << CLOCK_HFCLK192MRUN_STATUS_Pos) /*!< Bit mask of STATUS field. */
+#define CLOCK_HFCLK192MRUN_STATUS_NotTriggered (0UL) /*!< Task not triggered */
+#define CLOCK_HFCLK192MRUN_STATUS_Triggered (1UL) /*!< Task triggered */
+
+/* Register: CLOCK_HFCLK192MSTAT */
+/* Description: Status indicating which HFCLK192M source is running */
+
+/* Bit 16 : HFCLK192M state */
+#define CLOCK_HFCLK192MSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
+#define CLOCK_HFCLK192MSTAT_STATE_Msk (0x1UL << CLOCK_HFCLK192MSTAT_STATE_Pos) /*!< Bit mask of STATE field. */
+#define CLOCK_HFCLK192MSTAT_STATE_NotRunning (0UL) /*!< HFCLK192M not running */
+#define CLOCK_HFCLK192MSTAT_STATE_Running (1UL) /*!< HFCLK192M running */
+
+/* Bit 4 : ALWAYSRUN activated */
+#define CLOCK_HFCLK192MSTAT_ALWAYSRUNNING_Pos (4UL) /*!< Position of ALWAYSRUNNING field. */
+#define CLOCK_HFCLK192MSTAT_ALWAYSRUNNING_Msk (0x1UL << CLOCK_HFCLK192MSTAT_ALWAYSRUNNING_Pos) /*!< Bit mask of ALWAYSRUNNING field. */
+#define CLOCK_HFCLK192MSTAT_ALWAYSRUNNING_NotRunning (0UL) /*!< Automatic clock control enabled */
+#define CLOCK_HFCLK192MSTAT_ALWAYSRUNNING_Running (1UL) /*!< Oscillator is always running */
+
+/* Bit 0 : Active clock source */
+#define CLOCK_HFCLK192MSTAT_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_HFCLK192MSTAT_SRC_Msk (0x1UL << CLOCK_HFCLK192MSTAT_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_HFCLK192MSTAT_SRC_HFINT (0UL) /*!< Clock source: HFINT - on-chip oscillator */
+#define CLOCK_HFCLK192MSTAT_SRC_HFXO (1UL) /*!< Clock source: HFXO - derived from external 32 MHz crystal oscillator */
+
+/* Register: CLOCK_HFCLKSRC */
+/* Description: Clock source for HFCLK128M/HFCLK64M */
+
+/* Bit 0 : Select which HFCLK source is started by the HFCLKSTART task */
+#define CLOCK_HFCLKSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_HFCLKSRC_SRC_Msk (0x1UL << CLOCK_HFCLKSRC_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_HFCLKSRC_SRC_HFINT (0UL) /*!< HFCLKSTART task starts HFINT oscillator */
+#define CLOCK_HFCLKSRC_SRC_HFXO (1UL) /*!< HFCLKSTART task starts HFXO oscillator */
+
+/* Register: CLOCK_LFCLKSRC */
+/* Description: Clock source for LFCLK */
+
+/* Bits 1..0 : Select which LFCLK source is started by the LFCLKSTART task */
+#define CLOCK_LFCLKSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_LFCLKSRC_SRC_Msk (0x3UL << CLOCK_LFCLKSRC_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_LFCLKSRC_SRC_LFRC (1UL) /*!< 32.768 kHz RC oscillator */
+#define CLOCK_LFCLKSRC_SRC_LFXO (2UL) /*!< 32.768 kHz crystal oscillator */
+#define CLOCK_LFCLKSRC_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
+
+/* Register: CLOCK_HFCLKCTRL */
+/* Description: HFCLK128M frequency configuration */
+
+/* Bits 1..0 : High frequency clock HCLK */
+#define CLOCK_HFCLKCTRL_HCLK_Pos (0UL) /*!< Position of HCLK field. */
+#define CLOCK_HFCLKCTRL_HCLK_Msk (0x3UL << CLOCK_HFCLKCTRL_HCLK_Pos) /*!< Bit mask of HCLK field. */
+#define CLOCK_HFCLKCTRL_HCLK_Div1 (0UL) /*!< Divide HFCLK by 1 */
+#define CLOCK_HFCLKCTRL_HCLK_Div2 (1UL) /*!< Divide HFCLK by 2 */
+
+/* Register: CLOCK_HFCLKAUDIO_FREQUENCY */
+/* Description: Audio PLL frequency in 11.176 MHz - 11.402 MHz or 12.165 MHz - 12.411 MHz frequency bands */
+
+/* Bits 15..0 : Frequency 0: 10.666 MHz 65535: 13.333 MHz */
+#define CLOCK_HFCLKAUDIO_FREQUENCY_FREQUENCY_Pos (0UL) /*!< Position of FREQUENCY field. */
+#define CLOCK_HFCLKAUDIO_FREQUENCY_FREQUENCY_Msk (0xFFFFUL << CLOCK_HFCLKAUDIO_FREQUENCY_FREQUENCY_Pos) /*!< Bit mask of FREQUENCY field. */
+
+/* Register: CLOCK_HFCLKALWAYSRUN */
+/* Description: Automatic or manual control of HFCLK128M/HFCLK64M */
+
+/* Bit 0 : Ensure clock is always running */
+#define CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Pos (0UL) /*!< Position of ALWAYSRUN field. */
+#define CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Msk (0x1UL << CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Pos) /*!< Bit mask of ALWAYSRUN field. */
+#define CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Automatic (0UL) /*!< Use automatic clock control */
+#define CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_AlwaysRun (1UL) /*!< Ensure clock is always running */
+
+/* Register: CLOCK_LFCLKALWAYSRUN */
+/* Description: Automatic or manual control of LFCLK */
+
+/* Bit 0 : Ensure clock is always running */
+#define CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Pos (0UL) /*!< Position of ALWAYSRUN field. */
+#define CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Msk (0x1UL << CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Pos) /*!< Bit mask of ALWAYSRUN field. */
+#define CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_Automatic (0UL) /*!< Use automatic clock control */
+#define CLOCK_LFCLKALWAYSRUN_ALWAYSRUN_AlwaysRun (1UL) /*!< Ensure clock is always running */
+
+/* Register: CLOCK_HFCLKAUDIOALWAYSRUN */
+/* Description: Automatic or manual control of HFCLKAUDIO */
+
+/* Bit 0 : Ensure clock is always running */
+#define CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Pos (0UL) /*!< Position of ALWAYSRUN field. */
+#define CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Msk (0x1UL << CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Pos) /*!< Bit mask of ALWAYSRUN field. */
+#define CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_Automatic (0UL) /*!< Use automatic clock control */
+#define CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_AlwaysRun (1UL) /*!< Ensure clock is always running */
+
+/* Register: CLOCK_HFCLK192MSRC */
+/* Description: Clock source for HFCLK192M */
+
+/* Bit 0 : Select which HFCLK192M source is started by the HFCLK192MSTART task */
+#define CLOCK_HFCLK192MSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
+#define CLOCK_HFCLK192MSRC_SRC_Msk (0x1UL << CLOCK_HFCLK192MSRC_SRC_Pos) /*!< Bit mask of SRC field. */
+#define CLOCK_HFCLK192MSRC_SRC_HFINT (0UL) /*!< HFCLK192MSTART task starts HFINT oscillator */
+#define CLOCK_HFCLK192MSRC_SRC_HFXO (1UL) /*!< HFCLK192MSTART task starts HFXO oscillator */
+
+/* Register: CLOCK_HFCLK192MALWAYSRUN */
+/* Description: Automatic or manual control of HFCLK192M */
+
+/* Bit 0 : Ensure clock is always running */
+#define CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Pos (0UL) /*!< Position of ALWAYSRUN field. */
+#define CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Msk (0x1UL << CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Pos) /*!< Bit mask of ALWAYSRUN field. */
+#define CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_Automatic (0UL) /*!< Use automatic clock control */
+#define CLOCK_HFCLK192MALWAYSRUN_ALWAYSRUN_AlwaysRun (1UL) /*!< Ensure clock is always running */
+
+/* Register: CLOCK_HFCLK192MCTRL */
+/* Description: HFCLK192M frequency configuration */
+
+/* Bits 1..0 : High frequency clock HCLK192M */
+#define CLOCK_HFCLK192MCTRL_HCLK192M_Pos (0UL) /*!< Position of HCLK192M field. */
+#define CLOCK_HFCLK192MCTRL_HCLK192M_Msk (0x3UL << CLOCK_HFCLK192MCTRL_HCLK192M_Pos) /*!< Bit mask of HCLK192M field. */
+#define CLOCK_HFCLK192MCTRL_HCLK192M_Div1 (0UL) /*!< Divide HFCLK192M by 1 */
+#define CLOCK_HFCLK192MCTRL_HCLK192M_Div2 (1UL) /*!< Divide HFCLK192M by 2 */
+#define CLOCK_HFCLK192MCTRL_HCLK192M_Div4 (2UL) /*!< Divide HFCLK192M by 4 */
+
+
 /* =========================================================================================================================== */
 /* ================                                          EGU                                              ================ */
 /* =========================================================================================================================== */
@@ -376,6 +1147,22 @@ typedef struct {                                /*!< (@ 0x40005000) POWER_NS Str
                                                                     register                                                   */
 } NRF_POWER_Type;                               /*!< Size = 1316 (0x524)                                                       */
 
+
+/* =========================================================================================================================== */
+/* ================                                         RESET                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Reset control (RESET)
+  */
+
+typedef struct {                                /*!< (@ 0x40005000) RESET_NS Structure                                         */
+  __IM  uint32_t  RESERVED[256];
+  __IOM uint32_t  RESETREAS;                    /*!< (@ 0x00000400) Reset reason                                               */
+  __IM  uint32_t  RESERVED1[131];
+  __IOM RESET_NETWORK_Type NETWORK;             /*!< (@ 0x00000610) ULP network core control                                   */
+} NRF_RESET_Type;                               /*!< Size = 1560 (0x618)                                                       */
 
 
 /* =========================================================================================================================== */

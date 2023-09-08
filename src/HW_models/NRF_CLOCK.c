@@ -8,9 +8,17 @@
 /*
  * CLOCK - Clock control
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/clock.html?cp=5_1_0_4_3
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/chapters/clock/doc/clock.html?cp=4_0_0_3_10
+ * POWER - POWER control
+ * https://infocenter.nordicsemi.com/topic/ps_nrf52833/power.html?cp=5_1_0_4_2
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/chapters/power/doc/power.html?cp=4_0_0_3_5
+ * RESET - RESET control
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/chapters/reset/doc/reset.html?cp=4_0_0_3_9
  *
- * Notes:
+ * Notes POWER / RESET:
+ * 1. The POWER and (nrf5340) RESET peripherals are just stubs with no functionality
  *
+ * Note: CLOCK:
  * 1. The clocks are ready in 1 delta cycle (i.e. almost instantaneously),
  *    HFXODEBOUNCE and LFXODEBOUNCE are ignored together with the XTALs
  *    power up times
@@ -35,6 +43,11 @@
  *
  * 8. After TASK_CTSTART EVENTS_CTSTARTED is raised immediately,
  *    After TASK_CTSTOP EVENTS_CTSTOPPED is raised immediately.
+ *
+ * 9. For the nrf5340 CLOCK. Almost all new functionality is missing
+ *     (beyond connection to the DPPI, and having one instance per core)
+ *    * The extra app core clocks are not implemented yet (Audio or 192M)
+ *    * Automatic HW clock requests are not implemented yet
  */
 
 #include <string.h>
@@ -44,7 +57,7 @@
 #include "NHW_peri_types.h"
 #include "NRF_CLOCK.h"
 #include "nsi_hw_scheduler.h"
-#include "NRF_PPI.h"
+#include "NHW_xPPI.h"
 #include "NRF_RTC.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
@@ -52,279 +65,497 @@
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
-NRF_CLOCK_Type NRF_CLOCK_regs;
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_clock_irq_map[NHW_CLOCK_TOTAL_INST] = NHW_CLOCK_INT_MAP;
+enum clock_states {Stopped = 0, Starting, Started, Stopping};
 
-static uint32_t CLOCK_INTEN = 0; //interrupt enable
+struct clkpwr_status {
+  NRF_CLOCK_Type *CLOCK_regs;
+  NRF_POWER_Type *POWER_regs;
+#if (NHW_CLKPWR_HAS_RESET)
+  NRF_RESET_Type *RESET_regs;
+#endif
 
-static bs_time_t Timer_CLOCK = TIME_NEVER;
+  uint inst;
 
-static bs_time_t Timer_CLOCK_LF = TIME_NEVER;
-static bs_time_t Timer_CLOCK_HF = TIME_NEVER;
-static bs_time_t Timer_LF_cal   = TIME_NEVER;
-static bs_time_t Timer_caltimer = TIME_NEVER;
+  uint32_t INTEN; //interrupt enable
 
-enum clock_states { Stopped, Starting, Started, Stopping};
-static enum clock_states HF_Clock_state = Stopped;
-static enum clock_states LF_Clock_state = Stopped;
-static enum clock_states LF_cal_state = Stopped;
-static enum clock_states caltimer_state = Stopped;
+  bs_time_t Timer_CLOCK_LF;
+  bs_time_t Timer_CLOCK_HF;
+  bs_time_t Timer_LF_cal;
+  bs_time_t Timer_caltimer;
+
+  enum clock_states HF_Clock_state;
+  enum clock_states LF_Clock_state;
+  enum clock_states LF_cal_state;
+  enum clock_states caltimer_state;
+
+#if (NHW_HAS_DPPI)
+  uint dppi_map;   //To which DPPI instance are this CLOCK/POWER subscribe&publish ports connected to
+  //Which of the subscription ports are currently connected, and to which channel:
+  struct nhw_subsc_mem subscribed_HFCLKSTART;
+  struct nhw_subsc_mem subscribed_HFCLKSTOP;
+  struct nhw_subsc_mem subscribed_LFCLKSTART;
+  struct nhw_subsc_mem subscribed_LFCLKSTOP;
+  struct nhw_subsc_mem subscribed_CAL;
+  struct nhw_subsc_mem subscribed_HFCLKAUDIOSTART;
+  struct nhw_subsc_mem subscribed_HFCLKAUDIOSTOP;
+  struct nhw_subsc_mem subscribed_HFCLK192MSTART;
+  struct nhw_subsc_mem subscribed_HFCLK192MSTOP;
+#endif
+};
+
+static bs_time_t Timer_PWRCLK = TIME_NEVER;
+static struct clkpwr_status nhw_clkpwr_st[NHW_CLKPWR_TOTAL_INST];
+union NRF_CLKPWR_Type NRF_CLKPWR_regs[NHW_CLKPWR_TOTAL_INST];
+
+NRF_CLOCK_Type *NRF_CLOCK_regs[NHW_CLKPWR_TOTAL_INST];
+NRF_POWER_Type *NRF_POWER_regs[NHW_CLKPWR_TOTAL_INST];
+#if (NHW_CLKPWR_HAS_RESET)
+NRF_RESET_Type *NRF_RESET_regs[NHW_CLKPWR_TOTAL_INST];
+#endif /* (NHW_CLKPWR_HAS_RESET) */
 
 static void nrf_clock_update_master_timer(void) {
-  bs_time_t t1 = BS_MIN(Timer_CLOCK_HF, Timer_CLOCK_LF);
-  bs_time_t t2 = BS_MIN(Timer_LF_cal, Timer_caltimer);
-  Timer_CLOCK = BS_MIN(t1, t2);
+
+  Timer_PWRCLK = TIME_NEVER;
+
+  for (int i = 0; i < NHW_CLKPWR_TOTAL_INST; i++) {
+    struct clkpwr_status * c_el = &nhw_clkpwr_st[i];
+
+    bs_time_t t1 = BS_MIN(c_el->Timer_CLOCK_HF, c_el->Timer_CLOCK_LF);
+    bs_time_t t2 = BS_MIN(c_el->Timer_LF_cal, c_el->Timer_caltimer);
+
+    bs_time_t el_min = BS_MIN(t1, t2);
+    if (el_min < Timer_PWRCLK) {
+      Timer_PWRCLK = el_min;
+    }
+  }
 
   nsi_hws_find_next_event();
 }
 
 static void nrf_clock_init(void) {
-  memset(&NRF_CLOCK_regs, 0, sizeof(NRF_CLOCK_regs));
-  NRF_CLOCK_regs.HFXODEBOUNCE = 0x00000010;
+#if (NHW_HAS_DPPI)
+  /* Mapping of peripheral instance to DPPI instance */
+  uint nhw_clkpwr_dppi_map[NHW_CLKPWR_TOTAL_INST] = NHW_CLKPWR_DPPI_MAP;
+#endif
 
-  HF_Clock_state = Stopped;
-  LF_Clock_state = Stopped;
-  LF_cal_state   = Stopped;
-  caltimer_state = Stopped;
-  Timer_CLOCK_LF = TIME_NEVER;
-  Timer_CLOCK_HF = TIME_NEVER;
-  Timer_LF_cal   = TIME_NEVER;
-  Timer_caltimer = TIME_NEVER;
+  memset(NRF_CLKPWR_regs, 0, sizeof(NRF_CLKPWR_regs));
+
+  for (int i = 0; i < NHW_CLKPWR_TOTAL_INST; i++) {
+    struct clkpwr_status * c_el = &nhw_clkpwr_st[i];
+
+    c_el->inst = i;
+
+    NRF_CLOCK_regs[i] = (NRF_CLOCK_Type *)&NRF_CLKPWR_regs[i];
+    c_el->CLOCK_regs = (NRF_CLOCK_Type *)&NRF_CLKPWR_regs[i];
+    NRF_POWER_regs[i] = (NRF_POWER_Type *)&NRF_CLKPWR_regs[i];
+    c_el->POWER_regs = (NRF_POWER_Type *)&NRF_CLKPWR_regs[i];
+#if (NHW_CLKPWR_HAS_RESET)
+    NRF_RESET_regs[i] = (NRF_RESET_Type *)&NRF_CLKPWR_regs[i];
+    c_el->RESET_regs = (NRF_RESET_Type *)&NRF_CLKPWR_regs[i];
+#endif /* (NHW_CLKPWR_HAS_RESET) */
+
+    c_el->Timer_CLOCK_LF = TIME_NEVER;
+    c_el->Timer_CLOCK_HF = TIME_NEVER;
+    c_el->Timer_LF_cal   = TIME_NEVER;
+    c_el->Timer_caltimer = TIME_NEVER;
+
+    c_el->HF_Clock_state = Stopped;
+    c_el->LF_Clock_state = Stopped;
+    c_el->LF_cal_state   = Stopped;
+    c_el->caltimer_state = Stopped;
+#if (NHW_HAS_DPPI)
+    c_el->dppi_map = nhw_clkpwr_dppi_map[i];
+#endif
+
+#if defined(CLOCK_HFXODEBOUNCE_HFXODEBOUNCE_Pos)
+    NRF_CLOCK_regs[i]->HFXODEBOUNCE = 0x00000010;
+#endif
+  }
 }
 
 NSI_TASK(nrf_clock_init, HW_INIT, 100);
 
-static void nrf_clock_eval_interrupt(void) {
-  static bool clock_int_line; /* Is the CLOCK currently driving its interrupt line high */
+static void nrf_pwrclk_eval_interrupt(int inst) {
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_clock_irq_map[NHW_CLKPWR_TOTAL_INST] = NHW_CLKPWR_INT_MAP;
+  static bool clock_int_line[NHW_CLKPWR_TOTAL_INST]; /* Is the CLOCK currently driving its interrupt line high */
   bool new_int_line = false;
 
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
 #define check_interrupt(x) \
-	if (NRF_CLOCK_regs.EVENTS_##x \
-	    && (CLOCK_INTEN & CLOCK_INTENCLR_##x##_Msk)){ \
+	if (NRF_CLOCK_regs[inst]->EVENTS_##x \
+	    && (this->INTEN & CLOCK_INTENCLR_##x##_Msk)){ \
 	  new_int_line = true; \
 	} \
 
   check_interrupt(HFCLKSTARTED);
   check_interrupt(LFCLKSTARTED);
   check_interrupt(DONE);
+#if (NHW_CLKPWR_HAS_CALTIMER)
   check_interrupt(CTTO);
   check_interrupt(CTSTARTED);
   check_interrupt(CTSTOPPED);
+#endif /* NHW_CLKPWR_HAS_CALTIMER */
+#if (NHW_CLKPWR_HAS_HFCLKAUDIOCLK)
+  check_interrupt(HFCLKAUDIOSTARTED);
+#endif
+#if (NHW_CLKPWR_HAS_HFCLK192MCLK)
+  check_interrupt(HFCLK192MSTARTED);
+#endif
 
-  int inst = 0;
-  if (clock_int_line == false && new_int_line == true) {
-    clock_int_line = true;
+  if (clock_int_line[inst] == false && new_int_line == true) {
+    clock_int_line[inst] = true;
     hw_irq_ctrl_raise_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
                                       nhw_clock_irq_map[inst].int_nbr);
-  } else if (clock_int_line == true && new_int_line == false) {
-    clock_int_line = false;
+  } else if (clock_int_line[inst] == true && new_int_line == false) {
+    clock_int_line[inst] = false;
     hw_irq_ctrl_lower_level_irq_line(nhw_clock_irq_map[inst].cntl_inst,
                                       nhw_clock_irq_map[inst].int_nbr);
   }
 }
 
-#define nrf_clock_event_handler(x) \
-  static void nrf_clock_event_##x(void) { \
-    NRF_CLOCK_regs.EVENTS_##x = 1; \
-    nrf_clock_eval_interrupt(); \
-    nrf_ppi_event(CLOCK_EVENTS_##x);\
+#if (NHW_HAS_PPI)
+#define nhw_clock_signal_handler(x)         \
+  static void nhw_clock_signal_##x(int i) { \
+    NRF_CLOCK_regs[i]->EVENTS_##x = 1;     \
+    nrf_pwrclk_eval_interrupt(i);           \
+    nrf_ppi_event(CLOCK_EVENTS_##x);       \
   }
+#else
+#define nhw_clock_signal_handler(x)         \
+  static void nhw_clock_signal_##x(int i) { \
+    NRF_CLOCK_regs[i]->EVENTS_##x = 1;     \
+    nrf_pwrclk_eval_interrupt(i);           \
+    nhw_dppi_event_signal_if(nhw_clkpwr_st[i].dppi_map,      \
+                             NRF_CLOCK_regs[i]->PUBLISH_##x);\
+  }
+#endif
+
 /*
- * CLOCK does not have shortcuts, so all we need to do is set the corresponding even
- * and evaluate the interrupt
+ * CLOCK POWER & RESET do not have shortcuts, so all we need to do
+ * is set the corresponding event and evaluate the interrupt.
  */
-nrf_clock_event_handler(HFCLKSTARTED)
-nrf_clock_event_handler(LFCLKSTARTED)
-nrf_clock_event_handler(DONE)
-nrf_clock_event_handler(CTTO)
-nrf_clock_event_handler(CTSTARTED)
-nrf_clock_event_handler(CTSTOPPED)
+nhw_clock_signal_handler(HFCLKSTARTED)
+nhw_clock_signal_handler(LFCLKSTARTED)
+nhw_clock_signal_handler(DONE)
+#if (NHW_CLKPWR_HAS_CALTIMER)
+nhw_clock_signal_handler(CTTO)
+nhw_clock_signal_handler(CTSTARTED)
+nhw_clock_signal_handler(CTSTOPPED)
+#endif /* NHW_CLKPWR_HAS_CALTIMER */
+#if (NHW_CLKPWR_HAS_HFCLKAUDIOCLK)
+//nhw_clock_signal_handler(HFCLKAUDIOSTARTED)
+#endif
+#if (NHW_CLKPWR_HAS_HFCLK192MCLK)
+//nhw_clock_signal_handler(HFCLK192MSTARTED)
+#endif
 
-void nrf_clock_TASKS_LFCLKSTART(void) {
-  NRF_CLOCK_regs.LFCLKSRCCOPY = NRF_CLOCK_regs.LFCLKSRC & CLOCK_LFCLKSRC_SRC_Msk;
-  NRF_CLOCK_regs.LFCLKRUN = CLOCK_LFCLKRUN_STATUS_Msk;
-  LF_Clock_state = Starting;
+void nhw_clock_TASKS_LFCLKSTART(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+  NRF_CLOCK_Type *CLOCK_regs = this->CLOCK_regs;
 
-  Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
+  CLOCK_regs->LFCLKSRCCOPY = CLOCK_regs->LFCLKSRC & CLOCK_LFCLKSRC_SRC_Msk;
+  CLOCK_regs->LFCLKRUN = CLOCK_LFCLKRUN_STATUS_Msk;
+  this->LF_Clock_state = Starting;
+
+  this->Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
   nrf_clock_update_master_timer();
 }
 
-void nrf_clock_TASKS_LFCLKSTOP(void) {
+void nhw_clock_TASKS_LFCLKSTOP(uint inst) {
   // There is no effect of turning the clock off that is actually modeled
-  if ((NRF_CLOCK_regs.LFCLKSTAT & CLOCK_LFCLKRUN_STATUS_Msk) == 0) { /* LCOV_EXCL_START */
-    bs_trace_info_line(3, "%s: Triggered LF oscillator stop while the clock was not running "
+  if ((NRF_CLOCK_regs[inst]->LFCLKSTAT & CLOCK_LFCLKRUN_STATUS_Msk) == 0) { /* LCOV_EXCL_START */
+    bs_trace_info_line(3, "%s(%u) Triggered LF oscillator stop while the clock was not running "
                           "(the model does not have a problem with this, but this is against "
-                          "the spec)\n", __func__);
-  } /* LCOV_EXCL_STOP */
-  if ((LF_Clock_state == Started) || (LF_Clock_state == Starting)) {
-    NRF_CLOCK_regs.LFCLKRUN = 0;
-    LF_Clock_state = Stopping;
-    Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
-    nrf_clock_update_master_timer();
-  }
-}
-
-void nrf_clock_TASKS_HFCLKSTART(void) {
-  if ( ( HF_Clock_state == Stopped ) || ( HF_Clock_state == Stopping ) ) {
-    HF_Clock_state = Starting;
-    NRF_CLOCK_regs.HFCLKRUN = CLOCK_HFCLKRUN_STATUS_Msk;
-    Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
-    nrf_clock_update_master_timer();
-  }
-}
-
-void nrf_clock_TASKS_HFCLKSTOP(void) {
-  if ( ( HF_Clock_state == Started ) || ( HF_Clock_state == Starting ) ) {
-    NRF_CLOCK_regs.HFCLKRUN = 0;
-    HF_Clock_state = Stopping;
-    Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
-    nrf_clock_update_master_timer();
-  }
-}
-
-void nrf_clock_TASKS_CAL(void) {
-  if (HF_Clock_state != Started) { /* LCOV_EXCL_START */
-    bs_trace_warning_line("%s: Triggered RC oscillator calibration with the HF CLK stopped "
-                          "(the model does not have a problem with this, but this is against "
-                          "the spec)\n", __func__);
+                          "the spec)\n", __func__, inst);
   } /* LCOV_EXCL_STOP */
 
-  LF_cal_state = Started; //We don't check for re-triggers, as we are going to be done right away
-  Timer_LF_cal = nsi_hws_get_time(); //we assume the calibration is done in 1 delta
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if ((this->LF_Clock_state == Started) || (this->LF_Clock_state == Starting)) {
+    NRF_CLOCK_regs[inst]->LFCLKRUN = 0;
+    this->LF_Clock_state = Stopping;
+    this->Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
+    nrf_clock_update_master_timer();
+  }
+}
+
+void nhw_clock_TASKS_HFCLKSTART(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if ((this->HF_Clock_state == Stopped ) || (this->HF_Clock_state == Stopping)) {
+    this->HF_Clock_state = Starting;
+    NRF_CLOCK_regs[inst]->HFCLKRUN = CLOCK_HFCLKRUN_STATUS_Msk;
+    this->Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
+    nrf_clock_update_master_timer();
+  }
+}
+
+void nhw_clock_TASKS_HFCLKSTOP(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if ((this->HF_Clock_state == Started) || (this->HF_Clock_state == Starting)) {
+    NRF_CLOCK_regs[inst]->HFCLKRUN = 0;
+    this->HF_Clock_state = Stopping;
+    this->Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
+    nrf_clock_update_master_timer();
+  }
+}
+
+#define HAS_CLOCK_CHECK(CLK_NAME)                                                 \
+	  bool has_this_clock[NHW_CLKPWR_TOTAL_INST] = NHW_CLKPWR_HAS_##CLK_NAME##CLK_I;\
+	  if (!has_this_clock[inst]) {                                                  \
+	    bs_trace_error_time_line("CLOCK#%i does not have "                          \
+         "this type of clock (" #CLK_NAME ")", inst);                             \
+	  }
+
+void nhw_clock_TASKS_HFCLKAUDIOSTART(uint inst) {
+  HAS_CLOCK_CHECK(HFCLKAUDIO);
+
+  bs_trace_warning_time_line("%s not yet implemented\n", __func__);
+}
+
+void nhw_clock_TASKS_HFCLKAUDIOSTOP(uint inst) {
+  HAS_CLOCK_CHECK(HFCLKAUDIO);
+
+  bs_trace_warning_time_line("%s not yet implemented\n", __func__);
+}
+
+void nhw_clock_TASKS_HFCLK192MSTART(uint inst) {
+  HAS_CLOCK_CHECK(HFCLK192M);
+
+  bs_trace_warning_time_line("%s not yet implemented\n", __func__);
+}
+
+void nhw_clock_TASKS_HFCLK192MSTOP(uint inst) {
+  HAS_CLOCK_CHECK(HFCLK192M);
+
+  bs_trace_warning_time_line("%s not yet implemented\n", __func__);
+}
+
+
+void nhw_clock_TASKS_CAL(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if (this->HF_Clock_state != Started) { /* LCOV_EXCL_START */
+    bs_trace_warning_line("%s(%u): Triggered RC oscillator calibration with the HF CLK stopped "
+                          "(the model does not have a problem with this, but this is against "
+                          "the spec)\n", __func__, inst);
+  } /* LCOV_EXCL_STOP */
+
+  this->LF_cal_state = Started; //We don't check for re-triggers, as we are going to be done right away
+  this->Timer_LF_cal = nsi_hws_get_time(); //we assume the calibration is done in 1 delta
   nrf_clock_update_master_timer();
 }
 
-void nrf_clock_TASKS_CTSTART(void) {
-  if ( caltimer_state == Started ) { /* LCOV_EXCL_START */
-    bs_trace_warning_line("%s Calibration timer was already running. "
+#if (NHW_CLKPWR_HAS_CALTIMER)
+void nhw_clock_TASKS_CTSTART(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if ( this->caltimer_state == Started ) { /* LCOV_EXCL_START */
+    bs_trace_warning_line("%s(%u) Calibration timer was already running. "
                           "Raising CTSTARTED event immediately. "
-                          "Timeout is not affected.\n", __func__);
+                          "Timeout is not affected.\n", __func__, inst);
   } else {  /* LCOV_EXCL_STOP */
-    caltimer_state = Started;
-    Timer_caltimer = nsi_hws_get_time() + (bs_time_t)NRF_CLOCK_regs.CTIV * 250000;
+    this->caltimer_state = Started;
+    this->Timer_caltimer = nsi_hws_get_time() + (bs_time_t)NRF_CLOCK_regs[inst]->CTIV * 250000;
     nrf_clock_update_master_timer();
   }
-  nrf_clock_event_CTSTARTED();
+  nhw_clock_signal_CTSTARTED(inst);
 }
 
-void nrf_clock_TASKS_CTSTOP(void) {
-  if ( caltimer_state == Stopped ) { /* LCOV_EXCL_START */
-    bs_trace_info_line(3, "%s Calibration timer was already stopped. "
-                          "Raising CTSTOPPED event immediately.\n", __func__);
+void nhw_clock_TASKS_CTSTOP(uint inst) {
+  struct clkpwr_status *this = &nhw_clkpwr_st[inst];
+
+  if ( this->caltimer_state == Stopped ) { /* LCOV_EXCL_START */
+    bs_trace_info_line(3, "%s(%u) Calibration timer was already stopped. "
+                          "Raising CTSTOPPED event immediately.\n", __func__, inst);
   } /* LCOV_EXCL_STOP */
-  caltimer_state = Stopped;
-  Timer_caltimer = TIME_NEVER;
+  this->caltimer_state = Stopped;
+  this->Timer_caltimer = TIME_NEVER;
   nrf_clock_update_master_timer();
-  nrf_clock_event_CTSTOPPED();
+  nhw_clock_signal_CTSTOPPED(inst);
 }
+#endif /* NHW_CLKPWR_HAS_CALTIMER */
 
-void nrf_clock_reqw_sideeffects_INTENSET(void) {
-  if (NRF_CLOCK_regs.INTENSET) { /* LCOV_EXCL_BR_LINE */
-    CLOCK_INTEN |= NRF_CLOCK_regs.INTENSET;
-    NRF_CLOCK_regs.INTENSET = CLOCK_INTEN;
-    nrf_clock_eval_interrupt();
+void nhw_clock_reqw_sideeffects_INTENSET(uint i) {
+  if (NRF_CLOCK_regs[i]->INTENSET) { /* LCOV_EXCL_BR_LINE */
+    struct clkpwr_status *this = &nhw_clkpwr_st[i];
+
+    this->INTEN |= NRF_CLOCK_regs[i]->INTENSET;
+    NRF_CLOCK_regs[i]->INTENSET = this->INTEN;
+    nrf_pwrclk_eval_interrupt(i);
   }
 }
 
-void nrf_clock_reqw_sideeffects_INTENCLR(void) {
-  if (NRF_CLOCK_regs.INTENCLR) { /* LCOV_EXCL_BR_LINE */
-    CLOCK_INTEN  &= ~NRF_CLOCK_regs.INTENCLR;
-    NRF_CLOCK_regs.INTENSET = CLOCK_INTEN;
-    NRF_CLOCK_regs.INTENCLR = 0;
-    nrf_clock_eval_interrupt();
+void nhw_clock_reqw_sideeffects_INTENCLR(uint i) {
+  if (NRF_CLOCK_regs[i]->INTENCLR) { /* LCOV_EXCL_BR_LINE */
+    struct clkpwr_status *this = &nhw_clkpwr_st[i];
+
+    this->INTEN  &= ~NRF_CLOCK_regs[i]->INTENCLR;
+    NRF_CLOCK_regs[i]->INTENSET = this->INTEN;
+    NRF_CLOCK_regs[i]->INTENCLR = 0;
+    nrf_pwrclk_eval_interrupt(i);
   }
 }
 
-#define nrf_clock_reqw_sideeffects_TASKS_(x)                \
-  void nrf_clock_reqw_sideeffects_TASKS_##x(void) {         \
-    if (NRF_CLOCK_regs.TASKS_##x) { /* LCOV_EXCL_BR_LINE */ \
-      NRF_CLOCK_regs.TASKS_##x = 0;                         \
-      nrf_clock_TASKS_##x();                                \
-    }                                                       \
+#define nhw_clock_reqw_sideeffects_TASKS_(x)                   \
+  void nhw_clock_reqw_sideeffects_TASKS_##x(uint i) {          \
+    if (NRF_CLOCK_regs[i]->TASKS_##x) { /* LCOV_EXCL_BR_LINE */\
+      NRF_CLOCK_regs[i]->TASKS_##x = 0;                        \
+      nhw_clock_TASKS_##x(i);                                  \
+    }                                                          \
   }
 
+nhw_clock_reqw_sideeffects_TASKS_(LFCLKSTART)
+nhw_clock_reqw_sideeffects_TASKS_(LFCLKSTOP)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLKSTART)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLKSTOP)
 
-nrf_clock_reqw_sideeffects_TASKS_(LFCLKSTART)
-nrf_clock_reqw_sideeffects_TASKS_(LFCLKSTOP)
-nrf_clock_reqw_sideeffects_TASKS_(HFCLKSTART)
-nrf_clock_reqw_sideeffects_TASKS_(HFCLKSTOP)
-nrf_clock_reqw_sideeffects_TASKS_(CAL)
-nrf_clock_reqw_sideeffects_TASKS_(CTSTART)
-nrf_clock_reqw_sideeffects_TASKS_(CTSTOP)
+#if (NHW_CLKPWR_HAS_HFCLKAUDIOCLK)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLKAUDIOSTART)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLKAUDIOSTOP)
+#endif
+#if (NHW_CLKPWR_HAS_HFCLK192MCLK)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLK192MSTART)
+nhw_clock_reqw_sideeffects_TASKS_(HFCLK192MSTOP)
+#endif
+nhw_clock_reqw_sideeffects_TASKS_(CAL)
+#if (NHW_CLKPWR_HAS_CALTIMER)
+nhw_clock_reqw_sideeffects_TASKS_(CTSTART)
+nhw_clock_reqw_sideeffects_TASKS_(CTSTOP)
+#endif /* NHW_CLKPWR_HAS_CALTIMER */
 
-void nrf_clock_regw_sideeffects_EVENTS_all(void) {
-  nrf_clock_eval_interrupt();
+void nhw_pwrclk_regw_sideeffects_EVENTS_all(uint i) {
+  nrf_pwrclk_eval_interrupt(i);
 }
 
-void nrf_clock_LFTimer_triggered(void) {
+void nrf_clock_LFTimer_triggered(struct clkpwr_status *this) {
+  NRF_CLOCK_Type *CLOCK_regs = this->CLOCK_regs;
+
   //For simplicity we assume the enable comes at the same instant as the first
   //tick of the clock so we start ticking in this same instant
 
-  if (LF_Clock_state == Starting) { /* LCOV_EXCL_BR_LINE */
-    NRF_CLOCK_regs.LFCLKSTAT = CLOCK_LFCLKSTAT_STATE_Msk
-                          | (NRF_CLOCK_regs.LFCLKSRCCOPY << CLOCK_LFCLKSTAT_SRC_Pos);
+  if (this->LF_Clock_state == Starting) { /* LCOV_EXCL_BR_LINE */
+    CLOCK_regs->LFCLKSTAT = CLOCK_LFCLKSTAT_STATE_Msk
+                          | (CLOCK_regs->LFCLKSRCCOPY << CLOCK_LFCLKSTAT_SRC_Pos);
 
-    nrf_clock_event_LFCLKSTARTED();
+    nhw_clock_signal_LFCLKSTARTED(this->inst);
 
     nrf_rtc_notify_first_lf_tick();
-  } else if (LF_Clock_state == Stopping) {
-    LF_Clock_state = Stopped;
-    NRF_CLOCK_regs.LFCLKSTAT &= ~CLOCK_LFCLKSTAT_STATE_Msk;
+  } else if (this->LF_Clock_state == Stopping) {
+    this->LF_Clock_state = Stopped;
+    CLOCK_regs->LFCLKSTAT &= ~CLOCK_LFCLKSTAT_STATE_Msk;
   }
 
-  Timer_CLOCK_LF = TIME_NEVER;
+  this->Timer_CLOCK_LF = TIME_NEVER;
   nrf_clock_update_master_timer();
 }
 
-void nrf_clock_HFTimer_triggered(void) {
-  if ( HF_Clock_state == Starting ){
-    HF_Clock_state = Started;
+#ifndef CLOCK_HFCLKSTAT_SRC_Xtal
+#define CLOCK_HFCLKSTAT_SRC_Xtal CLOCK_HFCLKSTAT_SRC_HFXO /* Bit name change from 52 -> 53 series but same meaning*/
+#endif
 
-    NRF_CLOCK_regs.HFCLKSTAT = CLOCK_HFCLKSTAT_STATE_Msk
+void nrf_clock_HFTimer_triggered(struct clkpwr_status *this) {
+  NRF_CLOCK_Type *CLOCK_regs = this->CLOCK_regs;
+
+  if ( this->HF_Clock_state == Starting ){
+    this->HF_Clock_state = Started;
+
+    CLOCK_regs->HFCLKSTAT = CLOCK_HFCLKSTAT_STATE_Msk
                                | ( CLOCK_HFCLKSTAT_SRC_Xtal << CLOCK_HFCLKSTAT_SRC_Pos);
 
-    nrf_clock_event_HFCLKSTARTED();
+    nhw_clock_signal_HFCLKSTARTED(this->inst);
 
-  } else if ( HF_Clock_state == Stopping ){
-    HF_Clock_state = Stopped;
-    NRF_CLOCK_regs.HFCLKSTAT = 0;
+  } else if ( this->HF_Clock_state == Stopping ){
+    this->HF_Clock_state = Stopped;
+    CLOCK_regs->HFCLKSTAT = 0;
   }
 
-  Timer_CLOCK_HF = TIME_NEVER;
+  this->Timer_CLOCK_HF = TIME_NEVER;
   nrf_clock_update_master_timer();
 }
 
-void nrf_clock_LF_cal_triggered(void) {
-  LF_cal_state = Stopped;
-  Timer_LF_cal = TIME_NEVER;
+void nrf_clock_LF_cal_triggered(struct clkpwr_status *this) {
+  this->LF_cal_state = Stopped;
+  this->Timer_LF_cal = TIME_NEVER;
   nrf_clock_update_master_timer();
 
-  nrf_clock_event_DONE();
+  nhw_clock_signal_DONE(this->inst);
 }
 
-void nrf_clock_caltimer_triggered(void) {
-  if (caltimer_state != Started) { /* LCOV_EXCL_START */
+#if (NHW_CLKPWR_HAS_CALTIMER)
+void nrf_clock_caltimer_triggered(struct clkpwr_status *this) {
+
+  if (this->caltimer_state != Started) { /* LCOV_EXCL_START */
     bs_trace_error_time_line("%s: programming error\n", __func__);
   } /* LCOV_EXCL_STOP */
-  caltimer_state = Stopped;
-  Timer_caltimer = TIME_NEVER;
+  this->caltimer_state = Stopped;
+  this->Timer_caltimer = TIME_NEVER;
   nrf_clock_update_master_timer();
-  nrf_clock_event_CTTO();
+  nhw_clock_signal_CTTO(this->inst);
+}
+#endif /* NHW_CLKPWR_HAS_CALTIMER */
+
+static void nrf_pwrclk_timer_triggered(void) {
+  for (int i = 0; i < NHW_CLKPWR_TOTAL_INST; i++) {
+    struct clkpwr_status * c_el = &nhw_clkpwr_st[i];
+    if (Timer_PWRCLK == c_el->Timer_CLOCK_HF) {
+      nrf_clock_HFTimer_triggered(c_el);
+    } else if (Timer_PWRCLK == c_el->Timer_CLOCK_LF) {
+      nrf_clock_LFTimer_triggered(c_el);
+    } else if (Timer_PWRCLK == c_el->Timer_LF_cal) {
+      nrf_clock_LF_cal_triggered(c_el);
+  #if (NHW_CLKPWR_HAS_CALTIMER)
+    } else if (Timer_PWRCLK == c_el->Timer_caltimer) {
+      nrf_clock_caltimer_triggered(c_el);
+  #endif
+    } else { /* LCOV_EXCL_START */
+      bs_trace_error_time_line("%s programming error\n", __func__);
+    } /* LCOV_EXCL_STOP */
+  }
 }
 
-static void nrf_clock_timer_triggered(void) {
-  if (Timer_CLOCK == Timer_CLOCK_HF) {
-    nrf_clock_HFTimer_triggered();
-  } else if (Timer_CLOCK == Timer_CLOCK_LF) {
-    nrf_clock_LFTimer_triggered();
-  } else if (Timer_CLOCK == Timer_LF_cal) {
-    nrf_clock_LF_cal_triggered();
-  } else if (Timer_CLOCK == Timer_caltimer) {
-    nrf_clock_caltimer_triggered();
-  } else { /* LCOV_EXCL_START */
-    bs_trace_error_time_line("%s programming error\n", __func__);
-  } /* LCOV_EXCL_STOP */
-}
+NSI_HW_EVENT(Timer_PWRCLK, nrf_pwrclk_timer_triggered, 50);
 
-NSI_HW_EVENT(Timer_CLOCK, nrf_clock_timer_triggered, 50);
+#if (NHW_HAS_DPPI)
+
+#define NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
+  static void nhw_clock_task##TASK_N##_wrap(void* param)                            \
+  {                                                                                 \
+    nhw_clock_TASKS_##TASK_N((int) param);                                          \
+  }                                                                                 \
+                                                                                    \
+  void nhw_clock_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
+  {                                                                                 \
+     struct clkpwr_status *this = &nhw_clkpwr_st[inst];                             \
+                                                                                    \
+     nhw_dppi_common_subscribe_sideeffect(this->dppi_map,                           \
+                                          this->CLOCK_regs->SUBSCRIBE_##TASK_N,     \
+                                          &this->subscribed_##TASK_N,               \
+                                          nhw_clock_task##TASK_N##_wrap,            \
+                                          (void*) inst);                            \
+  }
+
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLKSTART)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLKSTOP)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(LFCLKSTART)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(LFCLKSTOP)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(CAL)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLKAUDIOSTART)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLKAUDIOSTOP)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLK192MSTART)
+NRF_CLOCK_REGW_SIDEFFECTS_SUBSCRIBE(HFCLK192MSTOP)
+
+#endif /* NHW_HAS_DPPI */
+
+#if (NHW_HAS_PPI)
+void nhw_clock0_TASKS_LFCLKSTART(void) { nhw_clock_TASKS_LFCLKSTART(0); }
+void nhw_clock0_TASKS_LFCLKSTOP(void) { nhw_clock_TASKS_LFCLKSTOP(0); }
+void nhw_clock0_TASKS_HFCLKSTART(void) { nhw_clock_TASKS_HFCLKSTART(0); }
+void nhw_clock0_TASKS_HFCLKSTOP(void) { nhw_clock_TASKS_HFCLKSTOP(0); }
+void nhw_clock0_TASKS_CAL(void) { nhw_clock_TASKS_CAL(0); }
+void nhw_clock0_TASKS_CTSTART(void) { nhw_clock_TASKS_CTSTART(0); }
+void nhw_clock0_TASKS_CTSTOP(void) { nhw_clock_TASKS_CTSTOP(0); }
+#endif /* (NHW_HAS_PPI) */

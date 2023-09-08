@@ -90,13 +90,13 @@ typedef struct {
  */
 static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //POWER CLOCK:
-    { (void*)&NRF_CLOCK_regs.TASKS_LFCLKSTART , nrf_clock_TASKS_LFCLKSTART},
-    { (void*)&NRF_CLOCK_regs.TASKS_LFCLKSTOP  , nrf_clock_TASKS_LFCLKSTOP},
-    { (void*)&NRF_CLOCK_regs.TASKS_HFCLKSTART , nrf_clock_TASKS_HFCLKSTART},
-    { (void*)&NRF_CLOCK_regs.TASKS_HFCLKSTOP  , nrf_clock_TASKS_HFCLKSTOP},
-    { (void*)&NRF_CLOCK_regs.TASKS_CAL        , nrf_clock_TASKS_CAL},
-    { (void*)&NRF_CLOCK_regs.TASKS_CTSTART    , nrf_clock_TASKS_CTSTART},
-    { (void*)&NRF_CLOCK_regs.TASKS_CTSTOP     , nrf_clock_TASKS_CTSTOP},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_LFCLKSTART , nhw_clock0_TASKS_LFCLKSTART},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_LFCLKSTOP  , nhw_clock0_TASKS_LFCLKSTOP},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_HFCLKSTART , nhw_clock0_TASKS_HFCLKSTART},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_HFCLKSTOP  , nhw_clock0_TASKS_HFCLKSTOP},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_CAL        , nhw_clock0_TASKS_CAL},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_CTSTART    , nhw_clock0_TASKS_CTSTART},
+    { (void*)&NRF_CLKPWR_regs[0].CLK.TASKS_CTSTOP     , nhw_clock0_TASKS_CTSTOP},
 
     //RADIO:
     { (void*)&NRF_RADIO_regs.TASKS_TXEN,         nrf_radio_tasks_TXEN},
@@ -355,12 +355,12 @@ typedef struct {
 } ppi_event_table_t;
 
 static const ppi_event_table_t ppi_events_table[] = { //better keep same order as in ppi_event_types_t
-    {CLOCK_EVENTS_HFCLKSTARTED, &NRF_CLOCK_regs.EVENTS_HFCLKSTARTED},
-    {CLOCK_EVENTS_LFCLKSTARTED, &NRF_CLOCK_regs.EVENTS_LFCLKSTARTED},
-    {CLOCK_EVENTS_DONE        , &NRF_CLOCK_regs.EVENTS_DONE        },
-    {CLOCK_EVENTS_CTTO        , &NRF_CLOCK_regs.EVENTS_CTTO        },
-    {CLOCK_EVENTS_CTSTARTED   , &NRF_CLOCK_regs.EVENTS_CTSTARTED   },
-    {CLOCK_EVENTS_CTSTOPPED   , &NRF_CLOCK_regs.EVENTS_CTSTOPPED   },
+    {CLOCK_EVENTS_HFCLKSTARTED, &NRF_CLKPWR_regs[0].CLK.EVENTS_HFCLKSTARTED},
+    {CLOCK_EVENTS_LFCLKSTARTED, &NRF_CLKPWR_regs[0].CLK.EVENTS_LFCLKSTARTED},
+    {CLOCK_EVENTS_DONE        , &NRF_CLKPWR_regs[0].CLK.EVENTS_DONE        },
+    {CLOCK_EVENTS_CTTO        , &NRF_CLKPWR_regs[0].CLK.EVENTS_CTTO        },
+    {CLOCK_EVENTS_CTSTARTED   , &NRF_CLKPWR_regs[0].CLK.EVENTS_CTSTARTED   },
+    {CLOCK_EVENTS_CTSTOPPED   , &NRF_CLKPWR_regs[0].CLK.EVENTS_CTSTOPPED   },
 
     {RADIO_EVENTS_READY,   &NRF_RADIO_regs.EVENTS_READY},
     {RADIO_EVENTS_ADDRESS, &NRF_RADIO_regs.EVENTS_ADDRESS},

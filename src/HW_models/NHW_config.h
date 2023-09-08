@@ -30,9 +30,15 @@
 #define NHW_CCM_0 0
 #define NHW_CCM_INT_MAP {{0 , 15}} /*Only core,CCM_AAR_IRQn*/
 
-#define NHW_CLOCK_TOTAL_INST 1
-#define NHW_CLOCK_0 0
-#define NHW_CLOCK_INT_MAP {{0 , 0}} /*Only core,POWER_CLOCK_IRQn*/
+#define NHW_CLKPWR_TOTAL_INST 1
+#define NHW_CLKPWR_0 0
+#define NHW_CLKPWR_INT_MAP {{0 , 0}} /*Only core, POWER_CLOCK_IRQn*/
+#define NHW_CLKPWR_HAS_RESET 0
+#define NHW_CLKPWR_HAS_CALTIMER 1
+#define NHW_CLKPWR_HAS_HFCLKAUDIOCLK 0
+#define NHW_CLKPWR_HAS_HFCLKAUDIOCLK_I {0}
+#define NHW_CLKPWR_HAS_HFCLK192MCLK 0
+#define NHW_CLKPWR_HAS_HFCLK192MCLK_I  {0}
 
 #define NHW_ECB_TOTAL_INST 1
 #define NHW_ECB_0 0
@@ -169,6 +175,22 @@
 #define NHW_HAS_PPI  0
 #define NHW_HAS_DPPI 1
 #define NHW_USE_MDK_TYPES 0
+
+#define NHW_CLKPWR_TOTAL_INST 2
+#define NHW_CLKPWR_APP0 0
+#define NHW_CLKPWR_NET0 1
+#define NHW_CLKPWR_INT_MAP {{0 , 5}, \
+                            {1 , 5}  \
+                           } /* {App, CLOCK_POWER}
+                              * {Net, CLOCK_POWER}
+                              */
+#define NHW_CLKPWR_DPPI_MAP {0, 1}
+#define NHW_CLKPWR_HAS_RESET 1
+#define NHW_CLKPWR_HAS_CALTIMER 0
+#define NHW_CLKPWR_HAS_HFCLKAUDIOCLK 1
+#define NHW_CLKPWR_HAS_HFCLKAUDIOCLK_I {1, 0}
+#define NHW_CLKPWR_HAS_HFCLK192MCLK 1
+#define NHW_CLKPWR_HAS_HFCLK192MCLK_I  {1, 0}
 
 #define NHW_EGU_TOTAL_INST 7
 #define NHW_EGU_APP0 0

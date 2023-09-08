@@ -45,9 +45,9 @@ extern NRF_CCM_Type NRF_CCM_regs;
 extern NRF_RADIO_Type NRF_RADIO_regs;
 #undef NRF_RADIO_BASE
 #define NRF_RADIO_BASE                    (&NRF_RADIO_regs)
-extern NRF_CLOCK_Type NRF_CLOCK_regs;
+extern NRF_CLOCK_Type *NRF_CLOCK_regs[];
 #undef NRF_CLOCK_BASE
-#define NRF_CLOCK_BASE                    (&NRF_CLOCK_regs)
+#define NRF_CLOCK_BASE                    (NRF_CLOCK_regs[NHW_CLKPWR_0])
 extern NRF_FICR_Type NRF_FICR_regs;
 #undef NRF_FICR_BASE
 #define NRF_FICR_BASE                     (&NRF_FICR_regs)
@@ -66,8 +66,8 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #undef NRF_TIMER4_BASE
 #define NRF_TIMER4_BASE                   (&NRF_TIMER_regs[4])
 #undef NRF_POWER_BASE
-extern NRF_POWER_Type NRF_POWER_regs;
-#define NRF_POWER_BASE                    (&NRF_POWER_regs)
+extern NRF_POWER_Type *NRF_POWER_regs[];
+#define NRF_POWER_BASE                    (NRF_POWER_regs[NHW_CLKPWR_0])
 extern NRF_GPIO_Type NRF_GPIO_regs[];
 #undef NRF_P0_BASE
 #define NRF_P0_BASE                       (&NRF_GPIO_regs[0])
@@ -111,12 +111,15 @@ extern NRF_UICR_Type *NRF_UICR_regs_p;
 #define NRF_DCNF_NS_BASE           NULL
 #undef NRF_VREQCTRL_NS_BASE
 #define NRF_VREQCTRL_NS_BASE       NULL
+extern NRF_CLOCK_Type *NRF_CLOCK_regs[];
 #undef NRF_CLOCK_NS_BASE
-#define NRF_CLOCK_NS_BASE          NULL
+#define NRF_CLOCK_NS_BASE          (NRF_CLOCK_regs[NHW_CLKPWR_NET0])
+extern NRF_POWER_Type *NRF_POWER_regs[];
 #undef NRF_POWER_NS_BASE
-#define NRF_POWER_NS_BASE          NULL
+#define NRF_POWER_NS_BASE          (NRF_POWER_regs[NHW_CLKPWR_NET0])
+extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_RESET_NS_BASE
-#define NRF_RESET_NS_BASE          NULL
+#define NRF_RESET_NS_BASE          (NRF_RESET_regs[NHW_CLKPWR_NET0])
 #undef NRF_CTRLAP_NS_BASE
 #define NRF_CTRLAP_NS_BASE         NULL
 #undef NRF_RADIO_NS_BASE
@@ -226,18 +229,21 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #define NRF_OSCILLATORS_S_BASE      NULL
 #undef NRF_REGULATORS_S_BASE
 #define NRF_REGULATORS_S_BASE       NULL
+extern NRF_CLOCK_Type *NRF_CLOCK_regs[];
 #undef NRF_CLOCK_NS_BASE
-#define NRF_CLOCK_NS_BASE           NULL
+#define NRF_CLOCK_NS_BASE          (NRF_CLOCK_regs[NHW_CLKPWR_APP0])
+extern NRF_POWER_Type *NRF_POWER_regs[];
 #undef NRF_POWER_NS_BASE
-#define NRF_POWER_NS_BASE           NULL
+#define NRF_POWER_NS_BASE          (NRF_POWER_regs[NHW_CLKPWR_APP0])
+extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_RESET_NS_BASE
-#define NRF_RESET_NS_BASE           NULL
+#define NRF_RESET_NS_BASE          (NRF_RESET_regs[NHW_CLKPWR_APP0])
 #undef NRF_CLOCK_S_BASE
-#define NRF_CLOCK_S_BASE            NULL
+#define NRF_CLOCK_S_BASE           (NRF_CLOCK_regs[NHW_CLKPWR_APP0])
 #undef NRF_POWER_S_BASE
-#define NRF_POWER_S_BASE            NULL
+#define NRF_POWER_S_BASE           (NRF_POWER_regs[NHW_CLKPWR_APP0])
 #undef NRF_RESET_S_BASE
-#define NRF_RESET_S_BASE            NULL
+#define NRF_RESET_S_BASE           (NRF_RESET_regs[NHW_CLKPWR_APP0])
 #undef NRF_CTRLAP_NS_BASE
 #define NRF_CTRLAP_NS_BASE          NULL
 #undef NRF_CTRLAP_S_BASE

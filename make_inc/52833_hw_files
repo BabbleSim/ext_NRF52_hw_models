@@ -2,7 +2,6 @@ src/HW_models/BLECrypt_if.c
 src/HW_models/NRF_PPI.c
 src/HW_models/NRF_HWLowL.c
 src/HW_models/NRF_GPIO_backend.c
-src/HW_models/NRF_POWER.c
 src/HW_models/NRF_EGU.c
 src/HW_models/NRF_AAR.c
 src/HW_models/NRF_RADIO_bitcounter.c
