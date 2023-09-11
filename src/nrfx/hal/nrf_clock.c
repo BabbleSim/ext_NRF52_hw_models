@@ -8,7 +8,7 @@
  */
 #include "hal/nrf_clock.h"
 #include "bs_tracing.h"
-#include "NRF_CLOCK.h"
+#include "NHW_CLOCK.h"
 
 static int clock_number_from_ptr(NRF_CLOCK_Type * p_reg)
 {

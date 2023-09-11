@@ -55,7 +55,7 @@
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
-#include "NRF_CLOCK.h"
+#include "NHW_CLOCK.h"
 #include "nsi_hw_scheduler.h"
 #include "NHW_xPPI.h"
 #include "NRF_RTC.h"
@@ -113,7 +113,7 @@ NRF_POWER_Type *NRF_POWER_regs[NHW_CLKPWR_TOTAL_INST];
 NRF_RESET_Type *NRF_RESET_regs[NHW_CLKPWR_TOTAL_INST];
 #endif /* (NHW_CLKPWR_HAS_RESET) */
 
-static void nrf_clock_update_master_timer(void) {
+static void nhw_clock_update_master_timer(void) {
 
   Timer_PWRCLK = TIME_NEVER;
 
@@ -132,7 +132,7 @@ static void nrf_clock_update_master_timer(void) {
   nsi_hws_find_next_event();
 }
 
-static void nrf_clock_init(void) {
+static void nhw_clock_init(void) {
 #if (NHW_HAS_DPPI)
   /* Mapping of peripheral instance to DPPI instance */
   uint nhw_clkpwr_dppi_map[NHW_CLKPWR_TOTAL_INST] = NHW_CLKPWR_DPPI_MAP;
@@ -173,9 +173,9 @@ static void nrf_clock_init(void) {
   }
 }
 
-NSI_TASK(nrf_clock_init, HW_INIT, 100);
+NSI_TASK(nhw_clock_init, HW_INIT, 100);
 
-static void nrf_pwrclk_eval_interrupt(int inst) {
+static void nhw_pwrclk_eval_interrupt(int inst) {
   /* Mapping of peripheral instance to {int controller instance, int number} */
   static struct nhw_irq_mapping nhw_clock_irq_map[NHW_CLKPWR_TOTAL_INST] = NHW_CLKPWR_INT_MAP;
   static bool clock_int_line[NHW_CLKPWR_TOTAL_INST]; /* Is the CLOCK currently driving its interrupt line high */
@@ -219,14 +219,14 @@ static void nrf_pwrclk_eval_interrupt(int inst) {
 #define nhw_clock_signal_handler(x)         \
   static void nhw_clock_signal_##x(int i) { \
     NRF_CLOCK_regs[i]->EVENTS_##x = 1;     \
-    nrf_pwrclk_eval_interrupt(i);           \
+    nhw_pwrclk_eval_interrupt(i);           \
     nrf_ppi_event(CLOCK_EVENTS_##x);       \
   }
 #else
 #define nhw_clock_signal_handler(x)         \
   static void nhw_clock_signal_##x(int i) { \
     NRF_CLOCK_regs[i]->EVENTS_##x = 1;     \
-    nrf_pwrclk_eval_interrupt(i);           \
+    nhw_pwrclk_eval_interrupt(i);           \
     nhw_dppi_event_signal_if(nhw_clkpwr_st[i].dppi_map,      \
                              NRF_CLOCK_regs[i]->PUBLISH_##x);\
   }
@@ -260,7 +260,7 @@ void nhw_clock_TASKS_LFCLKSTART(uint inst) {
   this->LF_Clock_state = Starting;
 
   this->Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
 }
 
 void nhw_clock_TASKS_LFCLKSTOP(uint inst) {
@@ -277,7 +277,7 @@ void nhw_clock_TASKS_LFCLKSTOP(uint inst) {
     NRF_CLOCK_regs[inst]->LFCLKRUN = 0;
     this->LF_Clock_state = Stopping;
     this->Timer_CLOCK_LF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
-    nrf_clock_update_master_timer();
+    nhw_clock_update_master_timer();
   }
 }
 
@@ -288,7 +288,7 @@ void nhw_clock_TASKS_HFCLKSTART(uint inst) {
     this->HF_Clock_state = Starting;
     NRF_CLOCK_regs[inst]->HFCLKRUN = CLOCK_HFCLKRUN_STATUS_Msk;
     this->Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is ready in 1 delta
-    nrf_clock_update_master_timer();
+    nhw_clock_update_master_timer();
   }
 }
 
@@ -299,7 +299,7 @@ void nhw_clock_TASKS_HFCLKSTOP(uint inst) {
     NRF_CLOCK_regs[inst]->HFCLKRUN = 0;
     this->HF_Clock_state = Stopping;
     this->Timer_CLOCK_HF = nsi_hws_get_time(); //we assume the clock is stopped in 1 delta
-    nrf_clock_update_master_timer();
+    nhw_clock_update_master_timer();
   }
 }
 
@@ -346,7 +346,7 @@ void nhw_clock_TASKS_CAL(uint inst) {
 
   this->LF_cal_state = Started; //We don't check for re-triggers, as we are going to be done right away
   this->Timer_LF_cal = nsi_hws_get_time(); //we assume the calibration is done in 1 delta
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
 }
 
 #if (NHW_CLKPWR_HAS_CALTIMER)
@@ -360,7 +360,7 @@ void nhw_clock_TASKS_CTSTART(uint inst) {
   } else {  /* LCOV_EXCL_STOP */
     this->caltimer_state = Started;
     this->Timer_caltimer = nsi_hws_get_time() + (bs_time_t)NRF_CLOCK_regs[inst]->CTIV * 250000;
-    nrf_clock_update_master_timer();
+    nhw_clock_update_master_timer();
   }
   nhw_clock_signal_CTSTARTED(inst);
 }
@@ -374,7 +374,7 @@ void nhw_clock_TASKS_CTSTOP(uint inst) {
   } /* LCOV_EXCL_STOP */
   this->caltimer_state = Stopped;
   this->Timer_caltimer = TIME_NEVER;
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
   nhw_clock_signal_CTSTOPPED(inst);
 }
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
@@ -385,7 +385,7 @@ void nhw_clock_reqw_sideeffects_INTENSET(uint i) {
 
     this->INTEN |= NRF_CLOCK_regs[i]->INTENSET;
     NRF_CLOCK_regs[i]->INTENSET = this->INTEN;
-    nrf_pwrclk_eval_interrupt(i);
+    nhw_pwrclk_eval_interrupt(i);
   }
 }
 
@@ -396,7 +396,7 @@ void nhw_clock_reqw_sideeffects_INTENCLR(uint i) {
     this->INTEN  &= ~NRF_CLOCK_regs[i]->INTENCLR;
     NRF_CLOCK_regs[i]->INTENSET = this->INTEN;
     NRF_CLOCK_regs[i]->INTENCLR = 0;
-    nrf_pwrclk_eval_interrupt(i);
+    nhw_pwrclk_eval_interrupt(i);
   }
 }
 
@@ -428,10 +428,10 @@ nhw_clock_reqw_sideeffects_TASKS_(CTSTOP)
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
 
 void nhw_pwrclk_regw_sideeffects_EVENTS_all(uint i) {
-  nrf_pwrclk_eval_interrupt(i);
+  nhw_pwrclk_eval_interrupt(i);
 }
 
-void nrf_clock_LFTimer_triggered(struct clkpwr_status *this) {
+void nhw_clock_LFTimer_triggered(struct clkpwr_status *this) {
   NRF_CLOCK_Type *CLOCK_regs = this->CLOCK_regs;
 
   //For simplicity we assume the enable comes at the same instant as the first
@@ -450,14 +450,14 @@ void nrf_clock_LFTimer_triggered(struct clkpwr_status *this) {
   }
 
   this->Timer_CLOCK_LF = TIME_NEVER;
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
 }
 
 #ifndef CLOCK_HFCLKSTAT_SRC_Xtal
 #define CLOCK_HFCLKSTAT_SRC_Xtal CLOCK_HFCLKSTAT_SRC_HFXO /* Bit name change from 52 -> 53 series but same meaning*/
 #endif
 
-void nrf_clock_HFTimer_triggered(struct clkpwr_status *this) {
+void nhw_clock_HFTimer_triggered(struct clkpwr_status *this) {
   NRF_CLOCK_Type *CLOCK_regs = this->CLOCK_regs;
 
   if ( this->HF_Clock_state == Starting ){
@@ -474,50 +474,56 @@ void nrf_clock_HFTimer_triggered(struct clkpwr_status *this) {
   }
 
   this->Timer_CLOCK_HF = TIME_NEVER;
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
 }
 
-void nrf_clock_LF_cal_triggered(struct clkpwr_status *this) {
+void nhw_clock_LF_cal_triggered(struct clkpwr_status *this) {
   this->LF_cal_state = Stopped;
   this->Timer_LF_cal = TIME_NEVER;
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
 
   nhw_clock_signal_DONE(this->inst);
 }
 
 #if (NHW_CLKPWR_HAS_CALTIMER)
-void nrf_clock_caltimer_triggered(struct clkpwr_status *this) {
+void nhw_clock_caltimer_triggered(struct clkpwr_status *this) {
 
   if (this->caltimer_state != Started) { /* LCOV_EXCL_START */
     bs_trace_error_time_line("%s: programming error\n", __func__);
   } /* LCOV_EXCL_STOP */
   this->caltimer_state = Stopped;
   this->Timer_caltimer = TIME_NEVER;
-  nrf_clock_update_master_timer();
+  nhw_clock_update_master_timer();
   nhw_clock_signal_CTTO(this->inst);
 }
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
 
-static void nrf_pwrclk_timer_triggered(void) {
+static void nhw_pwrclk_timer_triggered(void) {
+  bool any = false;
   for (int i = 0; i < NHW_CLKPWR_TOTAL_INST; i++) {
     struct clkpwr_status * c_el = &nhw_clkpwr_st[i];
     if (Timer_PWRCLK == c_el->Timer_CLOCK_HF) {
-      nrf_clock_HFTimer_triggered(c_el);
+      nhw_clock_HFTimer_triggered(c_el);
+      any = true;
     } else if (Timer_PWRCLK == c_el->Timer_CLOCK_LF) {
-      nrf_clock_LFTimer_triggered(c_el);
+      nhw_clock_LFTimer_triggered(c_el);
+      any = true;
     } else if (Timer_PWRCLK == c_el->Timer_LF_cal) {
-      nrf_clock_LF_cal_triggered(c_el);
+      nhw_clock_LF_cal_triggered(c_el);
+      any = true;
   #if (NHW_CLKPWR_HAS_CALTIMER)
     } else if (Timer_PWRCLK == c_el->Timer_caltimer) {
-      nrf_clock_caltimer_triggered(c_el);
+      nhw_clock_caltimer_triggered(c_el);
+      any = true;
   #endif
-    } else { /* LCOV_EXCL_START */
-      bs_trace_error_time_line("%s programming error\n", __func__);
-    } /* LCOV_EXCL_STOP */
+    }
   }
+  if (!any) { /* LCOV_EXCL_START */
+    bs_trace_error_time_line("%s programming error\n", __func__);
+  } /* LCOV_EXCL_STOP */
 }
 
-NSI_HW_EVENT(Timer_PWRCLK, nrf_pwrclk_timer_triggered, 50);
+NSI_HW_EVENT(Timer_PWRCLK, nhw_pwrclk_timer_triggered, 50);
 
 #if (NHW_HAS_DPPI)
 

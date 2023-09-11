@@ -99,7 +99,7 @@
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_xPPI.h"
-#include "NRF_CLOCK.h"
+#include "NHW_CLOCK.h"
 #include "irq_ctrl.h"
 #include "NRF_RTC.h"
 

@@ -28,7 +28,7 @@
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
 #include "NHW_TIMER.h"
-#include "NRF_CLOCK.h"
+#include "NHW_CLOCK.h"
 #include "NRF_RADIO.h"
 #include "NHW_EGU.h"
 #include "bs_tracing.h"
