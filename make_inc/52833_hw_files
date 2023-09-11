@@ -24,7 +24,7 @@ src/HW_models/bs_compat.c
 src/HW_models/NRF_FICR.c
 src/HW_models/NRF_RADIO_timings.c
 src/HW_models/NRF_GPIOTE.c
-src/HW_models/NRF_RNG.c
+src/HW_models/NHW_RNG.c
 src/HW_models/weak_stubs.c
 src/HW_models/NHW_CLOCK.c
 src/HW_models/NRF_RADIO_signals.c

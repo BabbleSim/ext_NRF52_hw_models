@@ -28,7 +28,7 @@
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_common_types.h"
-#include "NRF_RNG.h"
+#include "NHW_RNG.h"
 #include "NHW_xPPI.h"
 #include "nsi_hw_scheduler.h"
 #include "irq_ctrl.h"
@@ -52,16 +52,16 @@ static uint nhw_rng_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
 /**
  * Initialize the RNG model
  */
-static void nrf_rng_init(void) {
+static void nhw_rng_init(void) {
   memset(&NRF_RNG_regs, 0, sizeof(NRF_RNG_regs));
   RNG_hw_started = false;
   RNG_INTEN = false;
   Timer_RNG = TIME_NEVER;
 }
 
-NSI_TASK(nrf_rng_init, HW_INIT, 100);
+NSI_TASK(nhw_rng_init, HW_INIT, 100);
 
-static void nrf_rng_schedule_next(bool first_time){
+static void nhw_rng_schedule_next(bool first_time){
   bs_time_t delay = 0;
 
   if (first_time) {
@@ -101,61 +101,61 @@ static void nhw_rng_eval_interrupt(uint inst) {
 /**
  * TASK_START triggered handler
  */
-void nrf_rng_task_start(void) {
+void nhw_rng_task_start(void) {
   if (RNG_hw_started) {
     return;
   }
   RNG_hw_started = true;
-  nrf_rng_schedule_next(true);
+  nhw_rng_schedule_next(true);
 }
 
 /**
  * TASK_STOP triggered handler
  */
-void nrf_rng_task_stop(void) {
+void nhw_rng_task_stop(void) {
   RNG_hw_started = false;
   Timer_RNG = TIME_NEVER;
   nsi_hws_find_next_event();
 }
 
 
-void nrf_rng_regw_sideeffects_TASK_START(void) {
+void nhw_rng_regw_sideeffects_TASK_START(void) {
   if (NRF_RNG_regs.TASKS_START) { /* LCOV_EXCL_BR_LINE */
     NRF_RNG_regs.TASKS_START = 0;
-    nrf_rng_task_start();
+    nhw_rng_task_start();
   }
 }
 
-void nrf_rng_regw_sideeffects_TASK_STOP(void) {
+void nhw_rng_regw_sideeffects_TASK_STOP(void) {
   if (NRF_RNG_regs.TASKS_STOP) { /* LCOV_EXCL_BR_LINE */
     NRF_RNG_regs.TASKS_STOP = 0;
-    nrf_rng_task_stop();
+    nhw_rng_task_stop();
   }
 }
 
 #if (NHW_HAS_DPPI)
-void nrf_rng_regw_sideeffects_SUBSCRIBE_START(unsigned int inst) {
+void nhw_rng_regw_sideeffects_SUBSCRIBE_START(unsigned int inst) {
   static struct nhw_subsc_mem START_subscribed[NHW_RNG_TOTAL_INST];
 
   nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
                                        NRF_RNG_regs.SUBSCRIBE_START,
                                        &START_subscribed[inst],
-                                       (dppi_callback_t)nrf_rng_task_start,
+                                       (dppi_callback_t)nhw_rng_task_start,
                                        DPPI_CB_NO_PARAM);
 }
 
-void nrf_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
+void nhw_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
   static struct nhw_subsc_mem STOP_subscribed[NHW_RNG_TOTAL_INST];
 
   nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
                                        NRF_RNG_regs.SUBSCRIBE_START,
                                        &STOP_subscribed[inst],
-                                       (dppi_callback_t)nrf_rng_task_stop,
+                                       (dppi_callback_t)nhw_rng_task_stop,
                                        DPPI_CB_NO_PARAM);
 }
 #endif /* NHW_HAS_DPPI */
 
-void nrf_rng_regw_sideeffects_INTENSET(void) {
+void nhw_rng_regw_sideeffects_INTENSET(void) {
   if (NRF_RNG_regs.INTENSET) { /* LCOV_EXCL_BR_LINE */
     RNG_INTEN |= NRF_RNG_regs.INTENSET;
     NRF_RNG_regs.INTENSET = RNG_INTEN;
@@ -163,7 +163,7 @@ void nrf_rng_regw_sideeffects_INTENSET(void) {
   }
 }
 
-void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
+void nhw_rng_regw_sideeffects_INTENCLEAR(void) {
   if (NRF_RNG_regs.INTENCLR) { /* LCOV_EXCL_BR_LINE */
     RNG_INTEN &= ~NRF_RNG_regs.INTENCLR;
     NRF_RNG_regs.INTENSET = RNG_INTEN;
@@ -172,13 +172,13 @@ void nrf_rng_regw_sideeffects_INTENCLEAR(void) {
   }
 }
 
-void nrf_rng_regw_sideeffects_EVENTS_all(void) {
+void nhw_rng_regw_sideeffects_EVENTS_all(void) {
   nhw_rng_eval_interrupt(0);
 }
 
 static void nhw_rng_signal_VALRDY(uint periph_inst) {
   if (NRF_RNG_regs.SHORTS & RNG_SHORTS_VALRDY_STOP_Msk) {
-    nrf_rng_task_stop();
+    nhw_rng_task_stop();
   }
 
   NRF_RNG_regs.EVENTS_VALRDY = 1;
@@ -196,13 +196,13 @@ static void nhw_rng_signal_VALRDY(uint periph_inst) {
 /**
  * Time has come when a new random number is ready
  */
-static void nrf_rng_timer_triggered(void) {
+static void nhw_rng_timer_triggered(void) {
   //We generate a proper random number even if CONFIG is not set to correct the bias:
   NRF_RNG_regs.VALUE = bs_random_uint32();
 
-  nrf_rng_schedule_next(false);
+  nhw_rng_schedule_next(false);
 
   nhw_rng_signal_VALRDY(0);
 }
 
-NSI_HW_EVENT(Timer_RNG, nrf_rng_timer_triggered, 50);
+NSI_HW_EVENT(Timer_RNG, nhw_rng_timer_triggered, 50);
