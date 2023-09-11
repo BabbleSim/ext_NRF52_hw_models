@@ -19,7 +19,7 @@ src/HW_models/NRF_GPIO.c
 src/HW_models/NRF_TEMP.c
 src/HW_models/NRF_AES_CCM.c
 src/HW_models/NRF_RADIO_tasks_regs.c
-src/HW_models/NRF_TIMER.c
+src/HW_models/NHW_TIMER.c
 src/HW_models/bs_compat.c
 src/HW_models/NRF_FICR.c
 src/HW_models/NRF_RADIO_timings.c

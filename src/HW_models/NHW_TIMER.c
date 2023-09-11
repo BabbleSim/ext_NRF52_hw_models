@@ -33,7 +33,7 @@
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
-#include "NRF_TIMER.h"
+#include "NHW_TIMER.h"
 #include "nsi_hw_scheduler.h"
 #include "NHW_xPPI.h"
 #include "irq_ctrl.h"
@@ -77,7 +77,7 @@ NRF_TIMER_Type NRF_TIMER_regs[NHW_TIMER_TOTAL_INST];
 /**
  * Initialize the TIMER model
  */
-static void nrf_hw_model_timer_init(void) {
+static void nhw_timer_init(void) {
 #if (NHW_HAS_DPPI)
   /* Mapping of peripheral instance to DPPI instance */
   uint nhw_timer_dppi_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_DPPI_MAP;
@@ -114,7 +114,7 @@ static void nrf_hw_model_timer_init(void) {
   Timer_TIMERs = TIME_NEVER;
 }
 
-NSI_TASK(nrf_hw_model_timer_init, HW_INIT, 100);
+NSI_TASK(nhw_timer_init, HW_INIT, 100);
 
 /*
  * Free all TIMER instances resources before program exit
@@ -232,7 +232,7 @@ static void update_all_cc_timers(int t) {
   }
 }
 
-static void nrf_timer_eval_interrupts(int t) {
+static void nhw_timer_eval_interrupts(int t) {
   /* Mapping of peripheral instance to {int controller instance, int number} */
   static struct nhw_irq_mapping nhw_timer_irq_map[NHW_TIMER_TOTAL_INST] = NHW_TIMER_INT_MAP;
   static bool TIMER_int_line[N_TIMERS]; /* Is the TIMER currently driving its interrupt line high */
@@ -260,7 +260,7 @@ static void nrf_timer_eval_interrupts(int t) {
   }
 }
 
-void nrf_timer_TASK_START(int t){
+void nhw_timer_TASK_START(int t){
   struct timer_status *this = &nhw_timer_st[t];
 
   //Note: STATUS is missing in NRF_TIMER_Type
@@ -274,7 +274,7 @@ void nrf_timer_TASK_START(int t){
   }
 }
 
-void nrf_timer_TASK_STOP(int t) {
+void nhw_timer_TASK_STOP(int t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   //Note: STATUS is missing in NRF_TIMER_Type
@@ -290,7 +290,7 @@ void nrf_timer_TASK_STOP(int t) {
   }
 }
 
-void nrf_timer_TASK_SHUTDOWN(int t) {
+void nhw_timer_TASK_SHUTDOWN(int t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   /*
@@ -310,7 +310,7 @@ void nrf_timer_TASK_SHUTDOWN(int t) {
   update_master_timer();
 }
 
-void nrf_timer_TASK_CAPTURE(int t, int cc_n) {
+void nhw_timer_TASK_CAPTURE(int t, int cc_n) {
   struct timer_status *this = &nhw_timer_st[t];
 
   if (cc_n >= this->n_CCs) {
@@ -335,7 +335,7 @@ void nrf_timer_TASK_CAPTURE(int t, int cc_n) {
   }
 }
 
-void nrf_timer_TASK_CLEAR(uint t) {
+void nhw_timer_TASK_CLEAR(uint t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   this->Counter = 0;
@@ -347,20 +347,20 @@ void nrf_timer_TASK_CLEAR(uint t) {
   }
 }
 
-static void nrf_timer_signal_COMPARE(uint t, uint cc) {
+static void nhw_timer_signal_COMPARE(uint t, uint cc) {
   struct timer_status *this = &nhw_timer_st[t];
   NRF_TIMER_Type *TIMER_regs = this->NRF_TIMER_regs;
 
   if (TIMER_regs->SHORTS & (TIMER_SHORTS_COMPARE0_CLEAR_Msk << cc)) {
-    nrf_timer_TASK_CLEAR(t);
+    nhw_timer_TASK_CLEAR(t);
   }
   if (TIMER_regs->SHORTS & (TIMER_SHORTS_COMPARE0_STOP_Msk << cc)) {
-    nrf_timer_TASK_STOP(t);
+    nhw_timer_TASK_STOP(t);
   }
 
   TIMER_regs->EVENTS_COMPARE[cc] = 1;
 
-  nrf_timer_eval_interrupts(t);
+  nhw_timer_eval_interrupts(t);
 
 #if (NHW_HAS_PPI)
   ppi_event_types_t event_cc;
@@ -389,7 +389,7 @@ static void nrf_timer_signal_COMPARE(uint t, uint cc) {
 #endif
 }
 
-static void nrf_timer_signal_COMPARE_if(uint t, uint cc_n) {
+static void nhw_timer_signal_COMPARE_if(uint t, uint cc_n) {
   struct timer_status *this = &nhw_timer_st[t];
 #if (NHW_TIMER_HAS_ONE_SHOT)
   if ((this->oneshot_flag[cc_n] == false) && this->NRF_TIMER_regs->ONESHOTEN[cc_n]) {
@@ -397,10 +397,10 @@ static void nrf_timer_signal_COMPARE_if(uint t, uint cc_n) {
   }
 #endif
   this->oneshot_flag[cc_n] = false;
-  nrf_timer_signal_COMPARE(t, cc_n);
+  nhw_timer_signal_COMPARE(t, cc_n);
 }
 
-void nrf_timer_TASK_COUNT(uint t) {
+void nhw_timer_TASK_COUNT(uint t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   if ((NRF_TIMER_regs[t].MODE != 0 /* Count mode */) && (this->is_running == true)) {
@@ -408,51 +408,51 @@ void nrf_timer_TASK_COUNT(uint t) {
 
     for (int cc_n = 0; cc_n < this->n_CCs; cc_n++) {
       if (this->Counter == (NRF_TIMER_regs[t].CC[cc_n] & mask_from_bitmode(t))){
-        nrf_timer_signal_COMPARE_if(t, cc_n);
+        nhw_timer_signal_COMPARE_if(t, cc_n);
       }
     }
   } //Otherwise ignored
 }
 
-void nrf_timer_regw_sideeffects_TASKS_START(uint t) {
+void nhw_timer_regw_sideeffects_TASKS_START(uint t) {
   if ( NRF_TIMER_regs[t].TASKS_START ){
     NRF_TIMER_regs[t].TASKS_START = 0;
-    nrf_timer_TASK_START(t);
+    nhw_timer_TASK_START(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_STOP(uint t) {
+void nhw_timer_regw_sideeffects_TASKS_STOP(uint t) {
   if (NRF_TIMER_regs[t].TASKS_STOP) {
     NRF_TIMER_regs[t].TASKS_STOP = 0;
-    nrf_timer_TASK_STOP(t);
+    nhw_timer_TASK_STOP(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(uint t) {
+void nhw_timer_regw_sideeffects_TASKS_SHUTDOWN(uint t) {
   if (NRF_TIMER_regs[t].TASKS_SHUTDOWN) {
     NRF_TIMER_regs[t].TASKS_SHUTDOWN = 0;
-    nrf_timer_TASK_SHUTDOWN(t);
+    nhw_timer_TASK_SHUTDOWN(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_CAPTURE(uint t, uint cc_n){
+void nhw_timer_regw_sideeffects_TASKS_CAPTURE(uint t, uint cc_n){
   if ( NRF_TIMER_regs[t].TASKS_CAPTURE[cc_n] ){
     NRF_TIMER_regs[t].TASKS_CAPTURE[cc_n] = 0;
-    nrf_timer_TASK_CAPTURE(t,cc_n);
+    nhw_timer_TASK_CAPTURE(t,cc_n);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_CLEAR(uint t) {
+void nhw_timer_regw_sideeffects_TASKS_CLEAR(uint t) {
   if (NRF_TIMER_regs[t].TASKS_CLEAR) {
     NRF_TIMER_regs[t].TASKS_CLEAR = 0;
-    nrf_timer_TASK_CLEAR(t);
+    nhw_timer_TASK_CLEAR(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_TASKS_COUNT(uint t) {
+void nhw_timer_regw_sideeffects_TASKS_COUNT(uint t) {
   if ( NRF_TIMER_regs[t].TASKS_COUNT ){
     NRF_TIMER_regs[t].TASKS_COUNT = 0;
-    nrf_timer_TASK_COUNT(t);
+    nhw_timer_TASK_COUNT(t);
   }
 }
 
@@ -461,10 +461,10 @@ void nrf_timer_regw_sideeffects_TASKS_COUNT(uint t) {
 static void nhw_timer_taskcapture_wrap(void* param) {
   unsigned int inst = (uintptr_t)param >> 16;
   uint cc_n = (uintptr_t)param & 0xFFFF;
-  nrf_timer_TASK_CAPTURE(inst, cc_n);
+  nhw_timer_TASK_CAPTURE(inst, cc_n);
 }
 
-void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
+void nhw_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
   struct timer_status *this = &nhw_timer_st[inst];
 
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
@@ -474,13 +474,13 @@ void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
                                        (void*)((inst << 16) + cc_n));
 }
 
-#define NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
+#define NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
   static void nhw_timer_task##TASK_N##_wrap(void* param)                            \
   {                                                                                 \
-    nrf_timer_TASK_##TASK_N((int) param);                                           \
+    nhw_timer_TASK_##TASK_N((int) param);                                           \
   }                                                                                 \
                                                                                     \
-  void nrf_timer_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
+  void nhw_timer_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
   {                                                                                 \
      struct timer_status *this = &nhw_timer_st[inst];                               \
                                                                                     \
@@ -491,41 +491,41 @@ void nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
                                           (void*) inst);                            \
   }
 
-NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(START)
-NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(STOP)
-NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(COUNT)
-NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(CLEAR)
-NRF_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(SHUTDOWN)
+NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(START)
+NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(STOP)
+NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(COUNT)
+NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(CLEAR)
+NHW_TIMER_REGW_SIDEFFECTS_SUBSCRIBE(SHUTDOWN)
 
 #endif /* NHW_HAS_DPPI */
 
 
-void nrf_timer_regw_sideeffects_EVENTS_all(uint t) {
-  nrf_timer_eval_interrupts(t);
+void nhw_timer_regw_sideeffects_EVENTS_all(uint t) {
+  nhw_timer_eval_interrupts(t);
 }
 
-void nrf_timer_regw_sideeffects_INTENSET(uint t) {
+void nhw_timer_regw_sideeffects_INTENSET(uint t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   if ( NRF_TIMER_regs[t].INTENSET ){
     this->INTEN |= NRF_TIMER_regs[t].INTENSET;
     NRF_TIMER_regs[t].INTENSET = this->INTEN;
-    nrf_timer_eval_interrupts(t);
+    nhw_timer_eval_interrupts(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_INTENCLR(uint t) {
+void nhw_timer_regw_sideeffects_INTENCLR(uint t) {
   struct timer_status *this = &nhw_timer_st[t];
 
   if ( NRF_TIMER_regs[t].INTENCLR ){
     this->INTEN  &= ~NRF_TIMER_regs[t].INTENCLR;
     NRF_TIMER_regs[t].INTENSET = this->INTEN;
     NRF_TIMER_regs[t].INTENCLR = 0;
-    nrf_timer_eval_interrupts(t);
+    nhw_timer_eval_interrupts(t);
   }
 }
 
-void nrf_timer_regw_sideeffects_CC(uint t, uint cc_n) {
+void nhw_timer_regw_sideeffects_CC(uint t, uint cc_n) {
   struct timer_status *this = &nhw_timer_st[t];
 
   if (cc_n >= this->n_CCs) {
@@ -542,7 +542,7 @@ void nrf_timer_regw_sideeffects_CC(uint t, uint cc_n) {
   }
 }
 
-static void nrf_hw_model_timer_timer_triggered(void) {
+static void nhw_hw_model_timer_timer_triggered(void) {
   unsigned int t, cc;
   struct {
     unsigned int t[N_TIMERS*N_MAX_CC];
@@ -571,64 +571,64 @@ static void nrf_hw_model_timer_timer_triggered(void) {
     t = match.t[match.cnt];
     cc = match.cc[match.cnt];
     update_cc_timer(t,cc); //Next time it will match
-    nrf_timer_signal_COMPARE_if(t,cc);
+    nhw_timer_signal_COMPARE_if(t,cc);
   }
   update_master_timer();
 }
 
-NSI_HW_EVENT(Timer_TIMERs, nrf_hw_model_timer_timer_triggered, 50);
+NSI_HW_EVENT(Timer_TIMERs, nhw_hw_model_timer_timer_triggered, 50);
 
 #if (NHW_HAS_PPI)
-void nrf_timer0_TASK_START(void) { nrf_timer_TASK_START(0); }
-void nrf_timer1_TASK_START(void) { nrf_timer_TASK_START(1); }
-void nrf_timer2_TASK_START(void) { nrf_timer_TASK_START(2); }
-void nrf_timer3_TASK_START(void) { nrf_timer_TASK_START(3); }
-void nrf_timer4_TASK_START(void) { nrf_timer_TASK_START(4); }
+void nhw_timer0_TASK_START(void) { nhw_timer_TASK_START(0); }
+void nhw_timer1_TASK_START(void) { nhw_timer_TASK_START(1); }
+void nhw_timer2_TASK_START(void) { nhw_timer_TASK_START(2); }
+void nhw_timer3_TASK_START(void) { nhw_timer_TASK_START(3); }
+void nhw_timer4_TASK_START(void) { nhw_timer_TASK_START(4); }
 
-void nrf_timer0_TASK_STOP(void) { nrf_timer_TASK_STOP(0); }
-void nrf_timer1_TASK_STOP(void) { nrf_timer_TASK_STOP(1); }
-void nrf_timer2_TASK_STOP(void) { nrf_timer_TASK_STOP(2); }
-void nrf_timer3_TASK_STOP(void) { nrf_timer_TASK_STOP(3); }
-void nrf_timer4_TASK_STOP(void) { nrf_timer_TASK_STOP(4); }
+void nhw_timer0_TASK_STOP(void) { nhw_timer_TASK_STOP(0); }
+void nhw_timer1_TASK_STOP(void) { nhw_timer_TASK_STOP(1); }
+void nhw_timer2_TASK_STOP(void) { nhw_timer_TASK_STOP(2); }
+void nhw_timer3_TASK_STOP(void) { nhw_timer_TASK_STOP(3); }
+void nhw_timer4_TASK_STOP(void) { nhw_timer_TASK_STOP(4); }
 
-void nrf_timer0_TASK_CAPTURE_0(void) { nrf_timer_TASK_CAPTURE(0,0); }
-void nrf_timer0_TASK_CAPTURE_1(void) { nrf_timer_TASK_CAPTURE(0,1); }
-void nrf_timer0_TASK_CAPTURE_2(void) { nrf_timer_TASK_CAPTURE(0,2); }
-void nrf_timer0_TASK_CAPTURE_3(void) { nrf_timer_TASK_CAPTURE(0,3); }
+void nhw_timer0_TASK_CAPTURE_0(void) { nhw_timer_TASK_CAPTURE(0,0); }
+void nhw_timer0_TASK_CAPTURE_1(void) { nhw_timer_TASK_CAPTURE(0,1); }
+void nhw_timer0_TASK_CAPTURE_2(void) { nhw_timer_TASK_CAPTURE(0,2); }
+void nhw_timer0_TASK_CAPTURE_3(void) { nhw_timer_TASK_CAPTURE(0,3); }
 
-void nrf_timer1_TASK_CAPTURE_0(void) { nrf_timer_TASK_CAPTURE(1,0); }
-void nrf_timer1_TASK_CAPTURE_1(void) { nrf_timer_TASK_CAPTURE(1,1); }
-void nrf_timer1_TASK_CAPTURE_2(void) { nrf_timer_TASK_CAPTURE(1,2); }
-void nrf_timer1_TASK_CAPTURE_3(void) { nrf_timer_TASK_CAPTURE(1,3); }
+void nhw_timer1_TASK_CAPTURE_0(void) { nhw_timer_TASK_CAPTURE(1,0); }
+void nhw_timer1_TASK_CAPTURE_1(void) { nhw_timer_TASK_CAPTURE(1,1); }
+void nhw_timer1_TASK_CAPTURE_2(void) { nhw_timer_TASK_CAPTURE(1,2); }
+void nhw_timer1_TASK_CAPTURE_3(void) { nhw_timer_TASK_CAPTURE(1,3); }
 
-void nrf_timer2_TASK_CAPTURE_0(void) { nrf_timer_TASK_CAPTURE(2,0); }
-void nrf_timer2_TASK_CAPTURE_1(void) { nrf_timer_TASK_CAPTURE(2,1); }
-void nrf_timer2_TASK_CAPTURE_2(void) { nrf_timer_TASK_CAPTURE(2,2); }
-void nrf_timer2_TASK_CAPTURE_3(void) { nrf_timer_TASK_CAPTURE(2,3); }
+void nhw_timer2_TASK_CAPTURE_0(void) { nhw_timer_TASK_CAPTURE(2,0); }
+void nhw_timer2_TASK_CAPTURE_1(void) { nhw_timer_TASK_CAPTURE(2,1); }
+void nhw_timer2_TASK_CAPTURE_2(void) { nhw_timer_TASK_CAPTURE(2,2); }
+void nhw_timer2_TASK_CAPTURE_3(void) { nhw_timer_TASK_CAPTURE(2,3); }
 
-void nrf_timer3_TASK_CAPTURE_0(void) { nrf_timer_TASK_CAPTURE(3,0); }
-void nrf_timer3_TASK_CAPTURE_1(void) { nrf_timer_TASK_CAPTURE(3,1); }
-void nrf_timer3_TASK_CAPTURE_2(void) { nrf_timer_TASK_CAPTURE(3,2); }
-void nrf_timer3_TASK_CAPTURE_3(void) { nrf_timer_TASK_CAPTURE(3,3); }
-void nrf_timer3_TASK_CAPTURE_4(void) { nrf_timer_TASK_CAPTURE(3,4); }
-void nrf_timer3_TASK_CAPTURE_5(void) { nrf_timer_TASK_CAPTURE(3,5); }
+void nhw_timer3_TASK_CAPTURE_0(void) { nhw_timer_TASK_CAPTURE(3,0); }
+void nhw_timer3_TASK_CAPTURE_1(void) { nhw_timer_TASK_CAPTURE(3,1); }
+void nhw_timer3_TASK_CAPTURE_2(void) { nhw_timer_TASK_CAPTURE(3,2); }
+void nhw_timer3_TASK_CAPTURE_3(void) { nhw_timer_TASK_CAPTURE(3,3); }
+void nhw_timer3_TASK_CAPTURE_4(void) { nhw_timer_TASK_CAPTURE(3,4); }
+void nhw_timer3_TASK_CAPTURE_5(void) { nhw_timer_TASK_CAPTURE(3,5); }
 
-void nrf_timer4_TASK_CAPTURE_0(void) { nrf_timer_TASK_CAPTURE(4,0); }
-void nrf_timer4_TASK_CAPTURE_1(void) { nrf_timer_TASK_CAPTURE(4,1); }
-void nrf_timer4_TASK_CAPTURE_2(void) { nrf_timer_TASK_CAPTURE(4,2); }
-void nrf_timer4_TASK_CAPTURE_3(void) { nrf_timer_TASK_CAPTURE(4,3); }
-void nrf_timer4_TASK_CAPTURE_4(void) { nrf_timer_TASK_CAPTURE(4,4); }
-void nrf_timer4_TASK_CAPTURE_5(void) { nrf_timer_TASK_CAPTURE(4,5); }
+void nhw_timer4_TASK_CAPTURE_0(void) { nhw_timer_TASK_CAPTURE(4,0); }
+void nhw_timer4_TASK_CAPTURE_1(void) { nhw_timer_TASK_CAPTURE(4,1); }
+void nhw_timer4_TASK_CAPTURE_2(void) { nhw_timer_TASK_CAPTURE(4,2); }
+void nhw_timer4_TASK_CAPTURE_3(void) { nhw_timer_TASK_CAPTURE(4,3); }
+void nhw_timer4_TASK_CAPTURE_4(void) { nhw_timer_TASK_CAPTURE(4,4); }
+void nhw_timer4_TASK_CAPTURE_5(void) { nhw_timer_TASK_CAPTURE(4,5); }
 
-void nrf_timer0_TASK_CLEAR(void) { nrf_timer_TASK_CLEAR(0); }
-void nrf_timer1_TASK_CLEAR(void) { nrf_timer_TASK_CLEAR(1); }
-void nrf_timer2_TASK_CLEAR(void) { nrf_timer_TASK_CLEAR(2); }
-void nrf_timer3_TASK_CLEAR(void) { nrf_timer_TASK_CLEAR(3); }
-void nrf_timer4_TASK_CLEAR(void) { nrf_timer_TASK_CLEAR(4); }
+void nhw_timer0_TASK_CLEAR(void) { nhw_timer_TASK_CLEAR(0); }
+void nhw_timer1_TASK_CLEAR(void) { nhw_timer_TASK_CLEAR(1); }
+void nhw_timer2_TASK_CLEAR(void) { nhw_timer_TASK_CLEAR(2); }
+void nhw_timer3_TASK_CLEAR(void) { nhw_timer_TASK_CLEAR(3); }
+void nhw_timer4_TASK_CLEAR(void) { nhw_timer_TASK_CLEAR(4); }
 
-void nrf_timer0_TASK_COUNT(void) { nrf_timer_TASK_COUNT(0); }
-void nrf_timer1_TASK_COUNT(void) { nrf_timer_TASK_COUNT(1); }
-void nrf_timer2_TASK_COUNT(void) { nrf_timer_TASK_COUNT(2); }
-void nrf_timer3_TASK_COUNT(void) { nrf_timer_TASK_COUNT(3); }
-void nrf_timer4_TASK_COUNT(void) { nrf_timer_TASK_COUNT(4); }
+void nhw_timer0_TASK_COUNT(void) { nhw_timer_TASK_COUNT(0); }
+void nhw_timer1_TASK_COUNT(void) { nhw_timer_TASK_COUNT(1); }
+void nhw_timer2_TASK_COUNT(void) { nhw_timer_TASK_COUNT(2); }
+void nhw_timer3_TASK_COUNT(void) { nhw_timer_TASK_COUNT(3); }
+void nhw_timer4_TASK_COUNT(void) { nhw_timer_TASK_COUNT(4); }
 #endif /* (NHW_HAS_PPI) */

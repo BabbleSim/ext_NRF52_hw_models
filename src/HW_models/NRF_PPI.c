@@ -27,7 +27,7 @@
 #include "NRF_RNG.h"
 #include "NRF_PPI.h"
 #include "NRF_RTC.h"
-#include "NRF_TIMER.h"
+#include "NHW_TIMER.h"
 #include "NRF_CLOCK.h"
 #include "NRF_RADIO.h"
 #include "NRF_EGU.h"
@@ -148,60 +148,60 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //SAADC
 
     //TIMER0:
-    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[0],  nrf_timer0_TASK_CAPTURE_0},
-    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[1],  nrf_timer0_TASK_CAPTURE_1},
-    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[2],  nrf_timer0_TASK_CAPTURE_2},
-    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[3],  nrf_timer0_TASK_CAPTURE_3},
-//    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[4],  nrf_timer0_TASK_CAPTURE_4},
-//    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[5],  nrf_timer0_TASK_CAPTURE_5},
-    { (void*)&NRF_TIMER_regs[0].TASKS_CLEAR,       nrf_timer0_TASK_CLEAR},
-    { (void*)&NRF_TIMER_regs[0].TASKS_COUNT,       nrf_timer0_TASK_COUNT},
-    { (void*)&NRF_TIMER_regs[0].TASKS_START,       nrf_timer0_TASK_START},
-    { (void*)&NRF_TIMER_regs[0].TASKS_STOP,        nrf_timer0_TASK_STOP},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[0],  nhw_timer0_TASK_CAPTURE_0},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[1],  nhw_timer0_TASK_CAPTURE_1},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[2],  nhw_timer0_TASK_CAPTURE_2},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[3],  nhw_timer0_TASK_CAPTURE_3},
+//    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[4],  nhw_timer0_TASK_CAPTURE_4},
+//    { (void*)&NRF_TIMER_regs[0].TASKS_CAPTURE[5],  nhw_timer0_TASK_CAPTURE_5},
+    { (void*)&NRF_TIMER_regs[0].TASKS_CLEAR,       nhw_timer0_TASK_CLEAR},
+    { (void*)&NRF_TIMER_regs[0].TASKS_COUNT,       nhw_timer0_TASK_COUNT},
+    { (void*)&NRF_TIMER_regs[0].TASKS_START,       nhw_timer0_TASK_START},
+    { (void*)&NRF_TIMER_regs[0].TASKS_STOP,        nhw_timer0_TASK_STOP},
     //TIMER1:
-    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[0],  nrf_timer1_TASK_CAPTURE_0},
-    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[1],  nrf_timer1_TASK_CAPTURE_1},
-    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[2],  nrf_timer1_TASK_CAPTURE_2},
-    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[3],  nrf_timer1_TASK_CAPTURE_3},
-//    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[4],  nrf_timer1_TASK_CAPTURE_4},
-//    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[5],  nrf_timer1_TASK_CAPTURE_5},
-    { (void*)&NRF_TIMER_regs[1].TASKS_CLEAR,       nrf_timer1_TASK_CLEAR},
-    { (void*)&NRF_TIMER_regs[1].TASKS_COUNT,       nrf_timer1_TASK_COUNT},
-    { (void*)&NRF_TIMER_regs[1].TASKS_START,       nrf_timer1_TASK_START},
-    { (void*)&NRF_TIMER_regs[1].TASKS_STOP,        nrf_timer1_TASK_STOP},
+    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[0],  nhw_timer1_TASK_CAPTURE_0},
+    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[1],  nhw_timer1_TASK_CAPTURE_1},
+    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[2],  nhw_timer1_TASK_CAPTURE_2},
+    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[3],  nhw_timer1_TASK_CAPTURE_3},
+//    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[4],  nhw_timer1_TASK_CAPTURE_4},
+//    { (void*)&NRF_TIMER_regs[1].TASKS_CAPTURE[5],  nhw_timer1_TASK_CAPTURE_5},
+    { (void*)&NRF_TIMER_regs[1].TASKS_CLEAR,       nhw_timer1_TASK_CLEAR},
+    { (void*)&NRF_TIMER_regs[1].TASKS_COUNT,       nhw_timer1_TASK_COUNT},
+    { (void*)&NRF_TIMER_regs[1].TASKS_START,       nhw_timer1_TASK_START},
+    { (void*)&NRF_TIMER_regs[1].TASKS_STOP,        nhw_timer1_TASK_STOP},
     //TIMER2:
-    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[0],  nrf_timer2_TASK_CAPTURE_0},
-    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[1],  nrf_timer2_TASK_CAPTURE_1},
-    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[2],  nrf_timer2_TASK_CAPTURE_2},
-    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[3],  nrf_timer2_TASK_CAPTURE_3},
-//    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[4],  nrf_timer2_TASK_CAPTURE_4},
-//    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[5],  nrf_timer2_TASK_CAPTURE_5},
-    { (void*)&NRF_TIMER_regs[2].TASKS_CLEAR,       nrf_timer2_TASK_CLEAR},
-    { (void*)&NRF_TIMER_regs[2].TASKS_COUNT,       nrf_timer2_TASK_COUNT},
-    { (void*)&NRF_TIMER_regs[2].TASKS_START,       nrf_timer2_TASK_START},
-    { (void*)&NRF_TIMER_regs[2].TASKS_STOP,        nrf_timer2_TASK_STOP},
+    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[0],  nhw_timer2_TASK_CAPTURE_0},
+    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[1],  nhw_timer2_TASK_CAPTURE_1},
+    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[2],  nhw_timer2_TASK_CAPTURE_2},
+    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[3],  nhw_timer2_TASK_CAPTURE_3},
+//    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[4],  nhw_timer2_TASK_CAPTURE_4},
+//    { (void*)&NRF_TIMER_regs[2].TASKS_CAPTURE[5],  nhw_timer2_TASK_CAPTURE_5},
+    { (void*)&NRF_TIMER_regs[2].TASKS_CLEAR,       nhw_timer2_TASK_CLEAR},
+    { (void*)&NRF_TIMER_regs[2].TASKS_COUNT,       nhw_timer2_TASK_COUNT},
+    { (void*)&NRF_TIMER_regs[2].TASKS_START,       nhw_timer2_TASK_START},
+    { (void*)&NRF_TIMER_regs[2].TASKS_STOP,        nhw_timer2_TASK_STOP},
     //TIMER3:
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[0],  nrf_timer3_TASK_CAPTURE_0},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[1],  nrf_timer3_TASK_CAPTURE_1},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[2],  nrf_timer3_TASK_CAPTURE_2},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[3],  nrf_timer3_TASK_CAPTURE_3},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[4],  nrf_timer3_TASK_CAPTURE_4},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[5],  nrf_timer3_TASK_CAPTURE_5},
-    { (void*)&NRF_TIMER_regs[3].TASKS_CLEAR,       nrf_timer3_TASK_CLEAR},
-    { (void*)&NRF_TIMER_regs[3].TASKS_COUNT,       nrf_timer3_TASK_COUNT},
-    { (void*)&NRF_TIMER_regs[3].TASKS_START,       nrf_timer3_TASK_START},
-    { (void*)&NRF_TIMER_regs[3].TASKS_STOP,        nrf_timer3_TASK_STOP},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[0],  nhw_timer3_TASK_CAPTURE_0},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[1],  nhw_timer3_TASK_CAPTURE_1},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[2],  nhw_timer3_TASK_CAPTURE_2},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[3],  nhw_timer3_TASK_CAPTURE_3},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[4],  nhw_timer3_TASK_CAPTURE_4},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CAPTURE[5],  nhw_timer3_TASK_CAPTURE_5},
+    { (void*)&NRF_TIMER_regs[3].TASKS_CLEAR,       nhw_timer3_TASK_CLEAR},
+    { (void*)&NRF_TIMER_regs[3].TASKS_COUNT,       nhw_timer3_TASK_COUNT},
+    { (void*)&NRF_TIMER_regs[3].TASKS_START,       nhw_timer3_TASK_START},
+    { (void*)&NRF_TIMER_regs[3].TASKS_STOP,        nhw_timer3_TASK_STOP},
     //TIMER4:
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[0],  nrf_timer4_TASK_CAPTURE_0},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[1],  nrf_timer4_TASK_CAPTURE_1},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[2],  nrf_timer4_TASK_CAPTURE_2},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[3],  nrf_timer4_TASK_CAPTURE_3},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[4],  nrf_timer4_TASK_CAPTURE_4},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[5],  nrf_timer4_TASK_CAPTURE_5},
-    { (void*)&NRF_TIMER_regs[4].TASKS_CLEAR,       nrf_timer4_TASK_CLEAR},
-    { (void*)&NRF_TIMER_regs[4].TASKS_COUNT,       nrf_timer4_TASK_COUNT},
-    { (void*)&NRF_TIMER_regs[4].TASKS_START,       nrf_timer4_TASK_START},
-    { (void*)&NRF_TIMER_regs[4].TASKS_STOP,        nrf_timer4_TASK_STOP},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[0],  nhw_timer4_TASK_CAPTURE_0},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[1],  nhw_timer4_TASK_CAPTURE_1},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[2],  nhw_timer4_TASK_CAPTURE_2},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[3],  nhw_timer4_TASK_CAPTURE_3},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[4],  nhw_timer4_TASK_CAPTURE_4},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CAPTURE[5],  nhw_timer4_TASK_CAPTURE_5},
+    { (void*)&NRF_TIMER_regs[4].TASKS_CLEAR,       nhw_timer4_TASK_CLEAR},
+    { (void*)&NRF_TIMER_regs[4].TASKS_COUNT,       nhw_timer4_TASK_COUNT},
+    { (void*)&NRF_TIMER_regs[4].TASKS_START,       nhw_timer4_TASK_START},
+    { (void*)&NRF_TIMER_regs[4].TASKS_STOP,        nhw_timer4_TASK_STOP},
 
     //RTC:
     //{ (void*)&(NRF_RTC_regs[0]).TASKS_CLEAR, nrf_rtc0_TASKS_CLEAR},
@@ -589,11 +589,11 @@ static void set_fixed_channel_routes(void) {
 
   //  26 RADIO->EVENTS_ADDRESS TIMER0->TASKS_CAPTURE[1]
     ppi_evt_to_ch[RADIO_EVENTS_ADDRESS].channels_mask |= ( 1 << 26 );
-    ppi_ch_tasks[26].tep_f = nrf_timer0_TASK_CAPTURE_1; //TIMER0->TASKS_CAPTURE[1]
+    ppi_ch_tasks[26].tep_f = nhw_timer0_TASK_CAPTURE_1; //TIMER0->TASKS_CAPTURE[1]
 
   //  27 RADIO->EVENTS_END TIMER0->TASKS_CAPTURE[2]
     ppi_evt_to_ch[RADIO_EVENTS_END].channels_mask |= ( 1 << 27 );
-    ppi_ch_tasks[27].tep_f = nrf_timer0_TASK_CAPTURE_2; //TIMER0->TASKS_CAPTURE[2]
+    ppi_ch_tasks[27].tep_f = nhw_timer0_TASK_CAPTURE_2; //TIMER0->TASKS_CAPTURE[2]
 
   //  28 RTC0->EVENTS_COMPARE[0] RADIO->TASKS_TXEN
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 28 );
@@ -605,11 +605,11 @@ static void set_fixed_channel_routes(void) {
 
   //  30 RTC0->EVENTS_COMPARE[0] TIMER0->TASKS_CLEAR
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( 1 << 30 );
-    ppi_ch_tasks[30].tep_f = nrf_timer0_TASK_CLEAR; //TIMER0->TASKS_CLEAR
+    ppi_ch_tasks[30].tep_f = nhw_timer0_TASK_CLEAR; //TIMER0->TASKS_CLEAR
 
   //  31 RTC0->EVENTS_COMPARE[0] TIMER0->TASKS_START
     ppi_evt_to_ch[RTC0_EVENTS_COMPARE_0].channels_mask |= ( (uint32_t)1 << 31 );
-    ppi_ch_tasks[31].tep_f = nrf_timer0_TASK_START; //TIMER0->TASKS_START
+    ppi_ch_tasks[31].tep_f = nhw_timer0_TASK_START; //TIMER0->TASKS_START
 }
 
 /*

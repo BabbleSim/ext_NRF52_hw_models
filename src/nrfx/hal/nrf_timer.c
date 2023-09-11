@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "hal/nrf_timer.h"
 #include "bs_tracing.h"
-#include "NRF_TIMER.h"
+#include "NHW_TIMER.h"
 
 static int timer_number_from_ptr(NRF_TIMER_Type * p_reg){
   int i = ( (int)p_reg - (int)&NRF_TIMER_regs[0] ) / sizeof(NRF_TIMER_Type);
@@ -23,7 +23,7 @@ void nrf_timer_cc_set(NRF_TIMER_Type * p_reg,
 {
   int i = timer_number_from_ptr(p_reg);
   p_reg->CC[cc_channel] = cc_value;
-  nrf_timer_regw_sideeffects_CC(i, cc_channel);
+  nhw_timer_regw_sideeffects_CC(i, cc_channel);
 }
 
 void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
@@ -34,18 +34,18 @@ void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
   *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 
   if (task == NRF_TIMER_TASK_START) {
-    nrf_timer_regw_sideeffects_TASKS_START(i);
+    nhw_timer_regw_sideeffects_TASKS_START(i);
   } else if (task == NRF_TIMER_TASK_STOP) {
-    nrf_timer_regw_sideeffects_TASKS_STOP(i);
+    nhw_timer_regw_sideeffects_TASKS_STOP(i);
   } else if (task == NRF_TIMER_TASK_COUNT) {
-    nrf_timer_regw_sideeffects_TASKS_COUNT(i);
+    nhw_timer_regw_sideeffects_TASKS_COUNT(i);
   } else if (task == NRF_TIMER_TASK_CLEAR) {
-    nrf_timer_regw_sideeffects_TASKS_CLEAR(i);
+    nhw_timer_regw_sideeffects_TASKS_CLEAR(i);
   } else if (task == NRF_TIMER_TASK_SHUTDOWN) {
-    nrf_timer_regw_sideeffects_TASKS_SHUTDOWN(i);
+    nhw_timer_regw_sideeffects_TASKS_SHUTDOWN(i);
   } else if (task >= NRF_TIMER_TASK_CAPTURE0) {
     int task_nbr = (task - NRF_TIMER_TASK_CAPTURE0)/sizeof(uint32_t);
-    nrf_timer_regw_sideeffects_TASKS_CAPTURE(i, task_nbr);
+    nhw_timer_regw_sideeffects_TASKS_CAPTURE(i, task_nbr);
   } else {
     bs_trace_error_line_time("Not supported task started in nrf_timer%i\n",
                              (int) task);
@@ -57,7 +57,7 @@ void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
     int t = timer_number_from_ptr(p_reg);
-    nrf_timer_regw_sideeffects_EVENTS_all(t);
+    nhw_timer_regw_sideeffects_EVENTS_all(t);
 }
 
 void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
@@ -65,7 +65,7 @@ void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
 {
     int i = timer_number_from_ptr(p_reg);
     p_reg->INTENSET = mask;
-    nrf_timer_regw_sideeffects_INTENSET(i);
+    nhw_timer_regw_sideeffects_INTENSET(i);
 }
 
 void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
@@ -73,7 +73,7 @@ void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
 {
     int i = timer_number_from_ptr(p_reg);
     p_reg->INTENCLR = mask;
-    nrf_timer_regw_sideeffects_INTENCLR(i);
+    nhw_timer_regw_sideeffects_INTENCLR(i);
 }
 
 #if defined(DPPI_PRESENT)
@@ -84,18 +84,18 @@ static void nrf_timer_subscribe_common(NRF_TIMER_Type * p_reg,
   int i = timer_number_from_ptr(p_reg);
 
   if (task == NRF_TIMER_TASK_START) {
-    nrf_timer_regw_sideeffects_SUBSCRIBE_START(i);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_START(i);
   } else if (task == NRF_TIMER_TASK_STOP) {
-    nrf_timer_regw_sideeffects_SUBSCRIBE_STOP(i);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_STOP(i);
   } else if (task == NRF_TIMER_TASK_COUNT) {
-    nrf_timer_regw_sideeffects_SUBSCRIBE_COUNT(i);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_COUNT(i);
   } else if (task == NRF_TIMER_TASK_CLEAR) {
-    nrf_timer_regw_sideeffects_SUBSCRIBE_CLEAR(i);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_CLEAR(i);
   } else if (task == NRF_TIMER_TASK_SHUTDOWN) {
-    nrf_timer_regw_sideeffects_SUBSCRIBE_SHUTDOWN(i);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_SHUTDOWN(i);
   } else if (task >= NRF_TIMER_TASK_CAPTURE0) {
     int task_nbr = (task - NRF_TIMER_TASK_CAPTURE0)/sizeof(uint32_t);
-    nrf_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(i, task_nbr);
+    nhw_timer_regw_sideeffects_SUBSCRIBE_CAPTURE(i, task_nbr);
   } else {
     bs_trace_error_line_time("Attempted to subscribe to a not-supported task in the nrf_timer (%i)\n",
                              task);
