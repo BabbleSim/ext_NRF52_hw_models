@@ -26,7 +26,7 @@
 #include "NRF_GPIOTE.h"
 #include "NRF_RNG.h"
 #include "NRF_PPI.h"
-#include "NRF_RTC.h"
+#include "NHW_RTC.h"
 #include "NHW_TIMER.h"
 #include "NHW_CLOCK.h"
 #include "NRF_RADIO.h"
@@ -204,18 +204,18 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     { (void*)&NRF_TIMER_regs[4].TASKS_STOP,        nhw_timer4_TASK_STOP},
 
     //RTC:
-    //{ (void*)&(NRF_RTC_regs[0]).TASKS_CLEAR, nrf_rtc0_TASKS_CLEAR},
-    //{ (void*)&(NRF_RTC_regs[0]).TASKS_START, nrf_rtc0_TASKS_START},
-    //{ (void*)&(NRF_RTC_regs[0]).TASKS_STOP , nrf_rtc0_TASKS_STOP},
-    //{ (void*)&(NRF_RTC_regs[0]).TASKS_TRIGOVRFLW , nrf_rtc0_TASKS_TRIGOVRFLW},
-    //{ (void*)&(NRF_RTC_regs[1]).TASKS_CLEAR, nrf_rtc1_TASKS_CLEAR},
-    //{ (void*)&(NRF_RTC_regs[1]).TASKS_START, nrf_rtc1_TASKS_START},
-    //{ (void*)&(NRF_RTC_regs[1]).TASKS_STOP , nrf_rtc1_TASKS_STOP},
-    //{ (void*)&(NRF_RTC_regs[1]).TASKS_TRIGOVRFLW , nrf_rtc1_TASKS_TRIGOVRFLW},
-    //{ (void*)&(NRF_RTC_regs[2]).TASKS_CLEAR, nrf_rtc2_TASKS_CLEAR},
-    //{ (void*)&(NRF_RTC_regs[2]).TASKS_START, nrf_rtc2_TASKS_START},
-    //{ (void*)&(NRF_RTC_regs[2]).TASKS_STOP , nrf_rtc2_TASKS_STOP},
-    //{ (void*)&(NRF_RTC_regs[2]).TASKS_TRIGOVRFLW , nrf_rtc2_TASKS_TRIGOVRFLW},
+    //{ (void*)&(NRF_RTC_regs[0]).TASKS_CLEAR, nhw_rtc0_TASKS_CLEAR},
+    //{ (void*)&(NRF_RTC_regs[0]).TASKS_START, nhw_rtc0_TASKS_START},
+    //{ (void*)&(NRF_RTC_regs[0]).TASKS_STOP , nhw_rtc0_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[0]).TASKS_TRIGOVRFLW , nhw_rtc0_TASKS_TRIGOVRFLW},
+    //{ (void*)&(NRF_RTC_regs[1]).TASKS_CLEAR, nhw_rtc1_TASKS_CLEAR},
+    //{ (void*)&(NRF_RTC_regs[1]).TASKS_START, nhw_rtc1_TASKS_START},
+    //{ (void*)&(NRF_RTC_regs[1]).TASKS_STOP , nhw_rtc1_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[1]).TASKS_TRIGOVRFLW , nhw_rtc1_TASKS_TRIGOVRFLW},
+    //{ (void*)&(NRF_RTC_regs[2]).TASKS_CLEAR, nhw_rtc2_TASKS_CLEAR},
+    //{ (void*)&(NRF_RTC_regs[2]).TASKS_START, nhw_rtc2_TASKS_START},
+    //{ (void*)&(NRF_RTC_regs[2]).TASKS_STOP , nhw_rtc2_TASKS_STOP},
+    //{ (void*)&(NRF_RTC_regs[2]).TASKS_TRIGOVRFLW , nhw_rtc2_TASKS_TRIGOVRFLW},
 
     //RNG:
     { (void*)&NRF_RNG_regs.TASKS_START, nrf_rng_task_start},

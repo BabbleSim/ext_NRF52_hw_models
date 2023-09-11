@@ -101,7 +101,7 @@
 #include "NHW_xPPI.h"
 #include "NHW_CLOCK.h"
 #include "irq_ctrl.h"
-#include "NRF_RTC.h"
+#include "NHW_RTC.h"
 
 #define RTC_COUNTER_MASK 0xFFFFFF /*24 bits*/
 #define RTC_TRIGGER_OVERFLOW_COUNTER_VALUE 0xFFFFF0
@@ -147,7 +147,7 @@ NRF_RTC_Type NRF_RTC_regs[NHW_RTC_TOTAL_INST];
 
 static bs_time_t sub_us_time_to_us_time(uint64_t sub_us_time);
 static uint64_t us_time_to_sub_us_time(bs_time_t us_time);
-static void nrf_rtc_TASKS_CLEAR(uint rtc);
+static void nhw_rtc_TASKS_CLEAR(uint rtc);
 static void nhw_rtc_signal_OVERFLOW(uint rtc);
 static void nhw_rtc_signal_COMPARE(uint rtc, uint cc);
 
@@ -428,7 +428,7 @@ static void handle_overflow_event(uint rtc)
   nhw_rtc_signal_OVERFLOW(rtc);
 }
 
-static void nrf_rtc_timer_triggered(void) {
+static void nhw_rtc_timer_triggered(void) {
   for (int rtc = 0; rtc < NHW_RTC_TOTAL_INST ; rtc++) {
     struct rtc_status *rtc_el = &nhw_rtc_st[rtc];
     if (rtc_el->running == false) {
@@ -450,7 +450,7 @@ static void nrf_rtc_timer_triggered(void) {
   nhw_rtc_update_master_timer();
 }
 
-NSI_HW_EVENT(Timer_RTC, nrf_rtc_timer_triggered, 50);
+NSI_HW_EVENT(Timer_RTC, nhw_rtc_timer_triggered, 50);
 
 /**
  * Check if an EVTEN or INTEN has the tick event set
@@ -461,7 +461,7 @@ static void check_not_supported_TICK(uint32_t i) {
   }
 }
 
-void nrf_rtc_notify_first_lf_tick(void) {
+void nhw_rtc_notify_first_lf_tick(void) {
   first_lf_tick_time_sub_us = get_time_in_sub_us();
   bs_trace_raw_time(9, "RTC: First lf tick\n");
 }
@@ -469,7 +469,7 @@ void nrf_rtc_notify_first_lf_tick(void) {
 /*
  * Update the counter register so it can be read by SW
  */
-void nrf_rtc_update_COUNTER(uint rtc) {
+void nhw_rtc_update_COUNTER(uint rtc) {
   struct rtc_status *this = &nhw_rtc_st[rtc];
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
 
@@ -487,7 +487,7 @@ void nrf_rtc_update_COUNTER(uint rtc) {
 /**
  * TASK_START triggered handler
  */
-static void nrf_rtc_TASKS_START(uint rtc) {
+static void nhw_rtc_TASKS_START(uint rtc) {
   struct rtc_status *this = &nhw_rtc_st[rtc];
 
   if (this->running == true) {
@@ -506,7 +506,7 @@ static void nrf_rtc_TASKS_START(uint rtc) {
 /**
  * TASK_STOP triggered handler
  */
-static void nrf_rtc_TASKS_STOP(uint rtc) {
+static void nhw_rtc_TASKS_STOP(uint rtc) {
   struct rtc_status *this = &nhw_rtc_st[rtc];
 
   if (this->running == false) {
@@ -529,7 +529,7 @@ static void nrf_rtc_TASKS_STOP(uint rtc) {
 /**
  * TASK_CLEAR triggered handler
  */
-static void nrf_rtc_TASKS_CLEAR(uint rtc) {
+static void nhw_rtc_TASKS_CLEAR(uint rtc) {
   bs_trace_raw_time(5, "RTC%i: TASK_CLEAR\n", rtc);
 
   /* Pre-scaler value is latched to an internal register on tasks START, CLEAR, and TRIGOVRFLW */
@@ -540,7 +540,7 @@ static void nrf_rtc_TASKS_CLEAR(uint rtc) {
 /**
  * TASK_TRIGGER_OVERFLOW triggered handler
  */
-static void nrf_rtc_TASKS_TRIGOVRFLW(uint rtc) {
+static void nhw_rtc_TASKS_TRIGOVRFLW(uint rtc) {
 
   bs_trace_raw_time(5, "RTC%i: TASK_TRIGGER_OVERFLOW\n", rtc);
 
@@ -550,13 +550,13 @@ static void nrf_rtc_TASKS_TRIGOVRFLW(uint rtc) {
 }
 
 #if (NHW_RTC_HAS_CAPTURE)
-static void nrf_rtc_TASKS_CAPTURE(uint rtc, uint cc_n) {
+static void nhw_rtc_TASKS_CAPTURE(uint rtc, uint cc_n) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
 
-  nrf_rtc_update_COUNTER(rtc);
+  nhw_rtc_update_COUNTER(rtc);
   RTC_regs->CC[cc_n] = RTC_regs->COUNTER;
 
-  nrf_rtc_regw_sideeffects_CC(rtc, cc_n);
+  nhw_rtc_regw_sideeffects_CC(rtc, cc_n);
 }
 #endif /* NHW_RTC_HAS_CAPTURE */
 
@@ -602,7 +602,7 @@ static void nhw_rtc_signal_COMPARE(uint rtc, uint cc)
 
 #if (NHW_RTC_HAS_SHORT_COMP_CLEAR)
   if (RTC_regs->SHORTS & (RTC_SHORTS_COMPARE0_CLEAR_Msk << cc)) {
-    nrf_rtc_TASKS_CLEAR(rtc);
+    nhw_rtc_TASKS_CLEAR(rtc);
     bs_trace_warning_line_time("RTC: COMPARE->CLEAR short used, but CLEAR is instantaneous."
                                "If you are using this to generate a periodic interrupt, the period"
                                "will be 1 count too short\n");
@@ -713,49 +713,49 @@ static void nhw_rtc_signal_OVERFLOW(uint rtc)
   nhw_rtc_eval_interrupts(rtc);
 }
 
-void nrf_rtc_regw_sideeffect_TASKS_START(uint i) {
+void nhw_rtc_regw_sideeffect_TASKS_START(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if (RTC_regs->TASKS_START) {
     RTC_regs->TASKS_START = 0;
-    nrf_rtc_TASKS_START(i);
+    nhw_rtc_TASKS_START(i);
   }
 }
 
-void nrf_rtc_regw_sideeffect_TASKS_STOP(uint i) {
+void nhw_rtc_regw_sideeffect_TASKS_STOP(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if (RTC_regs->TASKS_STOP) {
     RTC_regs->TASKS_STOP = 0;
-    nrf_rtc_TASKS_STOP(i);
+    nhw_rtc_TASKS_STOP(i);
   }
 }
 
-void nrf_rtc_regw_sideeffect_TASKS_CLEAR(uint i) {
+void nhw_rtc_regw_sideeffect_TASKS_CLEAR(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if (RTC_regs->TASKS_CLEAR) {
     RTC_regs->TASKS_CLEAR = 0;
-    nrf_rtc_TASKS_CLEAR(i);
+    nhw_rtc_TASKS_CLEAR(i);
   }
 }
 
-void nrf_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(uint i) {
+void nhw_rtc_regw_sideeffect_TASKS_TRIGOVRFLW(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if (RTC_regs->TASKS_TRIGOVRFLW) {
     RTC_regs->TASKS_TRIGOVRFLW = 0;
-    nrf_rtc_TASKS_TRIGOVRFLW(i);
+    nhw_rtc_TASKS_TRIGOVRFLW(i);
   }
 }
 
 #if (NHW_RTC_HAS_CAPTURE)
-void nrf_rtc_regw_sideeffect_TASKS_CAPTURE(uint i, uint cc) {
+void nhw_rtc_regw_sideeffect_TASKS_CAPTURE(uint i, uint cc) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if (RTC_regs->TASKS_CAPTURE[cc]) {
     RTC_regs->TASKS_CAPTURE[cc] = 0;
-    nrf_rtc_TASKS_CAPTURE(i, cc);
+    nhw_rtc_TASKS_CAPTURE(i, cc);
   }
 }
 #endif /* NHW_RTC_HAS_CAPTURE */
@@ -765,10 +765,10 @@ void nrf_rtc_regw_sideeffect_TASKS_CAPTURE(uint i, uint cc) {
 static void nhw_rtc_taskcapture_wrap(void* param) {
   unsigned int inst = (uintptr_t)param >> 16;
   uint cc_n = (uintptr_t)param & 0xFFFF;
-  nrf_rtc_TASKS_CAPTURE(inst, cc_n);
+  nhw_rtc_TASKS_CAPTURE(inst, cc_n);
 }
 
-void nrf_rtc_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
+void nhw_rtc_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
   struct rtc_status *this = &nhw_rtc_st[inst];
 
   nhw_dppi_common_subscribe_sideeffect(this->dppi_map,
@@ -778,13 +778,13 @@ void nrf_rtc_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
                                        (void*)((inst << 16) + cc_n));
 }
 
-#define NRF_RTC_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
+#define NHW_RTC_REGW_SIDEFFECTS_SUBSCRIBE(TASK_N)                                 \
   static void nhw_rtc_task##TASK_N##_wrap(void* param)                            \
   {                                                                               \
-    nrf_rtc_TASKS_##TASK_N((int) param);                                           \
+    nhw_rtc_TASKS_##TASK_N((int) param);                                           \
   }                                                                               \
                                                                                   \
-  void nrf_rtc_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
+  void nhw_rtc_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
   {                                                                               \
      struct rtc_status *this = &nhw_rtc_st[inst];                                 \
                                                                                   \
@@ -795,14 +795,14 @@ void nrf_rtc_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc_n) {
                                           (void*) inst);                          \
   }
 
-NRF_RTC_REGW_SIDEFFECTS_SUBSCRIBE(START)
-NRF_RTC_REGW_SIDEFFECTS_SUBSCRIBE(STOP)
-NRF_RTC_REGW_SIDEFFECTS_SUBSCRIBE(CLEAR)
-NRF_RTC_REGW_SIDEFFECTS_SUBSCRIBE(TRIGOVRFLW)
+NHW_RTC_REGW_SIDEFFECTS_SUBSCRIBE(START)
+NHW_RTC_REGW_SIDEFFECTS_SUBSCRIBE(STOP)
+NHW_RTC_REGW_SIDEFFECTS_SUBSCRIBE(CLEAR)
+NHW_RTC_REGW_SIDEFFECTS_SUBSCRIBE(TRIGOVRFLW)
 
 #endif /* NHW_HAS_DPPI */
 
-void nrf_rtc_regw_sideeffect_INTENSET(uint rtc)
+void nhw_rtc_regw_sideeffect_INTENSET(uint rtc)
 {
   struct rtc_status *this = &nhw_rtc_st[rtc];
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
@@ -816,7 +816,7 @@ void nrf_rtc_regw_sideeffect_INTENSET(uint rtc)
   }
 }
 
-void nrf_rtc_regw_sideeffect_INTENCLR(uint rtc)
+void nhw_rtc_regw_sideeffect_INTENCLR(uint rtc)
 {
   struct rtc_status *this = &nhw_rtc_st[rtc];
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[rtc];
@@ -830,7 +830,7 @@ void nrf_rtc_regw_sideeffect_INTENCLR(uint rtc)
   }
 }
 
-void nrf_rtc_regw_sideeffect_EVTENSET(uint i) {
+void nhw_rtc_regw_sideeffect_EVTENSET(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if ( RTC_regs->EVTENSET ){
@@ -840,7 +840,7 @@ void nrf_rtc_regw_sideeffect_EVTENSET(uint i) {
   }
 }
 
-void nrf_rtc_regw_sideeffect_EVTENCLR(uint i) {
+void nhw_rtc_regw_sideeffect_EVTENCLR(uint i) {
   NRF_RTC_Type *RTC_regs = &NRF_RTC_regs[i];
 
   if ( RTC_regs->EVTENCLR ){
@@ -850,11 +850,11 @@ void nrf_rtc_regw_sideeffect_EVTENCLR(uint i) {
   }
 }
 
-void nrf_rtc_regw_sideeffects_EVENTS_all(uint rtc) {
+void nhw_rtc_regw_sideeffects_EVENTS_all(uint rtc) {
   nhw_rtc_eval_interrupts(rtc);
 }
 
-void nrf_rtc_regw_sideeffects_CC(uint rtc, uint cc_n) {
+void nhw_rtc_regw_sideeffects_CC(uint rtc, uint cc_n) {
   struct rtc_status *this = &nhw_rtc_st[rtc];
 
   if (this->running == true) {
@@ -864,16 +864,16 @@ void nrf_rtc_regw_sideeffects_CC(uint rtc, uint cc_n) {
 }
 
 #if (NHW_HAS_PPI)
-void nrf_rtc0_TASKS_START(void)      { nrf_rtc_TASKS_START(0); }
-void nrf_rtc0_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(0);  }
-void nrf_rtc0_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(0); }
-void nrf_rtc0_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(0); }
-void nrf_rtc1_TASKS_START(void)      { nrf_rtc_TASKS_START(1); }
-void nrf_rtc1_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(1);  }
-void nrf_rtc1_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(1); }
-void nrf_rtc1_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(1); }
-void nrf_rtc2_TASKS_START(void)      { nrf_rtc_TASKS_START(2); }
-void nrf_rtc2_TASKS_STOP(void)       { nrf_rtc_TASKS_STOP(2);  }
-void nrf_rtc2_TASKS_CLEAR(void)      { nrf_rtc_TASKS_CLEAR(2); }
-void nrf_rtc2_TASKS_TRIGOVRFLW(void) { nrf_rtc_TASKS_TRIGOVRFLW(2); }
+void nhw_rtc0_TASKS_START(void)      { nhw_rtc_TASKS_START(0); }
+void nhw_rtc0_TASKS_STOP(void)       { nhw_rtc_TASKS_STOP(0);  }
+void nhw_rtc0_TASKS_CLEAR(void)      { nhw_rtc_TASKS_CLEAR(0); }
+void nhw_rtc0_TASKS_TRIGOVRFLW(void) { nhw_rtc_TASKS_TRIGOVRFLW(0); }
+void nhw_rtc1_TASKS_START(void)      { nhw_rtc_TASKS_START(1); }
+void nhw_rtc1_TASKS_STOP(void)       { nhw_rtc_TASKS_STOP(1);  }
+void nhw_rtc1_TASKS_CLEAR(void)      { nhw_rtc_TASKS_CLEAR(1); }
+void nhw_rtc1_TASKS_TRIGOVRFLW(void) { nhw_rtc_TASKS_TRIGOVRFLW(1); }
+void nhw_rtc2_TASKS_START(void)      { nhw_rtc_TASKS_START(2); }
+void nhw_rtc2_TASKS_STOP(void)       { nhw_rtc_TASKS_STOP(2);  }
+void nhw_rtc2_TASKS_CLEAR(void)      { nhw_rtc_TASKS_CLEAR(2); }
+void nhw_rtc2_TASKS_TRIGOVRFLW(void) { nhw_rtc_TASKS_TRIGOVRFLW(2); }
 #endif /* NHW_HAS_PPI */

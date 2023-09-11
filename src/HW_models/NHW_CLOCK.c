@@ -58,7 +58,7 @@
 #include "NHW_CLOCK.h"
 #include "nsi_hw_scheduler.h"
 #include "NHW_xPPI.h"
-#include "NRF_RTC.h"
+#include "NHW_RTC.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "bs_utils.h"
@@ -443,7 +443,7 @@ void nhw_clock_LFTimer_triggered(struct clkpwr_status *this) {
 
     nhw_clock_signal_LFCLKSTARTED(this->inst);
 
-    nrf_rtc_notify_first_lf_tick();
+    nhw_rtc_notify_first_lf_tick();
   } else if (this->LF_Clock_state == Stopping) {
     this->LF_Clock_state = Stopped;
     CLOCK_regs->LFCLKSTAT &= ~CLOCK_LFCLKSTAT_STATE_Msk;
