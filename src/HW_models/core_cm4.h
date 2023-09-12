@@ -14,7 +14,7 @@
 #ifndef HW_MODELS_CORE_CM4_H
 #define HW_MODELS_CORE_CM4_H
 
-#if defined(CONFIG_BOARD_NRF52_BSIM) || defined(INTEGRATOR_PROVIDES_CMSIS)
+#if defined(CONFIG_SOC_SERIES_BSIM_NRFXX) || defined(INTEGRATOR_PROVIDES_CMSIS)
   /* The real core_cm4.h includes a very significant number of definitions
    * and further CMSIS includes. Which may be needed by the integrating program.
    * We provide this include as a means to allow the integrating to add those.
