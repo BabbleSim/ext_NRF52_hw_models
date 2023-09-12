@@ -141,6 +141,10 @@
 #include "hal/nrf_regulators.h"
 #endif
 
+#ifdef NRF_RESET /* The MDK lacks a RESET_PRESENT macro */
+#include "hal/nrf_reset.h"
+#endif
+
 #ifdef RNG_PRESENT
 #include "hal/nrf_rng.h"
 #endif
