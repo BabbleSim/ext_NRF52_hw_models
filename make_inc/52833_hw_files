@@ -1,4 +1,5 @@
 src/HW_models/BLECrypt_if.c
+src/HW_models/NHW_misc.c
 src/HW_models/NRF_PPI.c
 src/HW_models/NRF_HWLowL.c
 src/HW_models/NRF_GPIO_backend.c

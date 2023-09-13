@@ -18,6 +18,8 @@
 
 #if defined(NRF52833) || defined(NRF52833_XXAA)
 
+#define NHW_CORE_NAMES {""}
+
 #define NHW_HAS_PPI  1
 #define NHW_HAS_DPPI 0
 #define NHW_USE_MDK_TYPES 1 /* The HW registers layout types are taken from the MDK */
@@ -294,6 +296,8 @@
 [28] = "SWI2",\
 [29] = "SWI3",\
 }}
+
+#define NHW_CORE_NAMES {"Application", "Network"}
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_NET_0 0
