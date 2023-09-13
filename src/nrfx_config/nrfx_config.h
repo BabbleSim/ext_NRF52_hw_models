@@ -17,5 +17,15 @@
 
 #include "nrfx_config_bsim.h"
 
-#endif // NRFX_CONFIG_H__
+#ifndef NO_NRFX_TEMPLATE_CONFIG
 
+#include <templates/nrfx_config_common.h>
+#if defined(NRF5340_XXAA_APPLICATION)
+    #include <templates/nrfx_config_nrf5340_application.h>
+#elif defined(NRF5340_XXAA_NETWORK)
+    #include <templates/nrfx_config_nrf5340_network.h>
+#endif
+
+#endif /* NO_NRFX_TEMPLATE_CONFIG */
+
+#endif // NRFX_CONFIG_H__
