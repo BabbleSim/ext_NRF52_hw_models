@@ -23,6 +23,16 @@ extern "C" {
 #define NRFX_ASSERT(expression)
 #endif
 
+/** @brief Macro for entering into a critical section. */
+#ifndef NRFX_CRITICAL_SECTION_ENTER
+#define NRFX_CRITICAL_SECTION_ENTER()
+#endif
+
+/** @brief Macro for exiting from a critical section. */
+#ifndef NRFX_CRITICAL_SECTION_EXIT
+#define NRFX_CRITICAL_SECTION_EXIT()
+#endif
+
 #include "nrfx_bsim_redef.h"
 
 #ifdef __cplusplus
