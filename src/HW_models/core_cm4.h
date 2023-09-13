@@ -42,4 +42,8 @@ extern void __WFE(void);
 #define __DSB()
 #endif
 
+#ifndef __ISB
+#define __ISB()
+#endif
+
 #endif /* HW_MODELS_CORE_CM4_H */
