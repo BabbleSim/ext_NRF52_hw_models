@@ -211,15 +211,15 @@ int nrfra_is_HW_TIFS_enabled(void) {
 void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   //TOLOW: Add support for other packet formats and bitrates
-  uint8_t preamble_length;
-  uint8_t address_length;
-  uint8_t header_length;
-  uint64_t address;
-  bs_time_t pre_trunc;
-  uint16_t sync_threshold;
+  uint8_t preamble_length = 0;
+  uint8_t address_length = 0;
+  uint8_t header_length = 0;
+  uint64_t address = 0;
+  bs_time_t pre_trunc = 0;
+  uint16_t sync_threshold = 0;
 
   uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
-  double bits_per_us;
+  double bits_per_us = 0;
 
   if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
       || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)

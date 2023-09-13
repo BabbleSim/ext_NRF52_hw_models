@@ -737,10 +737,10 @@ static void start_Tx(void) {
   nrfra_check_packet_conf();
 
   //TOLOW: Add support for other packet formats and bitrates
-  uint8_t preamble_len;
-  uint8_t address_len;
-  uint8_t header_len;
-  uint payload_len;
+  uint8_t preamble_len = 0;
+  uint8_t address_len = 0;
+  uint8_t header_len = 0;
+  uint payload_len = 0;
   uint8_t crc_len = nrfra_get_crc_length();
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
@@ -836,7 +836,7 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
 
   //TODO: Discard Ieee802154_250Kbit frames with length == 0
 
-  bs_time_t payload_end;
+  bs_time_t payload_end = 0;
 
   if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
       || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
