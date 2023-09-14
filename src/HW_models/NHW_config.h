@@ -312,11 +312,12 @@
 #define NHW_RTC_APP1 1
 #define NHW_RTC_NET0 2
 #define NHW_RTC_NET1 3
-#define NHW_RTC_INT_MAP {{0 , 17}, \
-                         {0 , 22}, \
-                         {1 , 20}, \
-                         {1 , 21}, \
-                         } /*Only core,RTC0..2_IRQn*/
+#define NHW_RTC_INT_MAP {{0 , 20}, \
+                         {0 , 21}, \
+                         {1 , 17}, \
+                         {1 , 22}, \
+                         } /*App core,RTC0..1_IRQn*/
+                           /*Net core,RTC0..1_IRQn*/
 #define NHW_RTC_DPPI_MAP {0, 0, 1, 1} /*2xApp core, 2xNetwork core*/
 #define NHW_RTC_HAS_CAPTURE 1
 #define NHW_RTC_HAS_SHORT_COMP_CLEAR 1
