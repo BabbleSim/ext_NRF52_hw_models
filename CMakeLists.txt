@@ -39,14 +39,15 @@ if(CONFIG_SOC_SERIES_BSIM_NRFXX)
     )
   elseif(CONFIG_SOC_SERIES_BSIM_NRF53X)
     file(STRINGS make_inc/5340_hw_files HW_MODEL_SRCS)
-    file(STRINGS make_inc/5340_hal_files HAL_SRCS)
 
     if(CONFIG_BOARD_NRF53_BSIM_CPUNET)
+      file(STRINGS make_inc/5340_net_hal_files HAL_SRCS)
       set(VARIANT_FLAGS
         -DNRF5340_XXAA_NETWORK
         -DNRF5340
       )
     elseif(CONFIG_BOARD_NRF53_BSIM_CPUAPP)
+      file(STRINGS make_inc/5340_app_hal_files HAL_SRCS)
       set(VARIANT_FLAGS
         -DNRF5340_XXAA_APPLICATION
         -DNRF5340

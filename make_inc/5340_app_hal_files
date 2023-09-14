@@ -1,0 +1,6 @@
+src/nrfx/hal/nrf_clock.c
+src/nrfx/hal/nrf_dppi.c
+src/nrfx/hal/nrf_egu.c
+src/nrfx/hal/nrf_rtc.c
+src/nrfx/hal/nrf_timer.c
+src/nrfx/hal/nrf_hal_originals.c
