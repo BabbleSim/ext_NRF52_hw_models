@@ -23,7 +23,7 @@ void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask)
   p_reg->INTENSET = mask;
 
   int i = clock_number_from_ptr(p_reg);
-  nhw_clock_reqw_sideeffects_INTENSET(i);
+  nhw_clock_regw_sideeffects_INTENSET(i);
 }
 
 void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
@@ -31,7 +31,7 @@ void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
   p_reg->INTENCLR = mask;
 
   int i = clock_number_from_ptr(p_reg);
-  nhw_clock_reqw_sideeffects_INTENCLR(i);
+  nhw_clock_regw_sideeffects_INTENCLR(i);
 }
 
 void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
@@ -41,7 +41,7 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
   int i = clock_number_from_ptr(p_reg);
 
 #define CASE_TASK(TASKN) \
-  case NRF_CLOCK_TASK_##TASKN: nhw_clock_reqw_sideeffects_TASKS_##TASKN(i); break;
+  case NRF_CLOCK_TASK_##TASKN: nhw_clock_regw_sideeffects_TASKS_##TASKN(i); break;
 
   switch (task) {
     CASE_TASK(HFCLKSTART)

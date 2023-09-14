@@ -379,7 +379,7 @@ void nhw_clock_TASKS_CTSTOP(uint inst) {
 }
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
 
-void nhw_clock_reqw_sideeffects_INTENSET(uint i) {
+void nhw_clock_regw_sideeffects_INTENSET(uint i) {
   if (NRF_CLOCK_regs[i]->INTENSET) { /* LCOV_EXCL_BR_LINE */
     struct clkpwr_status *this = &nhw_clkpwr_st[i];
 
@@ -389,7 +389,7 @@ void nhw_clock_reqw_sideeffects_INTENSET(uint i) {
   }
 }
 
-void nhw_clock_reqw_sideeffects_INTENCLR(uint i) {
+void nhw_clock_regw_sideeffects_INTENCLR(uint i) {
   if (NRF_CLOCK_regs[i]->INTENCLR) { /* LCOV_EXCL_BR_LINE */
     struct clkpwr_status *this = &nhw_clkpwr_st[i];
 
@@ -400,31 +400,31 @@ void nhw_clock_reqw_sideeffects_INTENCLR(uint i) {
   }
 }
 
-#define nhw_clock_reqw_sideeffects_TASKS_(x)                   \
-  void nhw_clock_reqw_sideeffects_TASKS_##x(uint i) {          \
+#define nhw_clock_regw_sideeffects_TASKS_(x)                   \
+  void nhw_clock_regw_sideeffects_TASKS_##x(uint i) {          \
     if (NRF_CLOCK_regs[i]->TASKS_##x) { /* LCOV_EXCL_BR_LINE */\
       NRF_CLOCK_regs[i]->TASKS_##x = 0;                        \
       nhw_clock_TASKS_##x(i);                                  \
     }                                                          \
   }
 
-nhw_clock_reqw_sideeffects_TASKS_(LFCLKSTART)
-nhw_clock_reqw_sideeffects_TASKS_(LFCLKSTOP)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLKSTART)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLKSTOP)
+nhw_clock_regw_sideeffects_TASKS_(LFCLKSTART)
+nhw_clock_regw_sideeffects_TASKS_(LFCLKSTOP)
+nhw_clock_regw_sideeffects_TASKS_(HFCLKSTART)
+nhw_clock_regw_sideeffects_TASKS_(HFCLKSTOP)
 
 #if (NHW_CLKPWR_HAS_HFCLKAUDIOCLK)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLKAUDIOSTART)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLKAUDIOSTOP)
+nhw_clock_regw_sideeffects_TASKS_(HFCLKAUDIOSTART)
+nhw_clock_regw_sideeffects_TASKS_(HFCLKAUDIOSTOP)
 #endif
 #if (NHW_CLKPWR_HAS_HFCLK192MCLK)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLK192MSTART)
-nhw_clock_reqw_sideeffects_TASKS_(HFCLK192MSTOP)
+nhw_clock_regw_sideeffects_TASKS_(HFCLK192MSTART)
+nhw_clock_regw_sideeffects_TASKS_(HFCLK192MSTOP)
 #endif
-nhw_clock_reqw_sideeffects_TASKS_(CAL)
+nhw_clock_regw_sideeffects_TASKS_(CAL)
 #if (NHW_CLKPWR_HAS_CALTIMER)
-nhw_clock_reqw_sideeffects_TASKS_(CTSTART)
-nhw_clock_reqw_sideeffects_TASKS_(CTSTOP)
+nhw_clock_regw_sideeffects_TASKS_(CTSTART)
+nhw_clock_regw_sideeffects_TASKS_(CTSTOP)
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
 
 void nhw_pwrclk_regw_sideeffects_EVENTS_all(uint i) {
