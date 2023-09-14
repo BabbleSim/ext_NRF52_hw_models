@@ -322,6 +322,12 @@
 #define NHW_RTC_HAS_SHORT_COMP_CLEAR 1
 #define NHW_RTC_N_CC {4, 4, 4, 4}
 
+#define NHW_SWI_TOTAL_INST 4
+#define NHW_SWI_NET0 0
+#define NHW_SWI_NET1 1
+#define NHW_SWI_NET2 2
+#define NHW_SWI_NET3 3
+
 #define NHW_TIMER_TOTAL_INST 6
 #define NHW_TIMER_APP0 0
 #define NHW_TIMER_APP1 1

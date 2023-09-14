@@ -169,14 +169,15 @@ extern NRF_TIMER_Type NRF_TIMER_regs[];
 #define NRF_TIMER1_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET1])
 #undef NRF_TIMER2_NS_BASE
 #define NRF_TIMER2_NS_BASE         (&NRF_TIMER_regs[NHW_TIMER_NET2])
+extern int NRF_SWI_regs[];
 #undef NRF_SWI0_NS_BASE
-#define NRF_SWI0_NS_BASE           NULL
+#define NRF_SWI0_NS_BASE           (&NRF_SWI_regs[NHW_SWI_NET0])
 #undef NRF_SWI1_NS_BASE
-#define NRF_SWI1_NS_BASE           NULL
+#define NRF_SWI1_NS_BASE            (&NRF_SWI_regs[NHW_SWI_NET1])
 #undef NRF_SWI2_NS_BASE
-#define NRF_SWI2_NS_BASE           NULL
+#define NRF_SWI2_NS_BASE            (&NRF_SWI_regs[NHW_SWI_NET2])
 #undef NRF_SWI3_NS_BASE
-#define NRF_SWI3_NS_BASE           NULL
+#define NRF_SWI3_NS_BASE            (&NRF_SWI_regs[NHW_SWI_NET3])
 #undef NRF_APPMUTEX_NS_BASE
 #define NRF_APPMUTEX_NS_BASE       NULL
 #undef NRF_APPMUTEX_S_BASE
