@@ -201,7 +201,7 @@
 #define NHW_EGU_APP3 3
 #define NHW_EGU_APP4 4
 #define NHW_EGU_APP5 5
-#define NHW_EGU_NET0 5
+#define NHW_EGU_NET0 6
 #define NHW_EGU_INT_MAP {{0 , 27}, \
                          {0 , 28}, \
                          {0 , 29}, \
