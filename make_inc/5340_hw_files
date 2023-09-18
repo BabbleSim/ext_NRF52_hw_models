@@ -6,6 +6,7 @@ src/HW_models/crc.c
 src/HW_models/irq_ctrl.c
 src/HW_models/bstest_ticker.c
 src/HW_models/bs_compat.c
+src/HW_models/NHW_AES_ECB.c
 src/HW_models/NHW_DPPI.c
 src/HW_models/NHW_CLOCK.c
 src/HW_models/NHW_EGU.c

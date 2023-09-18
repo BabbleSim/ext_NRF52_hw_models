@@ -45,6 +45,7 @@
 #define NHW_ECB_TOTAL_INST 1
 #define NHW_ECB_0 0
 #define NHW_ECB_INT_MAP {{0 , 14}} /*Only core,ECB_IRQn*/
+#define NHW_ECB_t_ECB 7 /* 7.2 */
 
 #define NHW_EGU_TOTAL_INST 6
 #define NHW_EGU_0 0
@@ -193,6 +194,12 @@
 #define NHW_CLKPWR_HAS_HFCLKAUDIOCLK_I {1, 0}
 #define NHW_CLKPWR_HAS_HFCLK192MCLK 1
 #define NHW_CLKPWR_HAS_HFCLK192MCLK_I  {1, 0}
+
+#define NHW_ECB_TOTAL_INST 1
+#define NHW_ECB_NET0 0
+#define NHW_ECB_INT_MAP {{1 , 13}} /*Net core, ECB_IRQn*/
+#define NHW_ECB_DPPI_MAP {1}
+#define NHW_ECB_t_ECB 6 /* 6.2 */
 
 #define NHW_EGU_TOTAL_INST 7
 #define NHW_EGU_APP0 0

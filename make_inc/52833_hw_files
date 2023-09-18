@@ -10,7 +10,7 @@ src/HW_models/NRF_RADIO_utils.c
 src/HW_models/trivial_xo.c
 src/HW_models/fake_timer.c
 src/HW_models/NRF_RADIO.c
-src/HW_models/NRF_AES_ECB.c
+src/HW_models/NHW_AES_ECB.c
 src/HW_models/crc.c
 src/HW_models/irq_ctrl.c
 src/HW_models/NHW_RTC.c

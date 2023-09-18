@@ -848,6 +848,166 @@ typedef struct {                                /*!< (@ 0x40005000) CLOCK_NS Str
 #define CLOCK_HFCLK192MCTRL_HCLK192M_Div2 (1UL) /*!< Divide HFCLK192M by 2 */
 #define CLOCK_HFCLK192MCTRL_HCLK192M_Div4 (2UL) /*!< Divide HFCLK192M by 4 */
 
+/* =========================================================================================================================== */
+/* ================                                          ECB_NS                                           ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief AES ECB Mode Encryption (ECB_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x4100D000) ECB_NS Structure                                           */
+  __OM  uint32_t  TASKS_STARTECB;               /*!< (@ 0x00000000) Start ECB block encrypt                                    */
+  __OM  uint32_t  TASKS_STOPECB;                /*!< (@ 0x00000004) Abort a possible executing ECB operation                   */
+  __IM  uint32_t  RESERVED[30];
+  __IOM uint32_t  SUBSCRIBE_STARTECB;           /*!< (@ 0x00000080) Subscribe configuration for task STARTECB                  */
+  __IOM uint32_t  SUBSCRIBE_STOPECB;            /*!< (@ 0x00000084) Subscribe configuration for task STOPECB                   */
+  __IM  uint32_t  RESERVED1[30];
+  __IOM uint32_t  EVENTS_ENDECB;                /*!< (@ 0x00000100) ECB block encrypt complete                                 */
+  __IOM uint32_t  EVENTS_ERRORECB;              /*!< (@ 0x00000104) ECB block encrypt aborted because of a STOPECB
+                                                                    task or due to an error                                    */
+  __IM  uint32_t  RESERVED2[30];
+  __IOM uint32_t  PUBLISH_ENDECB;               /*!< (@ 0x00000180) Publish configuration for event ENDECB                     */
+  __IOM uint32_t  PUBLISH_ERRORECB;             /*!< (@ 0x00000184) Publish configuration for event ERRORECB                   */
+  __IM  uint32_t  RESERVED3[95];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED4[126];
+  __IOM uint32_t  ECBDATAPTR;                   /*!< (@ 0x00000504) ECB block encrypt memory pointers                          */
+} NRF_ECB_Type;                                 /*!< Size = 1288 (0x508)                                                       */
+
+
+/* Peripheral: ECB */
+/* Description: AES ECB Mode Encryption */
+
+/* Register: ECB_TASKS_STARTECB */
+/* Description: Start ECB block encrypt */
+
+/* Bit 0 : Start ECB block encrypt */
+#define ECB_TASKS_STARTECB_TASKS_STARTECB_Pos (0UL) /*!< Position of TASKS_STARTECB field. */
+#define ECB_TASKS_STARTECB_TASKS_STARTECB_Msk (0x1UL << ECB_TASKS_STARTECB_TASKS_STARTECB_Pos) /*!< Bit mask of TASKS_STARTECB field. */
+#define ECB_TASKS_STARTECB_TASKS_STARTECB_Trigger (1UL) /*!< Trigger task */
+
+/* Register: ECB_TASKS_STOPECB */
+/* Description: Abort a possible executing ECB operation */
+
+/* Bit 0 : Abort a possible executing ECB operation */
+#define ECB_TASKS_STOPECB_TASKS_STOPECB_Pos (0UL) /*!< Position of TASKS_STOPECB field. */
+#define ECB_TASKS_STOPECB_TASKS_STOPECB_Msk (0x1UL << ECB_TASKS_STOPECB_TASKS_STOPECB_Pos) /*!< Bit mask of TASKS_STOPECB field. */
+#define ECB_TASKS_STOPECB_TASKS_STOPECB_Trigger (1UL) /*!< Trigger task */
+
+/* Register: ECB_SUBSCRIBE_STARTECB */
+/* Description: Subscribe configuration for task STARTECB */
+
+/* Bit 31 :   */
+#define ECB_SUBSCRIBE_STARTECB_EN_Pos (31UL) /*!< Position of EN field. */
+#define ECB_SUBSCRIBE_STARTECB_EN_Msk (0x1UL << ECB_SUBSCRIBE_STARTECB_EN_Pos) /*!< Bit mask of EN field. */
+#define ECB_SUBSCRIBE_STARTECB_EN_Disabled (0UL) /*!< Disable subscription */
+#define ECB_SUBSCRIBE_STARTECB_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STARTECB will subscribe to */
+#define ECB_SUBSCRIBE_STARTECB_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define ECB_SUBSCRIBE_STARTECB_CHIDX_Msk (0xFFUL << ECB_SUBSCRIBE_STARTECB_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: ECB_SUBSCRIBE_STOPECB */
+/* Description: Subscribe configuration for task STOPECB */
+
+/* Bit 31 :   */
+#define ECB_SUBSCRIBE_STOPECB_EN_Pos (31UL) /*!< Position of EN field. */
+#define ECB_SUBSCRIBE_STOPECB_EN_Msk (0x1UL << ECB_SUBSCRIBE_STOPECB_EN_Pos) /*!< Bit mask of EN field. */
+#define ECB_SUBSCRIBE_STOPECB_EN_Disabled (0UL) /*!< Disable subscription */
+#define ECB_SUBSCRIBE_STOPECB_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOPECB will subscribe to */
+#define ECB_SUBSCRIBE_STOPECB_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define ECB_SUBSCRIBE_STOPECB_CHIDX_Msk (0xFFUL << ECB_SUBSCRIBE_STOPECB_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: ECB_EVENTS_ENDECB */
+/* Description: ECB block encrypt complete */
+
+/* Bit 0 : ECB block encrypt complete */
+#define ECB_EVENTS_ENDECB_EVENTS_ENDECB_Pos (0UL) /*!< Position of EVENTS_ENDECB field. */
+#define ECB_EVENTS_ENDECB_EVENTS_ENDECB_Msk (0x1UL << ECB_EVENTS_ENDECB_EVENTS_ENDECB_Pos) /*!< Bit mask of EVENTS_ENDECB field. */
+#define ECB_EVENTS_ENDECB_EVENTS_ENDECB_NotGenerated (0UL) /*!< Event not generated */
+#define ECB_EVENTS_ENDECB_EVENTS_ENDECB_Generated (1UL) /*!< Event generated */
+
+/* Register: ECB_EVENTS_ERRORECB */
+/* Description: ECB block encrypt aborted because of a STOPECB task or due to an error */
+
+/* Bit 0 : ECB block encrypt aborted because of a STOPECB task or due to an error */
+#define ECB_EVENTS_ERRORECB_EVENTS_ERRORECB_Pos (0UL) /*!< Position of EVENTS_ERRORECB field. */
+#define ECB_EVENTS_ERRORECB_EVENTS_ERRORECB_Msk (0x1UL << ECB_EVENTS_ERRORECB_EVENTS_ERRORECB_Pos) /*!< Bit mask of EVENTS_ERRORECB field. */
+#define ECB_EVENTS_ERRORECB_EVENTS_ERRORECB_NotGenerated (0UL) /*!< Event not generated */
+#define ECB_EVENTS_ERRORECB_EVENTS_ERRORECB_Generated (1UL) /*!< Event generated */
+
+/* Register: ECB_PUBLISH_ENDECB */
+/* Description: Publish configuration for event ENDECB */
+
+/* Bit 31 :   */
+#define ECB_PUBLISH_ENDECB_EN_Pos (31UL) /*!< Position of EN field. */
+#define ECB_PUBLISH_ENDECB_EN_Msk (0x1UL << ECB_PUBLISH_ENDECB_EN_Pos) /*!< Bit mask of EN field. */
+#define ECB_PUBLISH_ENDECB_EN_Disabled (0UL) /*!< Disable publishing */
+#define ECB_PUBLISH_ENDECB_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event ENDECB will publish to. */
+#define ECB_PUBLISH_ENDECB_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define ECB_PUBLISH_ENDECB_CHIDX_Msk (0xFFUL << ECB_PUBLISH_ENDECB_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: ECB_PUBLISH_ERRORECB */
+/* Description: Publish configuration for event ERRORECB */
+
+/* Bit 31 :   */
+#define ECB_PUBLISH_ERRORECB_EN_Pos (31UL) /*!< Position of EN field. */
+#define ECB_PUBLISH_ERRORECB_EN_Msk (0x1UL << ECB_PUBLISH_ERRORECB_EN_Pos) /*!< Bit mask of EN field. */
+#define ECB_PUBLISH_ERRORECB_EN_Disabled (0UL) /*!< Disable publishing */
+#define ECB_PUBLISH_ERRORECB_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event ERRORECB will publish to. */
+#define ECB_PUBLISH_ERRORECB_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define ECB_PUBLISH_ERRORECB_CHIDX_Msk (0xFFUL << ECB_PUBLISH_ERRORECB_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: ECB_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 1 : Write '1' to enable interrupt for event ERRORECB */
+#define ECB_INTENSET_ERRORECB_Pos (1UL) /*!< Position of ERRORECB field. */
+#define ECB_INTENSET_ERRORECB_Msk (0x1UL << ECB_INTENSET_ERRORECB_Pos) /*!< Bit mask of ERRORECB field. */
+#define ECB_INTENSET_ERRORECB_Disabled (0UL) /*!< Read: Disabled */
+#define ECB_INTENSET_ERRORECB_Enabled (1UL) /*!< Read: Enabled */
+#define ECB_INTENSET_ERRORECB_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event ENDECB */
+#define ECB_INTENSET_ENDECB_Pos (0UL) /*!< Position of ENDECB field. */
+#define ECB_INTENSET_ENDECB_Msk (0x1UL << ECB_INTENSET_ENDECB_Pos) /*!< Bit mask of ENDECB field. */
+#define ECB_INTENSET_ENDECB_Disabled (0UL) /*!< Read: Disabled */
+#define ECB_INTENSET_ENDECB_Enabled (1UL) /*!< Read: Enabled */
+#define ECB_INTENSET_ENDECB_Set (1UL) /*!< Enable */
+
+/* Register: ECB_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 1 : Write '1' to disable interrupt for event ERRORECB */
+#define ECB_INTENCLR_ERRORECB_Pos (1UL) /*!< Position of ERRORECB field. */
+#define ECB_INTENCLR_ERRORECB_Msk (0x1UL << ECB_INTENCLR_ERRORECB_Pos) /*!< Bit mask of ERRORECB field. */
+#define ECB_INTENCLR_ERRORECB_Disabled (0UL) /*!< Read: Disabled */
+#define ECB_INTENCLR_ERRORECB_Enabled (1UL) /*!< Read: Enabled */
+#define ECB_INTENCLR_ERRORECB_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable interrupt for event ENDECB */
+#define ECB_INTENCLR_ENDECB_Pos (0UL) /*!< Position of ENDECB field. */
+#define ECB_INTENCLR_ENDECB_Msk (0x1UL << ECB_INTENCLR_ENDECB_Pos) /*!< Bit mask of ENDECB field. */
+#define ECB_INTENCLR_ENDECB_Disabled (0UL) /*!< Read: Disabled */
+#define ECB_INTENCLR_ENDECB_Enabled (1UL) /*!< Read: Enabled */
+#define ECB_INTENCLR_ENDECB_Clear (1UL) /*!< Disable */
+
+/* Register: ECB_ECBDATAPTR */
+/* Description: ECB block encrypt memory pointers */
+
+/* Bits 31..0 : Pointer to the ECB data structure (see Table 1 ECB data structure overview) */
+#define ECB_ECBDATAPTR_ECBDATAPTR_Pos (0UL) /*!< Position of ECBDATAPTR field. */
+#define ECB_ECBDATAPTR_ECBDATAPTR_Msk (0xFFFFFFFFUL << ECB_ECBDATAPTR_ECBDATAPTR_Pos) /*!< Bit mask of ECBDATAPTR field. */
+
 
 /* =========================================================================================================================== */
 /* ================                                          EGU                                              ================ */

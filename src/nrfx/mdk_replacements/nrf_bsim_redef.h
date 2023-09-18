@@ -132,7 +132,8 @@ extern NRF_RNG_Type NRF_RNG_regs;
 #undef NRF_WDT_NS_BASE
 #define NRF_WDT_NS_BASE            NULL
 #undef NRF_ECB_NS_BASE
-#define NRF_ECB_NS_BASE            NULL
+extern NRF_ECB_Type NRF_ECB_regs;
+#define NRF_ECB_NS_BASE            (&NRF_ECB_regs)
 #undef NRF_AAR_NS_BASE
 #define NRF_AAR_NS_BASE            NULL
 #undef NRF_CCM_NS_BASE
