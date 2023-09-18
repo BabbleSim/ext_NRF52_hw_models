@@ -148,7 +148,7 @@ void nhw_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
   static struct nhw_subsc_mem STOP_subscribed[NHW_RNG_TOTAL_INST];
 
   nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
-                                       NRF_RNG_regs.SUBSCRIBE_START,
+                                       NRF_RNG_regs.SUBSCRIBE_STOP,
                                        &STOP_subscribed[inst],
                                        (dppi_callback_t)nhw_rng_task_stop,
                                        DPPI_CB_NO_PARAM);
