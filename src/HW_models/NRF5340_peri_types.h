@@ -341,6 +341,367 @@ typedef struct {                                /*!< (@ 0x4100E000) AAR_NS Struc
 
 
 /* =========================================================================================================================== */
+/* ================                                          CCM                                              ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief AES CCM mode encryption (CCM)
+  */
+
+typedef struct {                                /*!< (@ 0x4100E000) CCM_NS Structure                                           */
+  __OM  uint32_t  TASKS_KSGEN;                  /*!< (@ 0x00000000) Start generation of keystream. This operation
+                                                                    will stop by itself when completed.                        */
+  __OM  uint32_t  TASKS_CRYPT;                  /*!< (@ 0x00000004) Start encryption/decryption. This operation will
+                                                                    stop by itself when completed.                             */
+  __OM  uint32_t  TASKS_STOP;                   /*!< (@ 0x00000008) Stop encryption/decryption                                 */
+  __OM  uint32_t  TASKS_RATEOVERRIDE;           /*!< (@ 0x0000000C) Override DATARATE setting in MODE register with
+                                                                    the contents of the RATEOVERRIDE register
+                                                                    for any ongoing encryption/decryption                      */
+  __IM  uint32_t  RESERVED[28];
+  __IOM uint32_t  SUBSCRIBE_KSGEN;              /*!< (@ 0x00000080) Subscribe configuration for task KSGEN                     */
+  __IOM uint32_t  SUBSCRIBE_CRYPT;              /*!< (@ 0x00000084) Subscribe configuration for task CRYPT                     */
+  __IOM uint32_t  SUBSCRIBE_STOP;               /*!< (@ 0x00000088) Subscribe configuration for task STOP                      */
+  __IOM uint32_t  SUBSCRIBE_RATEOVERRIDE;       /*!< (@ 0x0000008C) Subscribe configuration for task RATEOVERRIDE              */
+  __IM  uint32_t  RESERVED1[28];
+  __IOM uint32_t  EVENTS_ENDKSGEN;              /*!< (@ 0x00000100) Keystream generation complete                              */
+  __IOM uint32_t  EVENTS_ENDCRYPT;              /*!< (@ 0x00000104) Encrypt/decrypt complete                                   */
+  __IOM uint32_t  EVENTS_ERROR;                 /*!< (@ 0x00000108) Deprecated register - CCM error event                      */
+  __IM  uint32_t  RESERVED2[29];
+  __IOM uint32_t  PUBLISH_ENDKSGEN;             /*!< (@ 0x00000180) Publish configuration for event ENDKSGEN                   */
+  __IOM uint32_t  PUBLISH_ENDCRYPT;             /*!< (@ 0x00000184) Publish configuration for event ENDCRYPT                   */
+  __IOM uint32_t  PUBLISH_ERROR;                /*!< (@ 0x00000188) Deprecated register - Publish configuration for
+                                                                    event ERROR                                                */
+  __IM  uint32_t  RESERVED3[29];
+  __IOM uint32_t  SHORTS;                       /*!< (@ 0x00000200) Shortcuts between local events and tasks                   */
+  __IM  uint32_t  RESERVED4[64];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED5[61];
+  __IM  uint32_t  MICSTATUS;                    /*!< (@ 0x00000400) MIC check result                                           */
+  __IM  uint32_t  RESERVED6[63];
+  __IOM uint32_t  ENABLE;                       /*!< (@ 0x00000500) Enable                                                     */
+  __IOM uint32_t  MODE;                         /*!< (@ 0x00000504) Operation mode                                             */
+  __IOM uint32_t  CNFPTR;                       /*!< (@ 0x00000508) Pointer to data structure holding the AES key
+                                                                    and the NONCE vector                                       */
+  __IOM uint32_t  INPTR;                        /*!< (@ 0x0000050C) Input pointer                                              */
+  __IOM uint32_t  OUTPTR;                       /*!< (@ 0x00000510) Output pointer                                             */
+  __IOM uint32_t  SCRATCHPTR;                   /*!< (@ 0x00000514) Pointer to data area used for temporary storage            */
+  __IOM uint32_t  MAXPACKETSIZE;                /*!< (@ 0x00000518) Length of keystream generated when MODE.LENGTH
+                                                                    = Extended                                                 */
+  __IOM uint32_t  RATEOVERRIDE;                 /*!< (@ 0x0000051C) Data rate override setting.                                */
+  __IOM uint32_t  HEADERMASK;                   /*!< (@ 0x00000520) Header (S0) mask.                                          */
+} NRF_CCM_Type;                                 /*!< Size = 1316 (0x524)                                                       */
+
+
+/* Peripheral: CCM */
+/* Description: AES CCM mode encryption */
+
+/* Register: CCM_TASKS_KSGEN */
+/* Description: Start generation of keystream. This operation will stop by itself when completed. */
+
+/* Bit 0 : Start generation of keystream. This operation will stop by itself when completed. */
+#define CCM_TASKS_KSGEN_TASKS_KSGEN_Pos (0UL) /*!< Position of TASKS_KSGEN field. */
+#define CCM_TASKS_KSGEN_TASKS_KSGEN_Msk (0x1UL << CCM_TASKS_KSGEN_TASKS_KSGEN_Pos) /*!< Bit mask of TASKS_KSGEN field. */
+#define CCM_TASKS_KSGEN_TASKS_KSGEN_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CCM_TASKS_CRYPT */
+/* Description: Start encryption/decryption. This operation will stop by itself when completed. */
+
+/* Bit 0 : Start encryption/decryption. This operation will stop by itself when completed. */
+#define CCM_TASKS_CRYPT_TASKS_CRYPT_Pos (0UL) /*!< Position of TASKS_CRYPT field. */
+#define CCM_TASKS_CRYPT_TASKS_CRYPT_Msk (0x1UL << CCM_TASKS_CRYPT_TASKS_CRYPT_Pos) /*!< Bit mask of TASKS_CRYPT field. */
+#define CCM_TASKS_CRYPT_TASKS_CRYPT_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CCM_TASKS_STOP */
+/* Description: Stop encryption/decryption */
+
+/* Bit 0 : Stop encryption/decryption */
+#define CCM_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
+#define CCM_TASKS_STOP_TASKS_STOP_Msk (0x1UL << CCM_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
+#define CCM_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CCM_TASKS_RATEOVERRIDE */
+/* Description: Override DATARATE setting in MODE register with the contents of the RATEOVERRIDE register for any ongoing encryption/decryption */
+
+/* Bit 0 : Override DATARATE setting in MODE register with the contents of the RATEOVERRIDE register for any ongoing encryption/decryption */
+#define CCM_TASKS_RATEOVERRIDE_TASKS_RATEOVERRIDE_Pos (0UL) /*!< Position of TASKS_RATEOVERRIDE field. */
+#define CCM_TASKS_RATEOVERRIDE_TASKS_RATEOVERRIDE_Msk (0x1UL << CCM_TASKS_RATEOVERRIDE_TASKS_RATEOVERRIDE_Pos) /*!< Bit mask of TASKS_RATEOVERRIDE field. */
+#define CCM_TASKS_RATEOVERRIDE_TASKS_RATEOVERRIDE_Trigger (1UL) /*!< Trigger task */
+
+/* Register: CCM_SUBSCRIBE_KSGEN */
+/* Description: Subscribe configuration for task KSGEN */
+
+/* Bit 31 :   */
+#define CCM_SUBSCRIBE_KSGEN_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_SUBSCRIBE_KSGEN_EN_Msk (0x1UL << CCM_SUBSCRIBE_KSGEN_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_SUBSCRIBE_KSGEN_EN_Disabled (0UL) /*!< Disable subscription */
+#define CCM_SUBSCRIBE_KSGEN_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task KSGEN will subscribe to */
+#define CCM_SUBSCRIBE_KSGEN_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_SUBSCRIBE_KSGEN_CHIDX_Msk (0xFFUL << CCM_SUBSCRIBE_KSGEN_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_SUBSCRIBE_CRYPT */
+/* Description: Subscribe configuration for task CRYPT */
+
+/* Bit 31 :   */
+#define CCM_SUBSCRIBE_CRYPT_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_SUBSCRIBE_CRYPT_EN_Msk (0x1UL << CCM_SUBSCRIBE_CRYPT_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_SUBSCRIBE_CRYPT_EN_Disabled (0UL) /*!< Disable subscription */
+#define CCM_SUBSCRIBE_CRYPT_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task CRYPT will subscribe to */
+#define CCM_SUBSCRIBE_CRYPT_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_SUBSCRIBE_CRYPT_CHIDX_Msk (0xFFUL << CCM_SUBSCRIBE_CRYPT_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_SUBSCRIBE_STOP */
+/* Description: Subscribe configuration for task STOP */
+
+/* Bit 31 :   */
+#define CCM_SUBSCRIBE_STOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_SUBSCRIBE_STOP_EN_Msk (0x1UL << CCM_SUBSCRIBE_STOP_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_SUBSCRIBE_STOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define CCM_SUBSCRIBE_STOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOP will subscribe to */
+#define CCM_SUBSCRIBE_STOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_SUBSCRIBE_STOP_CHIDX_Msk (0xFFUL << CCM_SUBSCRIBE_STOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_SUBSCRIBE_RATEOVERRIDE */
+/* Description: Subscribe configuration for task RATEOVERRIDE */
+
+/* Bit 31 :   */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_EN_Msk (0x1UL << CCM_SUBSCRIBE_RATEOVERRIDE_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_EN_Disabled (0UL) /*!< Disable subscription */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task RATEOVERRIDE will subscribe to */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_SUBSCRIBE_RATEOVERRIDE_CHIDX_Msk (0xFFUL << CCM_SUBSCRIBE_RATEOVERRIDE_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_EVENTS_ENDKSGEN */
+/* Description: Keystream generation complete */
+
+/* Bit 0 : Keystream generation complete */
+#define CCM_EVENTS_ENDKSGEN_EVENTS_ENDKSGEN_Pos (0UL) /*!< Position of EVENTS_ENDKSGEN field. */
+#define CCM_EVENTS_ENDKSGEN_EVENTS_ENDKSGEN_Msk (0x1UL << CCM_EVENTS_ENDKSGEN_EVENTS_ENDKSGEN_Pos) /*!< Bit mask of EVENTS_ENDKSGEN field. */
+#define CCM_EVENTS_ENDKSGEN_EVENTS_ENDKSGEN_NotGenerated (0UL) /*!< Event not generated */
+#define CCM_EVENTS_ENDKSGEN_EVENTS_ENDKSGEN_Generated (1UL) /*!< Event generated */
+
+/* Register: CCM_EVENTS_ENDCRYPT */
+/* Description: Encrypt/decrypt complete */
+
+/* Bit 0 : Encrypt/decrypt complete */
+#define CCM_EVENTS_ENDCRYPT_EVENTS_ENDCRYPT_Pos (0UL) /*!< Position of EVENTS_ENDCRYPT field. */
+#define CCM_EVENTS_ENDCRYPT_EVENTS_ENDCRYPT_Msk (0x1UL << CCM_EVENTS_ENDCRYPT_EVENTS_ENDCRYPT_Pos) /*!< Bit mask of EVENTS_ENDCRYPT field. */
+#define CCM_EVENTS_ENDCRYPT_EVENTS_ENDCRYPT_NotGenerated (0UL) /*!< Event not generated */
+#define CCM_EVENTS_ENDCRYPT_EVENTS_ENDCRYPT_Generated (1UL) /*!< Event generated */
+
+/* Register: CCM_EVENTS_ERROR */
+/* Description: Deprecated register - CCM error event */
+
+/* Bit 0 : Deprecated field -  CCM error event */
+#define CCM_EVENTS_ERROR_EVENTS_ERROR_Pos (0UL) /*!< Position of EVENTS_ERROR field. */
+#define CCM_EVENTS_ERROR_EVENTS_ERROR_Msk (0x1UL << CCM_EVENTS_ERROR_EVENTS_ERROR_Pos) /*!< Bit mask of EVENTS_ERROR field. */
+#define CCM_EVENTS_ERROR_EVENTS_ERROR_NotGenerated (0UL) /*!< Event not generated */
+#define CCM_EVENTS_ERROR_EVENTS_ERROR_Generated (1UL) /*!< Event generated */
+
+/* Register: CCM_PUBLISH_ENDKSGEN */
+/* Description: Publish configuration for event ENDKSGEN */
+
+/* Bit 31 :   */
+#define CCM_PUBLISH_ENDKSGEN_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_PUBLISH_ENDKSGEN_EN_Msk (0x1UL << CCM_PUBLISH_ENDKSGEN_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_PUBLISH_ENDKSGEN_EN_Disabled (0UL) /*!< Disable publishing */
+#define CCM_PUBLISH_ENDKSGEN_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event ENDKSGEN will publish to. */
+#define CCM_PUBLISH_ENDKSGEN_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_PUBLISH_ENDKSGEN_CHIDX_Msk (0xFFUL << CCM_PUBLISH_ENDKSGEN_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_PUBLISH_ENDCRYPT */
+/* Description: Publish configuration for event ENDCRYPT */
+
+/* Bit 31 :   */
+#define CCM_PUBLISH_ENDCRYPT_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_PUBLISH_ENDCRYPT_EN_Msk (0x1UL << CCM_PUBLISH_ENDCRYPT_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_PUBLISH_ENDCRYPT_EN_Disabled (0UL) /*!< Disable publishing */
+#define CCM_PUBLISH_ENDCRYPT_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event ENDCRYPT will publish to. */
+#define CCM_PUBLISH_ENDCRYPT_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_PUBLISH_ENDCRYPT_CHIDX_Msk (0xFFUL << CCM_PUBLISH_ENDCRYPT_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_PUBLISH_ERROR */
+/* Description: Deprecated register - Publish configuration for event ERROR */
+
+/* Bit 31 :   */
+#define CCM_PUBLISH_ERROR_EN_Pos (31UL) /*!< Position of EN field. */
+#define CCM_PUBLISH_ERROR_EN_Msk (0x1UL << CCM_PUBLISH_ERROR_EN_Pos) /*!< Bit mask of EN field. */
+#define CCM_PUBLISH_ERROR_EN_Disabled (0UL) /*!< Disable publishing */
+#define CCM_PUBLISH_ERROR_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event ERROR will publish to. */
+#define CCM_PUBLISH_ERROR_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define CCM_PUBLISH_ERROR_CHIDX_Msk (0xFFUL << CCM_PUBLISH_ERROR_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: CCM_SHORTS */
+/* Description: Shortcuts between local events and tasks */
+
+/* Bit 0 : Shortcut between event ENDKSGEN and task CRYPT */
+#define CCM_SHORTS_ENDKSGEN_CRYPT_Pos (0UL) /*!< Position of ENDKSGEN_CRYPT field. */
+#define CCM_SHORTS_ENDKSGEN_CRYPT_Msk (0x1UL << CCM_SHORTS_ENDKSGEN_CRYPT_Pos) /*!< Bit mask of ENDKSGEN_CRYPT field. */
+#define CCM_SHORTS_ENDKSGEN_CRYPT_Disabled (0UL) /*!< Disable shortcut */
+#define CCM_SHORTS_ENDKSGEN_CRYPT_Enabled (1UL) /*!< Enable shortcut */
+
+/* Register: CCM_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 2 : Deprecated intsetfield -  Write '1' to enable interrupt for event ERROR */
+#define CCM_INTENSET_ERROR_Pos (2UL) /*!< Position of ERROR field. */
+#define CCM_INTENSET_ERROR_Msk (0x1UL << CCM_INTENSET_ERROR_Pos) /*!< Bit mask of ERROR field. */
+#define CCM_INTENSET_ERROR_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENSET_ERROR_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENSET_ERROR_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable interrupt for event ENDCRYPT */
+#define CCM_INTENSET_ENDCRYPT_Pos (1UL) /*!< Position of ENDCRYPT field. */
+#define CCM_INTENSET_ENDCRYPT_Msk (0x1UL << CCM_INTENSET_ENDCRYPT_Pos) /*!< Bit mask of ENDCRYPT field. */
+#define CCM_INTENSET_ENDCRYPT_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENSET_ENDCRYPT_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENSET_ENDCRYPT_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event ENDKSGEN */
+#define CCM_INTENSET_ENDKSGEN_Pos (0UL) /*!< Position of ENDKSGEN field. */
+#define CCM_INTENSET_ENDKSGEN_Msk (0x1UL << CCM_INTENSET_ENDKSGEN_Pos) /*!< Bit mask of ENDKSGEN field. */
+#define CCM_INTENSET_ENDKSGEN_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENSET_ENDKSGEN_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENSET_ENDKSGEN_Set (1UL) /*!< Enable */
+
+/* Register: CCM_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 2 : Deprecated intclrfield -  Write '1' to disable interrupt for event ERROR */
+#define CCM_INTENCLR_ERROR_Pos (2UL) /*!< Position of ERROR field. */
+#define CCM_INTENCLR_ERROR_Msk (0x1UL << CCM_INTENCLR_ERROR_Pos) /*!< Bit mask of ERROR field. */
+#define CCM_INTENCLR_ERROR_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENCLR_ERROR_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENCLR_ERROR_Clear (1UL) /*!< Disable */
+
+/* Bit 1 : Write '1' to disable interrupt for event ENDCRYPT */
+#define CCM_INTENCLR_ENDCRYPT_Pos (1UL) /*!< Position of ENDCRYPT field. */
+#define CCM_INTENCLR_ENDCRYPT_Msk (0x1UL << CCM_INTENCLR_ENDCRYPT_Pos) /*!< Bit mask of ENDCRYPT field. */
+#define CCM_INTENCLR_ENDCRYPT_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENCLR_ENDCRYPT_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENCLR_ENDCRYPT_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable interrupt for event ENDKSGEN */
+#define CCM_INTENCLR_ENDKSGEN_Pos (0UL) /*!< Position of ENDKSGEN field. */
+#define CCM_INTENCLR_ENDKSGEN_Msk (0x1UL << CCM_INTENCLR_ENDKSGEN_Pos) /*!< Bit mask of ENDKSGEN field. */
+#define CCM_INTENCLR_ENDKSGEN_Disabled (0UL) /*!< Read: Disabled */
+#define CCM_INTENCLR_ENDKSGEN_Enabled (1UL) /*!< Read: Enabled */
+#define CCM_INTENCLR_ENDKSGEN_Clear (1UL) /*!< Disable */
+
+/* Register: CCM_MICSTATUS */
+/* Description: MIC check result */
+
+/* Bit 0 : The result of the MIC check performed during the previous decryption operation */
+#define CCM_MICSTATUS_MICSTATUS_Pos (0UL) /*!< Position of MICSTATUS field. */
+#define CCM_MICSTATUS_MICSTATUS_Msk (0x1UL << CCM_MICSTATUS_MICSTATUS_Pos) /*!< Bit mask of MICSTATUS field. */
+#define CCM_MICSTATUS_MICSTATUS_CheckFailed (0UL) /*!< MIC check failed */
+#define CCM_MICSTATUS_MICSTATUS_CheckPassed (1UL) /*!< MIC check passed */
+
+/* Register: CCM_ENABLE */
+/* Description: Enable */
+
+/* Bits 1..0 : Enable or disable CCM */
+#define CCM_ENABLE_ENABLE_Pos (0UL) /*!< Position of ENABLE field. */
+#define CCM_ENABLE_ENABLE_Msk (0x3UL << CCM_ENABLE_ENABLE_Pos) /*!< Bit mask of ENABLE field. */
+#define CCM_ENABLE_ENABLE_Disabled (0UL) /*!< Disable */
+#define CCM_ENABLE_ENABLE_Enabled (2UL) /*!< Enable */
+
+/* Register: CCM_MODE */
+/* Description: Operation mode */
+
+/* Bit 24 : Packet length configuration */
+#define CCM_MODE_LENGTH_Pos (24UL) /*!< Position of LENGTH field. */
+#define CCM_MODE_LENGTH_Msk (0x1UL << CCM_MODE_LENGTH_Pos) /*!< Bit mask of LENGTH field. */
+#define CCM_MODE_LENGTH_Default (0UL) /*!< Default length. Effective length of LENGTH field in encrypted/decrypted packet is 5 bits. A keystream for packet payloads up to 27 bytes will be generated. */
+#define CCM_MODE_LENGTH_Extended (1UL) /*!< Extended length. Effective length of LENGTH field in encrypted/decrypted packet is 8 bits. A keystream for packet payloads up to MAXPACKETSIZE bytes will be generated. */
+
+/* Bits 17..16 : Radio data rate that the CCM shall run synchronous with */
+#define CCM_MODE_DATARATE_Pos (16UL) /*!< Position of DATARATE field. */
+#define CCM_MODE_DATARATE_Msk (0x3UL << CCM_MODE_DATARATE_Pos) /*!< Bit mask of DATARATE field. */
+#define CCM_MODE_DATARATE_1Mbit (0UL) /*!< 1 Mbps */
+#define CCM_MODE_DATARATE_2Mbit (1UL) /*!< 2 Mbps */
+#define CCM_MODE_DATARATE_125Kbps (2UL) /*!< 125 kbps */
+#define CCM_MODE_DATARATE_500Kbps (3UL) /*!< 500 kbps */
+
+/* Bit 0 : The mode of operation to be used. Settings in this register apply whenever either the KSGEN task or the CRYPT task is triggered. */
+#define CCM_MODE_MODE_Pos (0UL) /*!< Position of MODE field. */
+#define CCM_MODE_MODE_Msk (0x1UL << CCM_MODE_MODE_Pos) /*!< Bit mask of MODE field. */
+#define CCM_MODE_MODE_Encryption (0UL) /*!< AES CCM packet encryption mode */
+#define CCM_MODE_MODE_Decryption (1UL) /*!< AES CCM packet decryption mode */
+
+/* Register: CCM_CNFPTR */
+/* Description: Pointer to data structure holding the AES key and the NONCE vector */
+
+/* Bits 31..0 : Pointer to the data structure holding the AES key and the CCM NONCE vector (see table CCM data structure overview) */
+#define CCM_CNFPTR_CNFPTR_Pos (0UL) /*!< Position of CNFPTR field. */
+#define CCM_CNFPTR_CNFPTR_Msk (0xFFFFFFFFUL << CCM_CNFPTR_CNFPTR_Pos) /*!< Bit mask of CNFPTR field. */
+
+/* Register: CCM_INPTR */
+/* Description: Input pointer */
+
+/* Bits 31..0 : Input pointer */
+#define CCM_INPTR_INPTR_Pos (0UL) /*!< Position of INPTR field. */
+#define CCM_INPTR_INPTR_Msk (0xFFFFFFFFUL << CCM_INPTR_INPTR_Pos) /*!< Bit mask of INPTR field. */
+
+/* Register: CCM_OUTPTR */
+/* Description: Output pointer */
+
+/* Bits 31..0 : Output pointer */
+#define CCM_OUTPTR_OUTPTR_Pos (0UL) /*!< Position of OUTPTR field. */
+#define CCM_OUTPTR_OUTPTR_Msk (0xFFFFFFFFUL << CCM_OUTPTR_OUTPTR_Pos) /*!< Bit mask of OUTPTR field. */
+
+/* Register: CCM_SCRATCHPTR */
+/* Description: Pointer to data area used for temporary storage */
+
+/* Bits 31..0 : Pointer to a scratch data area used for temporary storage during keystream generation,
+        MIC generation and encryption/decryption. */
+#define CCM_SCRATCHPTR_SCRATCHPTR_Pos (0UL) /*!< Position of SCRATCHPTR field. */
+#define CCM_SCRATCHPTR_SCRATCHPTR_Msk (0xFFFFFFFFUL << CCM_SCRATCHPTR_SCRATCHPTR_Pos) /*!< Bit mask of SCRATCHPTR field. */
+
+/* Register: CCM_MAXPACKETSIZE */
+/* Description: Length of keystream generated when MODE.LENGTH = Extended */
+
+/* Bits 7..0 : Length of keystream generated when MODE.LENGTH = Extended. This value must be greater than or equal to the subsequent packet payload to be encrypted/decrypted. */
+#define CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos (0UL) /*!< Position of MAXPACKETSIZE field. */
+#define CCM_MAXPACKETSIZE_MAXPACKETSIZE_Msk (0xFFUL << CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos) /*!< Bit mask of MAXPACKETSIZE field. */
+
+/* Register: CCM_RATEOVERRIDE */
+/* Description: Data rate override setting. */
+
+/* Bits 1..0 : Data rate override setting */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_Pos (0UL) /*!< Position of RATEOVERRIDE field. */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_Msk (0x3UL << CCM_RATEOVERRIDE_RATEOVERRIDE_Pos) /*!< Bit mask of RATEOVERRIDE field. */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_1Mbit (0UL) /*!< 1 Mbps */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_2Mbit (1UL) /*!< 2 Mbps */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_125Kbps (2UL) /*!< 125 kbps */
+#define CCM_RATEOVERRIDE_RATEOVERRIDE_500Kbps (3UL) /*!< 500 kbps */
+
+/* Register: CCM_HEADERMASK */
+/* Description: Header (S0) mask. */
+
+/* Bits 7..0 : Header (S0) mask */
+#define CCM_HEADERMASK_HEADERMASK_Pos (0UL) /*!< Position of HEADERMASK field. */
+#define CCM_HEADERMASK_HEADERMASK_Msk (0xFFUL << CCM_HEADERMASK_HEADERMASK_Pos) /*!< Bit mask of HEADERMASK field. */
+
+
+
+/* =========================================================================================================================== */
 /* ================                                         CLOCK                                          ================ */
 /* =========================================================================================================================== */
 

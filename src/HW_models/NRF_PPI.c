@@ -22,7 +22,7 @@
 #include <string.h>
 #include "NHW_peri_types.h"
 #include "NHW_AAR.h"
-#include "NRF_AES_CCM.h"
+#include "NHW_AES_CCM.h"
 #include "NRF_GPIOTE.h"
 #include "NHW_RNG.h"
 #include "NRF_PPI.h"
@@ -227,7 +227,7 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     { (void*)&NRF_AAR_regs.TASKS_START , nhw_AAR_TASK_START},
 
     //CCM
-    { (void*)&NRF_CCM_regs.TASKS_CRYPT , nrf_ccm_TASK_CRYPT},
+    { (void*)&NRF_CCM_regs.TASKS_CRYPT , nhw_CCM_TASK_CRYPT},
 
     //PPI:
     { (void*)&NRF_PPI_regs.TASKS_CHG[0].EN,  nrf_ppi_TASK_CHG0_EN},
@@ -581,11 +581,11 @@ static void set_fixed_channel_routes(void) {
 
   //  24 RADIO->EVENTS_READY CCM->TASKS_KSGEN
     ppi_evt_to_ch[RADIO_EVENTS_READY].channels_mask |= ( 1 << 24 );
-    ppi_ch_tasks[24].tep_f = nrf_ccm_TASK_KSGEN; //CCM->TASKS_KSGEN
+    ppi_ch_tasks[24].tep_f = nhw_CCM_TASK_KSGEN; //CCM->TASKS_KSGEN
 
   //  25 RADIO->EVENTS_ADDRESS CCM->TASKS_CRYPT
     ppi_evt_to_ch[RADIO_EVENTS_ADDRESS].channels_mask |= ( 1 << 25 );
-    ppi_ch_tasks[25].tep_f = nrf_ccm_TASK_CRYPT; //CCM->TASKS_CRYPT
+    ppi_ch_tasks[25].tep_f = nhw_CCM_TASK_CRYPT; //CCM->TASKS_CRYPT
 
   //  26 RADIO->EVENTS_ADDRESS TIMER0->TASKS_CAPTURE[1]
     ppi_evt_to_ch[RADIO_EVENTS_ADDRESS].channels_mask |= ( 1 << 26 );

@@ -8,6 +8,7 @@
 /*
  * CCM - AES CCM mode encryption
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ccm.html?cp=5_1_0_5_3
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/ccm.html?cp=4_0_0_6_4
  *
  * Notes:
  *
@@ -29,30 +30,33 @@
  *
  * 3. TASKS_STOP is not really supported
  *
- * 4. TASK_RATEOVERRIDE and RATEOVERRIDE are not supported
+ * 4. TASK_RATEOVERRIDE and RATEOVERRIDE are not supported (just ignored)
  */
 
 #include "NHW_common_types.h"
 #include "NHW_config.h"
-#include "NRF_AES_CCM.h"
+#include "NHW_templates.h"
+#include "NHW_AES_CCM.h"
 #include <string.h>
 #include <stdbool.h>
 #include "nsi_hw_scheduler.h"
 #include "NHW_peri_types.h"
-#include "NRF_PPI.h"
+#include "NHW_xPPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
 #include "nsi_tasks.h"
 
 NRF_CCM_Type NRF_CCM_regs;
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_ccm_irq_map[NHW_CCM_TOTAL_INST] = NHW_CCM_INT_MAP;
+#if (NHW_HAS_DPPI)
+/* Mapping of peripheral instance to DPPI instance */
+static uint nhw_CCM_dppi_map[NHW_CCM_TOTAL_INST] = NHW_CCM_DPPI_MAP;
+#endif
 
 static uint32_t CCM_INTEN; //interrupt enable
 static bool decryption_ongoing;
 
-static void nrf_aes_ccm_init(void) {
+static void nhw_aes_ccm_init(void) {
   memset(&NRF_CCM_regs, 0, sizeof(NRF_CCM_regs));
   NRF_CCM_regs.MODE = 0x01;
   NRF_CCM_regs.HEADERMASK= 0xE3;
@@ -61,10 +65,34 @@ static void nrf_aes_ccm_init(void) {
   decryption_ongoing = false;
 }
 
-NSI_TASK(nrf_aes_ccm_init, HW_INIT, 100);
+NSI_TASK(nhw_aes_ccm_init, HW_INIT, 100);
 
-void nrf_ccm_TASK_CRYPT(void);
-static void signal_EVENTS_ENDCRYPT(void);
+static void nhw_CCM_eval_interrupt(uint inst) {
+  static bool ccm_int_line[NHW_CCM_TOTAL_INST]; /* Is the CCM currently driving its interrupt line high */
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_ccm_irq_map[NHW_CCM_TOTAL_INST] = NHW_CCM_INT_MAP;
+  bool new_int_line = false;
+
+  NHW_CHECK_INTERRUPT_si(CCM, ENDKSGEN, CCM_INTEN)
+  NHW_CHECK_INTERRUPT_si(CCM, ENDCRYPT, CCM_INTEN)
+  NHW_CHECK_INTERRUPT_si(CCM, ERROR, CCM_INTEN)
+
+  hw_irq_ctrl_toggle_level_irq_line_if(&ccm_int_line[inst],
+                                       new_int_line,
+                                       &nhw_ccm_irq_map[inst]);
+}
+
+NHW_SIGNAL_EVENT_si(CCM, ENDKSGEN)
+NHW_SIGNAL_EVENT_si(CCM, ENDCRYPT)
+//Unused so far in this model: NHW_SIGNAL_EVENT_si(CCM, ERROR)
+
+static void signal_EVENTS_ENDKSGEN(void) {
+  nhw_CCM_signal_EVENTS_ENDKSGEN(0);
+
+  if (NRF_CCM_regs.SHORTS & CCM_SHORTS_ENDKSGEN_CRYPT_Msk) {
+    nhw_CCM_TASK_CRYPT();
+  }
+}
 
 #define IV_LEN      8
 #define NONCE_LEN   13
@@ -90,7 +118,6 @@ static void nonce_calc(
   // Copy initialization vector into remaining 8 bytes of nonce
   memcpy(&ccm_nonce[NONCE_LEN - IV_LEN], iv, IV_LEN);
 }
-
 
 static void nrf_ccm_encrypt_tx(void) {
   const uint8_t* cnfptr;
@@ -134,7 +161,7 @@ static void nrf_ccm_encrypt_tx(void) {
       ccm_nonce
   );
 
-  signal_EVENTS_ENDCRYPT();
+  nhw_CCM_signal_EVENTS_ENDCRYPT(0);
 }
 
 static void nrf_ccm_decrypt_rx(bool crc_error) {
@@ -152,7 +179,7 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
 
   if (crc_error) {
     NRF_CCM_regs.MICSTATUS = 0;
-    signal_EVENTS_ENDCRYPT();
+    nhw_CCM_signal_EVENTS_ENDCRYPT(0);
     return;
   }
 
@@ -189,45 +216,10 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
 
   NRF_CCM_regs.MICSTATUS = !mic_error;
 
-  signal_EVENTS_ENDCRYPT();
+  nhw_CCM_signal_EVENTS_ENDCRYPT(0);
 }
 
-static void signal_EVENTS_ENDKSGEN(void) {
-  NRF_CCM_regs.EVENTS_ENDKSGEN = 1;
-  nrf_ppi_event(CCM_EVENTS_ENDKSGEN);
-
-  int inst = 0;
-  if (CCM_INTEN & CCM_INTENSET_ENDKSGEN_Msk) {
-    hw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
-                         nhw_ccm_irq_map[inst].int_nbr);
-  }
-
-  if (NRF_CCM_regs.SHORTS & CCM_SHORTS_ENDKSGEN_CRYPT_Msk) {
-    nrf_ccm_TASK_CRYPT();
-  }
-}
-
-static void signal_EVENTS_ENDCRYPT(void) {
-  NRF_CCM_regs.EVENTS_ENDCRYPT = 1;
-  nrf_ppi_event(CCM_EVENTS_ENDCRYPT);
-
-  int inst = 0;
-  if (CCM_INTEN & CCM_INTENSET_ENDCRYPT_Msk) {
-    hw_irq_ctrl_set_irq(nhw_ccm_irq_map[inst].cntl_inst,
-                         nhw_ccm_irq_map[inst].int_nbr);
-  }
-}
-
-/* static void signal_EVENTS_ERROR(){
-	NRF_CCM_regs.EVENTS_ERROR = 1;
-	NRF_PPI_Event(CCM_EVENTS_ERROR);
-
-	if (CCM_INTEN & CCM_INTENSET_ERROR_Msk) {
-		hw_irq_ctrl_set_irq(NRF5_IRQ_CCM_AAR_IRQn);
-	}
-} */
-
-void nrf_ccm_TASK_KSGEN(void) {
+void nhw_CCM_TASK_KSGEN(void) {
   if (NRF_CCM_regs.ENABLE != CCM_ENABLE_ENABLE_Enabled) {
     return;
   }
@@ -235,7 +227,7 @@ void nrf_ccm_TASK_KSGEN(void) {
   signal_EVENTS_ENDKSGEN();
 }
 
-void nrf_ccm_TASK_CRYPT(void) {
+void nhw_CCM_TASK_CRYPT(void) {
   if (NRF_CCM_regs.ENABLE != CCM_ENABLE_ENABLE_Enabled) {
     return;
   }
@@ -248,54 +240,34 @@ void nrf_ccm_TASK_CRYPT(void) {
   }
 }
 
-void nrf_ccm_TASK_STOP(void) {
+void nhw_CCM_TASK_STOP(void) {
+  bs_trace_warning_line_time("CCM: TASK_STOP functionality is not implemented\n");
   decryption_ongoing = false;
 }
 
-void nrf_ccm_TASK_RATEOVERRIDE(void) {
+void nhw_CCM_TASK_RATEOVERRIDE(void) {
   /* We ignore the RATEOVERRIDE task */
   bs_trace_warning_line_time("%s ignored\n", __func__);
 }
 
+NHW_SIDEEFFECTS_INTSET_si(CCM, NRF_CCM_regs., CCM_INTEN)
+NHW_SIDEEFFECTS_INTCLR_si(CCM, NRF_CCM_regs., CCM_INTEN)
 
-void nrf_ccm_regw_sideeffects_INTENSET(void) {
-  if (NRF_CCM_regs.INTENSET) {
-    CCM_INTEN |= NRF_CCM_regs.INTENSET;
-    NRF_CCM_regs.INTENSET = CCM_INTEN;
-  }
-}
+NHW_SIDEEFFECTS_EVENTS(CCM)
 
-void nrf_ccm_regw_sideeffects_INTENCLR(void) {
-  if (NRF_CCM_regs.INTENCLR) {
-    CCM_INTEN  &= ~NRF_CCM_regs.INTENCLR;
-    NRF_CCM_regs.INTENSET = CCM_INTEN;
-    NRF_CCM_regs.INTENCLR = 0;
-  }
-}
+NHW_SIDEEFFECTS_TASKS_si(CCM, KSGEN)
+NHW_SIDEEFFECTS_TASKS_si(CCM, CRYPT)
+NHW_SIDEEFFECTS_TASKS_si(CCM, STOP)
+NHW_SIDEEFFECTS_TASKS_si(CCM, RATEOVERRIDE)
 
-void nrf_ccm_regw_sideeffects_TASKS_KSGEN(void) {
-  if (NRF_CCM_regs.TASKS_KSGEN) {
-    NRF_CCM_regs.TASKS_KSGEN = 0;
-    nrf_ccm_TASK_KSGEN();
-  }
-}
+#if (NHW_HAS_DPPI)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(CCM, KSGEN)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(CCM, CRYPT)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(CCM, STOP)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(CCM, RATEOVERRIDE)
+#endif /* NHW_HAS_DPPI */
 
-void nrf_ccm_regw_sideeffects_TASKS_CRYPT(void) {
-  if (NRF_CCM_regs.TASKS_CRYPT) {
-    NRF_CCM_regs.TASKS_CRYPT = 0;
-    nrf_ccm_TASK_CRYPT();
-  }
-}
-
-void nrf_ccm_regw_sideeffects_TASKS_STOP(void) {
-  if (NRF_CCM_regs.TASKS_STOP) {
-    NRF_CCM_regs.TASKS_STOP = 0;
-    nrf_ccm_TASK_STOP();
-    bs_trace_warning_line_time("CCM: TASK_STOP functionality is not implemented\n");
-  }
-}
-
-void nrf_ccm_radio_received_packet(bool crc_error) {
+void nhw_ccm_radio_received_packet(bool crc_error) {
   if (!decryption_ongoing) {
     return;
   }

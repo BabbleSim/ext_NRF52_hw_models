@@ -151,8 +151,7 @@
 #include "NHW_peri_types.h"
 #include "NRF_RADIO.h"
 #include "nsi_hw_scheduler.h"
-#include "NRF_PPI.h"
-#include "NRF_AES_CCM.h"
+#include "NHW_AES_CCM.h"
 #include "irq_ctrl.h"
 #include "NRF_HWLowL.h"
 #include "crc.h"
@@ -812,7 +811,7 @@ static void Rx_handle_end_response(bs_time_t end_time) {
     NRF_RADIO_regs.CRCSTATUS = 1;
   }
 
-  nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
+  nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
 }
 
 
@@ -1011,7 +1010,7 @@ static void Rx_Addr_received(void) {
 
     //We do what would correspond to Rx_handle_end_response() as it won't get called
     NRF_RADIO_regs.RXCRC = nrfra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
-    nrf_ccm_radio_received_packet(!rx_status.CRC_OK);
+    nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
   }
 }
 

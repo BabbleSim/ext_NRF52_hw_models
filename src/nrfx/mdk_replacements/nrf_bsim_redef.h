@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018 Oticon A/S
- * Copyright (c) 2020 Nordic Semiconductor ASA
+ * Copyright (c) 2020-2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -137,8 +137,9 @@ extern NRF_ECB_Type NRF_ECB_regs;
 extern NRF_AAR_Type NRF_AAR_regs;
 #undef NRF_AAR_NS_BASE
 #define NRF_AAR_NS_BASE            (&NRF_AAR_regs)
+extern NRF_CCM_Type NRF_CCM_regs;
 #undef NRF_CCM_NS_BASE
-#define NRF_CCM_NS_BASE            NULL
+#define NRF_CCM_NS_BASE            (&NRF_CCM_regs)
 extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #undef NRF_DPPIC_NS_BASE
 #define NRF_DPPIC_NS_BASE          (&NRF_DPPIC_regs[NHW_DPPI_NET_0])

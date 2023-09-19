@@ -186,6 +186,11 @@
 #define NHW_AAR_DPPI_MAP {1}
 #define NHW_AAR_t_AAR    6
 
+#define NHW_CCM_TOTAL_INST 1
+#define NHW_CCM_NET0 0
+#define NHW_CCM_INT_MAP {{1 , 14}} /*Net core,AAR_CCM*/
+#define NHW_CCM_DPPI_MAP {1}
+
 #define NHW_CLKPWR_TOTAL_INST 2
 #define NHW_CLKPWR_APP0 0
 #define NHW_CLKPWR_NET0 1
