@@ -27,6 +27,7 @@
 #define NHW_AAR_TOTAL_INST 1
 #define NHW_AAR_0 0
 #define NHW_AAR_INT_MAP {{0 , 15}} /*Only core,CCM_AAR_IRQn*/
+#define NHW_AAR_t_AAR    6
 
 #define NHW_CCM_TOTAL_INST 1
 #define NHW_CCM_0 0
@@ -178,6 +179,12 @@
 #define NHW_HAS_PPI  0
 #define NHW_HAS_DPPI 1
 #define NHW_USE_MDK_TYPES 0
+
+#define NHW_AAR_TOTAL_INST 1
+#define NHW_AAR_NET0 0
+#define NHW_AAR_INT_MAP {{1 , 14}} /*Net core,AAR_CCM */
+#define NHW_AAR_DPPI_MAP {1}
+#define NHW_AAR_t_AAR    6
 
 #define NHW_CLKPWR_TOTAL_INST 2
 #define NHW_CLKPWR_APP0 0

@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "NHW_peri_types.h"
-#include "NRF_AAR.h"
+#include "NHW_AAR.h"
 #include "NRF_AES_CCM.h"
 #include "NRF_GPIOTE.h"
 #include "NHW_RNG.h"
@@ -224,7 +224,7 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //ECB
 
     //AAR
-    { (void*)&NRF_AAR_regs.TASKS_START , nrf_aar_TASK_START},
+    { (void*)&NRF_AAR_regs.TASKS_START , nhw_AAR_TASK_START},
 
     //CCM
     { (void*)&NRF_CCM_regs.TASKS_CRYPT , nrf_ccm_TASK_CRYPT},
@@ -577,7 +577,7 @@ static void set_fixed_channel_routes(void) {
 
   //  23 RADIO->EVENTS_BCMATCH AAR->TASKS_START
     ppi_evt_to_ch[RADIO_EVENTS_BCMATCH].channels_mask |= ( 1 << 23 );
-    ppi_ch_tasks[23].tep_f = nrf_aar_TASK_START; //AAR->TASKS_START
+    ppi_ch_tasks[23].tep_f = nhw_AAR_TASK_START; //AAR->TASKS_START
 
   //  24 RADIO->EVENTS_READY CCM->TASKS_KSGEN
     ppi_evt_to_ch[RADIO_EVENTS_READY].channels_mask |= ( 1 << 24 );

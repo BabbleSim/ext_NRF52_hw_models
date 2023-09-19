@@ -95,6 +95,250 @@ typedef struct {
   __IOM uint32_t  FORCEOFF;                     /*!< (@ 0x00000004) Force network core off                                     */
 } RESET_NETWORK_Type;                           /*!< Size = 8 (0x8)                                                            */
 
+/* =========================================================================================================================== */
+/* ================                                          AAR                                              ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Accelerated Address Resolver (AAR)
+  */
+
+typedef struct {                                /*!< (@ 0x4100E000) AAR_NS Structure                                           */
+  __OM  uint32_t  TASKS_START;                  /*!< (@ 0x00000000) Start resolving addresses based on IRKs specified
+                                                                    in the IRK data structure                                  */
+  __IM  uint32_t  RESERVED;
+  __OM  uint32_t  TASKS_STOP;                   /*!< (@ 0x00000008) Stop resolving addresses                                   */
+  __IM  uint32_t  RESERVED1[29];
+  __IOM uint32_t  SUBSCRIBE_START;              /*!< (@ 0x00000080) Subscribe configuration for task START                     */
+  __IM  uint32_t  RESERVED2;
+  __IOM uint32_t  SUBSCRIBE_STOP;               /*!< (@ 0x00000088) Subscribe configuration for task STOP                      */
+  __IM  uint32_t  RESERVED3[29];
+  __IOM uint32_t  EVENTS_END;                   /*!< (@ 0x00000100) Address resolution procedure complete                      */
+  __IOM uint32_t  EVENTS_RESOLVED;              /*!< (@ 0x00000104) Address resolved                                           */
+  __IOM uint32_t  EVENTS_NOTRESOLVED;           /*!< (@ 0x00000108) Address not resolved                                       */
+  __IM  uint32_t  RESERVED4[29];
+  __IOM uint32_t  PUBLISH_END;                  /*!< (@ 0x00000180) Publish configuration for event END                        */
+  __IOM uint32_t  PUBLISH_RESOLVED;             /*!< (@ 0x00000184) Publish configuration for event RESOLVED                   */
+  __IOM uint32_t  PUBLISH_NOTRESOLVED;          /*!< (@ 0x00000188) Publish configuration for event NOTRESOLVED                */
+  __IM  uint32_t  RESERVED5[94];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED6[61];
+  __IM  uint32_t  STATUS;                       /*!< (@ 0x00000400) Resolution status                                          */
+  __IM  uint32_t  RESERVED7[63];
+  __IOM uint32_t  ENABLE;                       /*!< (@ 0x00000500) Enable AAR                                                 */
+  __IOM uint32_t  NIRK;                         /*!< (@ 0x00000504) Number of IRKs                                             */
+  __IOM uint32_t  IRKPTR;                       /*!< (@ 0x00000508) Pointer to IRK data structure                              */
+  __IM  uint32_t  RESERVED8;
+  __IOM uint32_t  ADDRPTR;                      /*!< (@ 0x00000510) Pointer to the resolvable address                          */
+  __IOM uint32_t  SCRATCHPTR;                   /*!< (@ 0x00000514) Pointer to data area used for temporary storage            */
+} NRF_AAR_Type;                                 /*!< Size = 1304 (0x518)                                                       */
+
+/* Peripheral: AAR */
+/* Description: Accelerated Address Resolver */
+
+/* Register: AAR_TASKS_START */
+/* Description: Start resolving addresses based on IRKs specified in the IRK data structure */
+
+/* Bit 0 : Start resolving addresses based on IRKs specified in the IRK data structure */
+#define AAR_TASKS_START_TASKS_START_Pos (0UL) /*!< Position of TASKS_START field. */
+#define AAR_TASKS_START_TASKS_START_Msk (0x1UL << AAR_TASKS_START_TASKS_START_Pos) /*!< Bit mask of TASKS_START field. */
+#define AAR_TASKS_START_TASKS_START_Trigger (1UL) /*!< Trigger task */
+
+/* Register: AAR_TASKS_STOP */
+/* Description: Stop resolving addresses */
+
+/* Bit 0 : Stop resolving addresses */
+#define AAR_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
+#define AAR_TASKS_STOP_TASKS_STOP_Msk (0x1UL << AAR_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
+#define AAR_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: AAR_SUBSCRIBE_START */
+/* Description: Subscribe configuration for task START */
+
+/* Bit 31 :   */
+#define AAR_SUBSCRIBE_START_EN_Pos (31UL) /*!< Position of EN field. */
+#define AAR_SUBSCRIBE_START_EN_Msk (0x1UL << AAR_SUBSCRIBE_START_EN_Pos) /*!< Bit mask of EN field. */
+#define AAR_SUBSCRIBE_START_EN_Disabled (0UL) /*!< Disable subscription */
+#define AAR_SUBSCRIBE_START_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task START will subscribe to */
+#define AAR_SUBSCRIBE_START_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define AAR_SUBSCRIBE_START_CHIDX_Msk (0xFFUL << AAR_SUBSCRIBE_START_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: AAR_SUBSCRIBE_STOP */
+/* Description: Subscribe configuration for task STOP */
+
+/* Bit 31 :   */
+#define AAR_SUBSCRIBE_STOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define AAR_SUBSCRIBE_STOP_EN_Msk (0x1UL << AAR_SUBSCRIBE_STOP_EN_Pos) /*!< Bit mask of EN field. */
+#define AAR_SUBSCRIBE_STOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define AAR_SUBSCRIBE_STOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOP will subscribe to */
+#define AAR_SUBSCRIBE_STOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define AAR_SUBSCRIBE_STOP_CHIDX_Msk (0xFFUL << AAR_SUBSCRIBE_STOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: AAR_EVENTS_END */
+/* Description: Address resolution procedure complete */
+
+/* Bit 0 : Address resolution procedure complete */
+#define AAR_EVENTS_END_EVENTS_END_Pos (0UL) /*!< Position of EVENTS_END field. */
+#define AAR_EVENTS_END_EVENTS_END_Msk (0x1UL << AAR_EVENTS_END_EVENTS_END_Pos) /*!< Bit mask of EVENTS_END field. */
+#define AAR_EVENTS_END_EVENTS_END_NotGenerated (0UL) /*!< Event not generated */
+#define AAR_EVENTS_END_EVENTS_END_Generated (1UL) /*!< Event generated */
+
+/* Register: AAR_EVENTS_RESOLVED */
+/* Description: Address resolved */
+
+/* Bit 0 : Address resolved */
+#define AAR_EVENTS_RESOLVED_EVENTS_RESOLVED_Pos (0UL) /*!< Position of EVENTS_RESOLVED field. */
+#define AAR_EVENTS_RESOLVED_EVENTS_RESOLVED_Msk (0x1UL << AAR_EVENTS_RESOLVED_EVENTS_RESOLVED_Pos) /*!< Bit mask of EVENTS_RESOLVED field. */
+#define AAR_EVENTS_RESOLVED_EVENTS_RESOLVED_NotGenerated (0UL) /*!< Event not generated */
+#define AAR_EVENTS_RESOLVED_EVENTS_RESOLVED_Generated (1UL) /*!< Event generated */
+
+/* Register: AAR_EVENTS_NOTRESOLVED */
+/* Description: Address not resolved */
+
+/* Bit 0 : Address not resolved */
+#define AAR_EVENTS_NOTRESOLVED_EVENTS_NOTRESOLVED_Pos (0UL) /*!< Position of EVENTS_NOTRESOLVED field. */
+#define AAR_EVENTS_NOTRESOLVED_EVENTS_NOTRESOLVED_Msk (0x1UL << AAR_EVENTS_NOTRESOLVED_EVENTS_NOTRESOLVED_Pos) /*!< Bit mask of EVENTS_NOTRESOLVED field. */
+#define AAR_EVENTS_NOTRESOLVED_EVENTS_NOTRESOLVED_NotGenerated (0UL) /*!< Event not generated */
+#define AAR_EVENTS_NOTRESOLVED_EVENTS_NOTRESOLVED_Generated (1UL) /*!< Event generated */
+
+/* Register: AAR_PUBLISH_END */
+/* Description: Publish configuration for event END */
+
+/* Bit 31 :   */
+#define AAR_PUBLISH_END_EN_Pos (31UL) /*!< Position of EN field. */
+#define AAR_PUBLISH_END_EN_Msk (0x1UL << AAR_PUBLISH_END_EN_Pos) /*!< Bit mask of EN field. */
+#define AAR_PUBLISH_END_EN_Disabled (0UL) /*!< Disable publishing */
+#define AAR_PUBLISH_END_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event END will publish to. */
+#define AAR_PUBLISH_END_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define AAR_PUBLISH_END_CHIDX_Msk (0xFFUL << AAR_PUBLISH_END_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: AAR_PUBLISH_RESOLVED */
+/* Description: Publish configuration for event RESOLVED */
+
+/* Bit 31 :   */
+#define AAR_PUBLISH_RESOLVED_EN_Pos (31UL) /*!< Position of EN field. */
+#define AAR_PUBLISH_RESOLVED_EN_Msk (0x1UL << AAR_PUBLISH_RESOLVED_EN_Pos) /*!< Bit mask of EN field. */
+#define AAR_PUBLISH_RESOLVED_EN_Disabled (0UL) /*!< Disable publishing */
+#define AAR_PUBLISH_RESOLVED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event RESOLVED will publish to. */
+#define AAR_PUBLISH_RESOLVED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define AAR_PUBLISH_RESOLVED_CHIDX_Msk (0xFFUL << AAR_PUBLISH_RESOLVED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: AAR_PUBLISH_NOTRESOLVED */
+/* Description: Publish configuration for event NOTRESOLVED */
+
+/* Bit 31 :   */
+#define AAR_PUBLISH_NOTRESOLVED_EN_Pos (31UL) /*!< Position of EN field. */
+#define AAR_PUBLISH_NOTRESOLVED_EN_Msk (0x1UL << AAR_PUBLISH_NOTRESOLVED_EN_Pos) /*!< Bit mask of EN field. */
+#define AAR_PUBLISH_NOTRESOLVED_EN_Disabled (0UL) /*!< Disable publishing */
+#define AAR_PUBLISH_NOTRESOLVED_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event NOTRESOLVED will publish to. */
+#define AAR_PUBLISH_NOTRESOLVED_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define AAR_PUBLISH_NOTRESOLVED_CHIDX_Msk (0xFFUL << AAR_PUBLISH_NOTRESOLVED_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: AAR_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 2 : Write '1' to enable interrupt for event NOTRESOLVED */
+#define AAR_INTENSET_NOTRESOLVED_Pos (2UL) /*!< Position of NOTRESOLVED field. */
+#define AAR_INTENSET_NOTRESOLVED_Msk (0x1UL << AAR_INTENSET_NOTRESOLVED_Pos) /*!< Bit mask of NOTRESOLVED field. */
+#define AAR_INTENSET_NOTRESOLVED_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENSET_NOTRESOLVED_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENSET_NOTRESOLVED_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable interrupt for event RESOLVED */
+#define AAR_INTENSET_RESOLVED_Pos (1UL) /*!< Position of RESOLVED field. */
+#define AAR_INTENSET_RESOLVED_Msk (0x1UL << AAR_INTENSET_RESOLVED_Pos) /*!< Bit mask of RESOLVED field. */
+#define AAR_INTENSET_RESOLVED_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENSET_RESOLVED_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENSET_RESOLVED_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event END */
+#define AAR_INTENSET_END_Pos (0UL) /*!< Position of END field. */
+#define AAR_INTENSET_END_Msk (0x1UL << AAR_INTENSET_END_Pos) /*!< Bit mask of END field. */
+#define AAR_INTENSET_END_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENSET_END_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENSET_END_Set (1UL) /*!< Enable */
+
+/* Register: AAR_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 2 : Write '1' to disable interrupt for event NOTRESOLVED */
+#define AAR_INTENCLR_NOTRESOLVED_Pos (2UL) /*!< Position of NOTRESOLVED field. */
+#define AAR_INTENCLR_NOTRESOLVED_Msk (0x1UL << AAR_INTENCLR_NOTRESOLVED_Pos) /*!< Bit mask of NOTRESOLVED field. */
+#define AAR_INTENCLR_NOTRESOLVED_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENCLR_NOTRESOLVED_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENCLR_NOTRESOLVED_Clear (1UL) /*!< Disable */
+
+/* Bit 1 : Write '1' to disable interrupt for event RESOLVED */
+#define AAR_INTENCLR_RESOLVED_Pos (1UL) /*!< Position of RESOLVED field. */
+#define AAR_INTENCLR_RESOLVED_Msk (0x1UL << AAR_INTENCLR_RESOLVED_Pos) /*!< Bit mask of RESOLVED field. */
+#define AAR_INTENCLR_RESOLVED_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENCLR_RESOLVED_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENCLR_RESOLVED_Clear (1UL) /*!< Disable */
+
+/* Bit 0 : Write '1' to disable interrupt for event END */
+#define AAR_INTENCLR_END_Pos (0UL) /*!< Position of END field. */
+#define AAR_INTENCLR_END_Msk (0x1UL << AAR_INTENCLR_END_Pos) /*!< Bit mask of END field. */
+#define AAR_INTENCLR_END_Disabled (0UL) /*!< Read: Disabled */
+#define AAR_INTENCLR_END_Enabled (1UL) /*!< Read: Enabled */
+#define AAR_INTENCLR_END_Clear (1UL) /*!< Disable */
+
+/* Register: AAR_STATUS */
+/* Description: Resolution status */
+
+/* Bits 3..0 : The IRK that was used last time an address was resolved */
+#define AAR_STATUS_STATUS_Pos (0UL) /*!< Position of STATUS field. */
+#define AAR_STATUS_STATUS_Msk (0xFUL << AAR_STATUS_STATUS_Pos) /*!< Bit mask of STATUS field. */
+
+/* Register: AAR_ENABLE */
+/* Description: Enable AAR */
+
+/* Bits 1..0 : Enable or disable AAR */
+#define AAR_ENABLE_ENABLE_Pos (0UL) /*!< Position of ENABLE field. */
+#define AAR_ENABLE_ENABLE_Msk (0x3UL << AAR_ENABLE_ENABLE_Pos) /*!< Bit mask of ENABLE field. */
+#define AAR_ENABLE_ENABLE_Disabled (0UL) /*!< Disable */
+#define AAR_ENABLE_ENABLE_Enabled (3UL) /*!< Enable */
+
+/* Register: AAR_NIRK */
+/* Description: Number of IRKs */
+
+/* Bits 4..0 : Number of Identity Root Keys available in the IRK data structure */
+#define AAR_NIRK_NIRK_Pos (0UL) /*!< Position of NIRK field. */
+#define AAR_NIRK_NIRK_Msk (0x1FUL << AAR_NIRK_NIRK_Pos) /*!< Bit mask of NIRK field. */
+
+/* Register: AAR_IRKPTR */
+/* Description: Pointer to IRK data structure */
+
+/* Bits 31..0 : Pointer to the IRK data structure */
+#define AAR_IRKPTR_IRKPTR_Pos (0UL) /*!< Position of IRKPTR field. */
+#define AAR_IRKPTR_IRKPTR_Msk (0xFFFFFFFFUL << AAR_IRKPTR_IRKPTR_Pos) /*!< Bit mask of IRKPTR field. */
+
+/* Register: AAR_ADDRPTR */
+/* Description: Pointer to the resolvable address */
+
+/* Bits 31..0 : Pointer to the resolvable address (6-bytes) */
+#define AAR_ADDRPTR_ADDRPTR_Pos (0UL) /*!< Position of ADDRPTR field. */
+#define AAR_ADDRPTR_ADDRPTR_Msk (0xFFFFFFFFUL << AAR_ADDRPTR_ADDRPTR_Pos) /*!< Bit mask of ADDRPTR field. */
+
+/* Register: AAR_SCRATCHPTR */
+/* Description: Pointer to data area used for temporary storage */
+
+/* Bits 31..0 : Pointer to a scratch data area used for temporary storage during resolution. A space of minimum 3 bytes must be reserved. */
+#define AAR_SCRATCHPTR_SCRATCHPTR_Pos (0UL) /*!< Position of SCRATCHPTR field. */
+#define AAR_SCRATCHPTR_SCRATCHPTR_Msk (0xFFFFFFFFUL << AAR_SCRATCHPTR_SCRATCHPTR_Pos) /*!< Bit mask of SCRATCHPTR field. */
+
+
 
 /* =========================================================================================================================== */
 /* ================                                         CLOCK                                          ================ */

@@ -8,6 +8,19 @@
 /**
  * AAR - Accelerated address resolver
  * https://infocenter.nordicsemi.com/topic/ps_nrf52833/aar.html?cp=4_1_0_5_1
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/aar.html?cp=4_0_0_6_3
+ *
+ * Notes:
+ *  * Unlike in the real HW the AAR peripheral does not share resources with the CCM or ECB peripherals.
+ *    They are actually 2 separate peripherals, so if they are used simultaneously nothing will fail.
+ *    Therefore
+ *    * Starting the AAR block while the ECB block is running will not abort the ECB and
+ *      cause a ERRORECB
+ *    * The AAR register map (including interrupt mask, enable, & task start) does not
+ *      overlap the CCM one.
+ *    * The AAR block could even be used in parallel to the CCM block without conflicts.
+ *  * IMPORTANT: This may change in the future. No embedded SW or tests may rely on this,
+ *    but instead they should behave like they would with real HW.
  */
 
 #include <string.h>
@@ -15,71 +28,64 @@
 #include <stdint.h>
 #include "NHW_config.h"
 #include "NHW_common_types.h"
-#include "NRF_AAR.h"
+#include "NHW_templates.h"
+#include "NHW_AAR.h"
 #include "nsi_hw_scheduler.h"
 #include "NHW_peri_types.h"
-#include "NRF_PPI.h"
+#include "NHW_xPPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
 #include "BLECrypt_if.h"
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
+#if NHW_AAR_TOTAL_INST > 1
+#error "This model only supports 1 instance so far"
+#endif
+
 static bs_time_t Timer_AAR = TIME_NEVER; /* Time when the AAR will finish */
 
 NRF_AAR_Type NRF_AAR_regs;
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_aar_irq_map[NHW_AAR_TOTAL_INST] = NHW_AAR_INT_MAP;
+#if (NHW_HAS_DPPI)
+/* Mapping of peripheral instance to DPPI instance */
+static uint nhw_AAR_dppi_map[NHW_AAR_TOTAL_INST] = NHW_AAR_DPPI_MAP;
+#endif
 
 static uint32_t AAR_INTEN = 0; //interrupt enable
 static bool AAR_Running;
 static int matching_irk;
 
-static void nrf_aar_init(void) {
+static void nhw_aar_init(void) {
   memset(&NRF_AAR_regs, 0, sizeof(NRF_AAR_regs));
   AAR_INTEN = 0;
   Timer_AAR = TIME_NEVER;
   AAR_Running = false;
 }
 
-NSI_TASK(nrf_aar_init, HW_INIT, 100);
+NSI_TASK(nhw_aar_init, HW_INIT, 100);
 
-static int nrf_aar_resolve(int *good_irk);
+static int nhw_aar_resolve(int *good_irk);
 
-static void signal_EVENTS_END(void) {
-  NRF_AAR_regs.EVENTS_END = 1;
-  nrf_ppi_event(AAR_EVENTS_END);
+static void nhw_AAR_eval_interrupt(uint inst) {
+  static bool aar_int_line[NHW_AAR_TOTAL_INST]; /* Is the AAR currently driving its interrupt line high */
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_aar_irq_map[NHW_AAR_TOTAL_INST] = NHW_AAR_INT_MAP;
+  bool new_int_line = false;
 
-  unsigned int inst = 0;
-  if (AAR_INTEN & AAR_INTENSET_END_Msk){
-    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
-                         nhw_aar_irq_map[inst].int_nbr);
-  }
+  NHW_CHECK_INTERRUPT_si(AAR, END, AAR_INTEN)
+  NHW_CHECK_INTERRUPT_si(AAR, RESOLVED, AAR_INTEN)
+  NHW_CHECK_INTERRUPT_si(AAR, NOTRESOLVED, AAR_INTEN)
+
+  hw_irq_ctrl_toggle_level_irq_line_if(&aar_int_line[inst],
+                                       new_int_line,
+                                       &nhw_aar_irq_map[inst]);
 }
 
-static void signal_EVENTS_RESOLVED(void) {
-  NRF_AAR_regs.EVENTS_RESOLVED = 1;
-  nrf_ppi_event(AAR_EVENTS_RESOLVED);
+NHW_SIGNAL_EVENT_si(AAR, END)
+NHW_SIGNAL_EVENT_si(AAR, RESOLVED)
+NHW_SIGNAL_EVENT_si(AAR, NOTRESOLVED)
 
-  unsigned int inst = 0;
-  if (AAR_INTEN & AAR_INTENCLR_RESOLVED_Msk){
-    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
-                         nhw_aar_irq_map[inst].int_nbr);
-  }
-}
-
-static void signal_EVENTS_NOTRESOLVED(void) {
-  NRF_AAR_regs.EVENTS_NOTRESOLVED = 1;
-  nrf_ppi_event(AAR_EVENTS_NOTRESOLVED);
-
-  unsigned int inst = 0;
-  if (AAR_INTEN & AAR_INTENCLR_NOTRESOLVED_Msk){
-    hw_irq_ctrl_set_irq(nhw_aar_irq_map[inst].cntl_inst,
-                         nhw_aar_irq_map[inst].int_nbr);
-  }
-}
-
-void nrf_aar_TASK_START(void) {
+void nhw_AAR_TASK_START(void) {
   int n_irks;
 
   if (NRF_AAR_regs.ENABLE != 0x3) {
@@ -87,13 +93,13 @@ void nrf_aar_TASK_START(void) {
   }
 
   AAR_Running = true;
-  n_irks = nrf_aar_resolve(&matching_irk);
+  n_irks = nhw_aar_resolve(&matching_irk);
 
-  Timer_AAR = nsi_hws_get_time() + 1 + 6 * n_irks; /*AAR delay*/
+  Timer_AAR = nsi_hws_get_time() + 1 + NHW_AAR_t_AAR * n_irks; /*AAR delay*/
   nsi_hws_find_next_event();
 }
 
-void nrf_aar_TASK_STOP(void) {
+void nhw_AAR_TASK_STOP(void) {
   if (!AAR_Running) {
     return;
   }
@@ -101,55 +107,39 @@ void nrf_aar_TASK_STOP(void) {
   AAR_Running = false;
   Timer_AAR = TIME_NEVER;
   nsi_hws_find_next_event();
-  signal_EVENTS_END();
+  nhw_AAR_signal_EVENTS_END(0);
   //Does this actually signal an END?
   //and only an END?
 }
 
-void nrf_aar_regw_sideeffects_INTENSET(void) {
-  if ( NRF_AAR_regs.INTENSET ){
-    AAR_INTEN |= NRF_AAR_regs.INTENSET;
-    NRF_AAR_regs.INTENSET = AAR_INTEN;
-  }
-}
+NHW_SIDEEFFECTS_INTSET_si(AAR, NRF_AAR_regs., AAR_INTEN)
+NHW_SIDEEFFECTS_INTCLR_si(AAR, NRF_AAR_regs., AAR_INTEN)
 
-void nrf_aar_regw_sideeffects_INTENCLR(void) {
-  if ( NRF_AAR_regs.INTENCLR ){
-    AAR_INTEN  &= ~NRF_AAR_regs.INTENCLR;
-    NRF_AAR_regs.INTENSET = AAR_INTEN;
-    NRF_AAR_regs.INTENCLR = 0;
-  }
-}
+NHW_SIDEEFFECTS_EVENTS(AAR)
 
-void nrf_aar_regw_sideeffects_TASKS_START(void) {
-  if ( NRF_AAR_regs.TASKS_START ) {
-    NRF_AAR_regs.TASKS_START = 0;
-    nrf_aar_TASK_START();
-  }
-}
+NHW_SIDEEFFECTS_TASKS_si(AAR, START)
+NHW_SIDEEFFECTS_TASKS_si(AAR, STOP)
 
-void nrf_aar_regw_sideeffects_TASKS_STOP(void) {
-  if ( NRF_AAR_regs.TASKS_STOP ) {
-    NRF_AAR_regs.TASKS_STOP = 0;
-    nrf_aar_TASK_STOP();
-  }
-}
+#if (NHW_HAS_DPPI)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(AAR, START)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(AAR, STOP)
+#endif /* NHW_HAS_DPPI */
 
-static void nrf_aar_timer_triggered(void) {
+static void nhw_aar_timer_triggered(void) {
   AAR_Running = false;
   Timer_AAR = TIME_NEVER;
   nsi_hws_find_next_event();
 
   if (matching_irk != -1) {
     NRF_AAR_regs.STATUS = matching_irk;
-    signal_EVENTS_RESOLVED();
+    nhw_AAR_signal_EVENTS_RESOLVED(0);
   } else {
-    signal_EVENTS_NOTRESOLVED();
+    nhw_AAR_signal_EVENTS_NOTRESOLVED(0);
   }
-  signal_EVENTS_END();
+  nhw_AAR_signal_EVENTS_END(0);
 }
 
-NSI_HW_EVENT(Timer_AAR, nrf_aar_timer_triggered, 50);
+NSI_HW_EVENT(Timer_AAR, nhw_aar_timer_triggered, 50);
 
 /**
  * Try to resolve the address
@@ -159,7 +149,7 @@ NSI_HW_EVENT(Timer_AAR, nrf_aar_timer_triggered, 50);
  * It sets *good_irk to the index of the IRK that matched
  * or to -1 if none did.
  */
-static int nrf_aar_resolve(int *good_irk) {
+static int nhw_aar_resolve(int *good_irk) {
   int i;
   uint8_t prand_buf[16];
   uint8_t hash_check_buf[16];
