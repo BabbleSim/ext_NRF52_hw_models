@@ -142,6 +142,8 @@
 #define NHW_TEMP_TOTAL_INST 1
 #define NHW_TEMP_0 0
 #define NHW_TEMP_INT_MAP {{0 , 12}} /*Only core,TEMP_IRQn*/
+#define NHW_TEMP_t_TEMP 36 /* microseconds */
+#define NHW_TEMP_FBITS  2 /* fractional bits => 0.25C resolution */
 
 #define NHW_TIMER_TOTAL_INST 5
 #define NHW_TIMER_0 0
@@ -347,6 +349,13 @@
 #define NHW_SWI_NET1 1
 #define NHW_SWI_NET2 2
 #define NHW_SWI_NET3 3
+
+#define NHW_TEMP_TOTAL_INST 1
+#define NHW_TEMP_NET0 0
+#define NHW_TEMP_INT_MAP {{1 , 16}} /*Net core,TEMP_IRQn*/
+#define NHW_TEMP_DPPI_MAP {1} /*Network core*/
+#define NHW_TEMP_t_TEMP 36 /* microseconds */
+#define NHW_TEMP_FBITS  2 /* fractional bits => 0.25C resolution */
 
 #define NHW_TIMER_TOTAL_INST 6
 #define NHW_TIMER_APP0 0

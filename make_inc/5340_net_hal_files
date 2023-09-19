@@ -7,5 +7,6 @@ src/nrfx/hal/nrf_ecb.c
 src/nrfx/hal/nrf_egu.c
 src/nrfx/hal/nrf_rng.c
 src/nrfx/hal/nrf_rtc.c
+src/nrfx/hal/nrf_temp.c
 src/nrfx/hal/nrf_timer.c
 src/nrfx/hal/nrf_hal_originals.c

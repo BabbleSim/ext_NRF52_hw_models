@@ -143,8 +143,9 @@ extern NRF_CCM_Type NRF_CCM_regs;
 extern NRF_DPPIC_Type NRF_DPPIC_regs[];
 #undef NRF_DPPIC_NS_BASE
 #define NRF_DPPIC_NS_BASE          (&NRF_DPPIC_regs[NHW_DPPI_NET_0])
+extern NRF_TEMP_Type NRF_TEMP_regs;
 #undef NRF_TEMP_NS_BASE
-#define NRF_TEMP_NS_BASE           NULL
+#define NRF_TEMP_NS_BASE           (&NRF_TEMP_regs)
 extern NRF_RTC_Type NRF_RTC_regs[];
 #undef NRF_RTC0_NS_BASE
 #define NRF_RTC0_NS_BASE           (&NRF_RTC_regs[NHW_RTC_NET0])

@@ -2491,6 +2491,267 @@ typedef struct {                                /*!< (@ 0x41011000) RTC0_NS Stru
 #define RTC_CC_COMPARE_Msk (0xFFFFFFUL << RTC_CC_COMPARE_Pos) /*!< Bit mask of COMPARE field. */
 
 
+/* =========================================================================================================================== */
+/* ================                                          TEMP                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Temperature Sensor (TEMP)
+  */
+
+typedef struct {                                /*!< (@ 0x41010000) TEMP_NS Structure                                          */
+  __OM  uint32_t  TASKS_START;                  /*!< (@ 0x00000000) Start temperature measurement                              */
+  __OM  uint32_t  TASKS_STOP;                   /*!< (@ 0x00000004) Stop temperature measurement                               */
+  __IM  uint32_t  RESERVED[30];
+  __IOM uint32_t  SUBSCRIBE_START;              /*!< (@ 0x00000080) Subscribe configuration for task START                     */
+  __IOM uint32_t  SUBSCRIBE_STOP;               /*!< (@ 0x00000084) Subscribe configuration for task STOP                      */
+  __IM  uint32_t  RESERVED1[30];
+  __IOM uint32_t  EVENTS_DATARDY;               /*!< (@ 0x00000100) Temperature measurement complete, data ready               */
+  __IM  uint32_t  RESERVED2[31];
+  __IOM uint32_t  PUBLISH_DATARDY;              /*!< (@ 0x00000180) Publish configuration for event DATARDY                    */
+  __IM  uint32_t  RESERVED3[96];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED4[127];
+  __IM  int32_t   TEMP;                         /*!< (@ 0x00000508) Temperature in degC (0.25deg steps)                        */
+  __IM  uint32_t  RESERVED5[5];
+  __IOM uint32_t  A0;                           /*!< (@ 0x00000520) Slope of first piecewise linear function                   */
+  __IOM uint32_t  A1;                           /*!< (@ 0x00000524) Slope of second piecewise linear function                  */
+  __IOM uint32_t  A2;                           /*!< (@ 0x00000528) Slope of third piecewise linear function                   */
+  __IOM uint32_t  A3;                           /*!< (@ 0x0000052C) Slope of fourth piecewise linear function                  */
+  __IOM uint32_t  A4;                           /*!< (@ 0x00000530) Slope of fifth piecewise linear function                   */
+  __IOM uint32_t  A5;                           /*!< (@ 0x00000534) Slope of sixth piecewise linear function                   */
+  __IM  uint32_t  RESERVED6[2];
+  __IOM uint32_t  B0;                           /*!< (@ 0x00000540) y-intercept of first piecewise linear function             */
+  __IOM uint32_t  B1;                           /*!< (@ 0x00000544) y-intercept of second piecewise linear function            */
+  __IOM uint32_t  B2;                           /*!< (@ 0x00000548) y-intercept of third piecewise linear function             */
+  __IOM uint32_t  B3;                           /*!< (@ 0x0000054C) y-intercept of fourth piecewise linear function            */
+  __IOM uint32_t  B4;                           /*!< (@ 0x00000550) y-intercept of fifth piecewise linear function             */
+  __IOM uint32_t  B5;                           /*!< (@ 0x00000554) y-intercept of sixth piecewise linear function             */
+  __IM  uint32_t  RESERVED7[2];
+  __IOM uint32_t  T0;                           /*!< (@ 0x00000560) Endpoint of first piecewise linear function                */
+  __IOM uint32_t  T1;                           /*!< (@ 0x00000564) Endpoint of second piecewise linear function               */
+  __IOM uint32_t  T2;                           /*!< (@ 0x00000568) Endpoint of third piecewise linear function                */
+  __IOM uint32_t  T3;                           /*!< (@ 0x0000056C) Endpoint of fourth piecewise linear function               */
+  __IOM uint32_t  T4;                           /*!< (@ 0x00000570) Endpoint of fifth piecewise linear function                */
+} NRF_TEMP_Type;                                /*!< Size = 1396 (0x574)                                                       */
+
+
+/* Peripheral: TEMP */
+/* Description: Temperature Sensor */
+
+/* Register: TEMP_TASKS_START */
+/* Description: Start temperature measurement */
+
+/* Bit 0 : Start temperature measurement */
+#define TEMP_TASKS_START_TASKS_START_Pos (0UL) /*!< Position of TASKS_START field. */
+#define TEMP_TASKS_START_TASKS_START_Msk (0x1UL << TEMP_TASKS_START_TASKS_START_Pos) /*!< Bit mask of TASKS_START field. */
+#define TEMP_TASKS_START_TASKS_START_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TEMP_TASKS_STOP */
+/* Description: Stop temperature measurement */
+
+/* Bit 0 : Stop temperature measurement */
+#define TEMP_TASKS_STOP_TASKS_STOP_Pos (0UL) /*!< Position of TASKS_STOP field. */
+#define TEMP_TASKS_STOP_TASKS_STOP_Msk (0x1UL << TEMP_TASKS_STOP_TASKS_STOP_Pos) /*!< Bit mask of TASKS_STOP field. */
+#define TEMP_TASKS_STOP_TASKS_STOP_Trigger (1UL) /*!< Trigger task */
+
+/* Register: TEMP_SUBSCRIBE_START */
+/* Description: Subscribe configuration for task START */
+
+/* Bit 31 :   */
+#define TEMP_SUBSCRIBE_START_EN_Pos (31UL) /*!< Position of EN field. */
+#define TEMP_SUBSCRIBE_START_EN_Msk (0x1UL << TEMP_SUBSCRIBE_START_EN_Pos) /*!< Bit mask of EN field. */
+#define TEMP_SUBSCRIBE_START_EN_Disabled (0UL) /*!< Disable subscription */
+#define TEMP_SUBSCRIBE_START_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task START will subscribe to */
+#define TEMP_SUBSCRIBE_START_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TEMP_SUBSCRIBE_START_CHIDX_Msk (0xFFUL << TEMP_SUBSCRIBE_START_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TEMP_SUBSCRIBE_STOP */
+/* Description: Subscribe configuration for task STOP */
+
+/* Bit 31 :   */
+#define TEMP_SUBSCRIBE_STOP_EN_Pos (31UL) /*!< Position of EN field. */
+#define TEMP_SUBSCRIBE_STOP_EN_Msk (0x1UL << TEMP_SUBSCRIBE_STOP_EN_Pos) /*!< Bit mask of EN field. */
+#define TEMP_SUBSCRIBE_STOP_EN_Disabled (0UL) /*!< Disable subscription */
+#define TEMP_SUBSCRIBE_STOP_EN_Enabled (1UL) /*!< Enable subscription */
+
+/* Bits 7..0 : DPPI channel that task STOP will subscribe to */
+#define TEMP_SUBSCRIBE_STOP_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TEMP_SUBSCRIBE_STOP_CHIDX_Msk (0xFFUL << TEMP_SUBSCRIBE_STOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TEMP_EVENTS_DATARDY */
+/* Description: Temperature measurement complete, data ready */
+
+/* Bit 0 : Temperature measurement complete, data ready */
+#define TEMP_EVENTS_DATARDY_EVENTS_DATARDY_Pos (0UL) /*!< Position of EVENTS_DATARDY field. */
+#define TEMP_EVENTS_DATARDY_EVENTS_DATARDY_Msk (0x1UL << TEMP_EVENTS_DATARDY_EVENTS_DATARDY_Pos) /*!< Bit mask of EVENTS_DATARDY field. */
+#define TEMP_EVENTS_DATARDY_EVENTS_DATARDY_NotGenerated (0UL) /*!< Event not generated */
+#define TEMP_EVENTS_DATARDY_EVENTS_DATARDY_Generated (1UL) /*!< Event generated */
+
+/* Register: TEMP_PUBLISH_DATARDY */
+/* Description: Publish configuration for event DATARDY */
+
+/* Bit 31 :   */
+#define TEMP_PUBLISH_DATARDY_EN_Pos (31UL) /*!< Position of EN field. */
+#define TEMP_PUBLISH_DATARDY_EN_Msk (0x1UL << TEMP_PUBLISH_DATARDY_EN_Pos) /*!< Bit mask of EN field. */
+#define TEMP_PUBLISH_DATARDY_EN_Disabled (0UL) /*!< Disable publishing */
+#define TEMP_PUBLISH_DATARDY_EN_Enabled (1UL) /*!< Enable publishing */
+
+/* Bits 7..0 : DPPI channel that event DATARDY will publish to. */
+#define TEMP_PUBLISH_DATARDY_CHIDX_Pos (0UL) /*!< Position of CHIDX field. */
+#define TEMP_PUBLISH_DATARDY_CHIDX_Msk (0xFFUL << TEMP_PUBLISH_DATARDY_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
+
+/* Register: TEMP_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 0 : Write '1' to enable interrupt for event DATARDY */
+#define TEMP_INTENSET_DATARDY_Pos (0UL) /*!< Position of DATARDY field. */
+#define TEMP_INTENSET_DATARDY_Msk (0x1UL << TEMP_INTENSET_DATARDY_Pos) /*!< Bit mask of DATARDY field. */
+#define TEMP_INTENSET_DATARDY_Disabled (0UL) /*!< Read: Disabled */
+#define TEMP_INTENSET_DATARDY_Enabled (1UL) /*!< Read: Enabled */
+#define TEMP_INTENSET_DATARDY_Set (1UL) /*!< Enable */
+
+/* Register: TEMP_INTENCLR */
+/* Description: Disable interrupt */
+
+/* Bit 0 : Write '1' to disable interrupt for event DATARDY */
+#define TEMP_INTENCLR_DATARDY_Pos (0UL) /*!< Position of DATARDY field. */
+#define TEMP_INTENCLR_DATARDY_Msk (0x1UL << TEMP_INTENCLR_DATARDY_Pos) /*!< Bit mask of DATARDY field. */
+#define TEMP_INTENCLR_DATARDY_Disabled (0UL) /*!< Read: Disabled */
+#define TEMP_INTENCLR_DATARDY_Enabled (1UL) /*!< Read: Enabled */
+#define TEMP_INTENCLR_DATARDY_Clear (1UL) /*!< Disable */
+
+/* Register: TEMP_TEMP */
+/* Description: Temperature in degC (0.25deg steps) */
+
+/* Bits 31..0 : Temperature in degC (0.25deg steps) */
+#define TEMP_TEMP_TEMP_Pos (0UL) /*!< Position of TEMP field. */
+#define TEMP_TEMP_TEMP_Msk (0xFFFFFFFFUL << TEMP_TEMP_TEMP_Pos) /*!< Bit mask of TEMP field. */
+
+/* Register: TEMP_A0 */
+/* Description: Slope of first piecewise linear function */
+
+/* Bits 11..0 : Slope of first piecewise linear function */
+#define TEMP_A0_A0_Pos (0UL) /*!< Position of A0 field. */
+#define TEMP_A0_A0_Msk (0xFFFUL << TEMP_A0_A0_Pos) /*!< Bit mask of A0 field. */
+
+/* Register: TEMP_A1 */
+/* Description: Slope of second piecewise linear function */
+
+/* Bits 11..0 : Slope of second piecewise linear function */
+#define TEMP_A1_A1_Pos (0UL) /*!< Position of A1 field. */
+#define TEMP_A1_A1_Msk (0xFFFUL << TEMP_A1_A1_Pos) /*!< Bit mask of A1 field. */
+
+/* Register: TEMP_A2 */
+/* Description: Slope of third piecewise linear function */
+
+/* Bits 11..0 : Slope of third piecewise linear function */
+#define TEMP_A2_A2_Pos (0UL) /*!< Position of A2 field. */
+#define TEMP_A2_A2_Msk (0xFFFUL << TEMP_A2_A2_Pos) /*!< Bit mask of A2 field. */
+
+/* Register: TEMP_A3 */
+/* Description: Slope of fourth piecewise linear function */
+
+/* Bits 11..0 : Slope of fourth piecewise linear function */
+#define TEMP_A3_A3_Pos (0UL) /*!< Position of A3 field. */
+#define TEMP_A3_A3_Msk (0xFFFUL << TEMP_A3_A3_Pos) /*!< Bit mask of A3 field. */
+
+/* Register: TEMP_A4 */
+/* Description: Slope of fifth piecewise linear function */
+
+/* Bits 11..0 : Slope of fifth piecewise linear function */
+#define TEMP_A4_A4_Pos (0UL) /*!< Position of A4 field. */
+#define TEMP_A4_A4_Msk (0xFFFUL << TEMP_A4_A4_Pos) /*!< Bit mask of A4 field. */
+
+/* Register: TEMP_A5 */
+/* Description: Slope of sixth piecewise linear function */
+
+/* Bits 11..0 : Slope of sixth piecewise linear function */
+#define TEMP_A5_A5_Pos (0UL) /*!< Position of A5 field. */
+#define TEMP_A5_A5_Msk (0xFFFUL << TEMP_A5_A5_Pos) /*!< Bit mask of A5 field. */
+
+/* Register: TEMP_B0 */
+/* Description: y-intercept of first piecewise linear function */
+
+/* Bits 11..0 : y-intercept of first piecewise linear function */
+#define TEMP_B0_B0_Pos (0UL) /*!< Position of B0 field. */
+#define TEMP_B0_B0_Msk (0xFFFUL << TEMP_B0_B0_Pos) /*!< Bit mask of B0 field. */
+
+/* Register: TEMP_B1 */
+/* Description: y-intercept of second piecewise linear function */
+
+/* Bits 11..0 : y-intercept of second piecewise linear function */
+#define TEMP_B1_B1_Pos (0UL) /*!< Position of B1 field. */
+#define TEMP_B1_B1_Msk (0xFFFUL << TEMP_B1_B1_Pos) /*!< Bit mask of B1 field. */
+
+/* Register: TEMP_B2 */
+/* Description: y-intercept of third piecewise linear function */
+
+/* Bits 11..0 : y-intercept of third piecewise linear function */
+#define TEMP_B2_B2_Pos (0UL) /*!< Position of B2 field. */
+#define TEMP_B2_B2_Msk (0xFFFUL << TEMP_B2_B2_Pos) /*!< Bit mask of B2 field. */
+
+/* Register: TEMP_B3 */
+/* Description: y-intercept of fourth piecewise linear function */
+
+/* Bits 11..0 : y-intercept of fourth piecewise linear function */
+#define TEMP_B3_B3_Pos (0UL) /*!< Position of B3 field. */
+#define TEMP_B3_B3_Msk (0xFFFUL << TEMP_B3_B3_Pos) /*!< Bit mask of B3 field. */
+
+/* Register: TEMP_B4 */
+/* Description: y-intercept of fifth piecewise linear function */
+
+/* Bits 11..0 : y-intercept of fifth piecewise linear function */
+#define TEMP_B4_B4_Pos (0UL) /*!< Position of B4 field. */
+#define TEMP_B4_B4_Msk (0xFFFUL << TEMP_B4_B4_Pos) /*!< Bit mask of B4 field. */
+
+/* Register: TEMP_B5 */
+/* Description: y-intercept of sixth piecewise linear function */
+
+/* Bits 11..0 : y-intercept of sixth piecewise linear function */
+#define TEMP_B5_B5_Pos (0UL) /*!< Position of B5 field. */
+#define TEMP_B5_B5_Msk (0xFFFUL << TEMP_B5_B5_Pos) /*!< Bit mask of B5 field. */
+
+/* Register: TEMP_T0 */
+/* Description: Endpoint of first piecewise linear function */
+
+/* Bits 7..0 : Endpoint of first piecewise linear function */
+#define TEMP_T0_T0_Pos (0UL) /*!< Position of T0 field. */
+#define TEMP_T0_T0_Msk (0xFFUL << TEMP_T0_T0_Pos) /*!< Bit mask of T0 field. */
+
+/* Register: TEMP_T1 */
+/* Description: Endpoint of second piecewise linear function */
+
+/* Bits 7..0 : Endpoint of second piecewise linear function */
+#define TEMP_T1_T1_Pos (0UL) /*!< Position of T1 field. */
+#define TEMP_T1_T1_Msk (0xFFUL << TEMP_T1_T1_Pos) /*!< Bit mask of T1 field. */
+
+/* Register: TEMP_T2 */
+/* Description: Endpoint of third piecewise linear function */
+
+/* Bits 7..0 : Endpoint of third piecewise linear function */
+#define TEMP_T2_T2_Pos (0UL) /*!< Position of T2 field. */
+#define TEMP_T2_T2_Msk (0xFFUL << TEMP_T2_T2_Pos) /*!< Bit mask of T2 field. */
+
+/* Register: TEMP_T3 */
+/* Description: Endpoint of fourth piecewise linear function */
+
+/* Bits 7..0 : Endpoint of fourth piecewise linear function */
+#define TEMP_T3_T3_Pos (0UL) /*!< Position of T3 field. */
+#define TEMP_T3_T3_Msk (0xFFUL << TEMP_T3_T3_Pos) /*!< Bit mask of T3 field. */
+
+/* Register: TEMP_T4 */
+/* Description: Endpoint of fifth piecewise linear function */
+
+/* Bits 7..0 : Endpoint of fifth piecewise linear function */
+#define TEMP_T4_T4_Pos (0UL) /*!< Position of T4 field. */
+#define TEMP_T4_T4_Msk (0xFFUL << TEMP_T4_T4_Pos) /*!< Bit mask of T4 field. */
+
+
 
 /* =========================================================================================================================== */
 /* ================                                         TIMER                                             ================ */

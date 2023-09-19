@@ -18,7 +18,7 @@ src/HW_models/NHW_RTC.c
 src/HW_models/bstest_ticker.c
 src/HW_models/NRF_NVMC.c
 src/HW_models/NRF_GPIO.c
-src/HW_models/NRF_TEMP.c
+src/HW_models/NHW_TEMP.c
 src/HW_models/NRF_RADIO_tasks_regs.c
 src/HW_models/NHW_TIMER.c
 src/HW_models/bs_compat.c
