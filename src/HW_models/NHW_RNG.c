@@ -28,6 +28,7 @@
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_common_types.h"
+#include "NHW_templates.h"
 #include "NHW_RNG.h"
 #include "NHW_xPPI.h"
 #include "nsi_hw_scheduler.h"
@@ -42,11 +43,9 @@ static bs_time_t Timer_RNG = TIME_NEVER; //Time when the next random number will
 static bool RNG_hw_started = false;
 static bool RNG_INTEN = false; //interrupt enable
 
-/* Mapping of peripheral instance to {int controller instance, int number} */
-static struct nhw_irq_mapping nhw_rng_irq_map[NHW_RNG_TOTAL_INST] = NHW_RNG_INT_MAP;
 #if (NHW_HAS_DPPI)
 /* Mapping of peripheral instance to DPPI instance */
-static uint nhw_rng_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
+static uint nhw_RNG_dppi_map[NHW_RNG_TOTAL_INST] = NHW_RNG_DPPI_MAP;
 #endif
 
 /**
@@ -79,29 +78,25 @@ static void nhw_rng_schedule_next(bool first_time){
   nsi_hws_find_next_event();
 }
 
-static void nhw_rng_eval_interrupt(uint inst) {
+static void nhw_RNG_eval_interrupt(uint inst) {
   static bool rng_int_line[NHW_RNG_TOTAL_INST]; /* Is the RNG currently driving its interrupt line high */
+  /* Mapping of peripheral instance to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_rng_irq_map[NHW_RNG_TOTAL_INST] = NHW_RNG_INT_MAP;
   bool new_int_line = false;
 
   if (NRF_RNG_regs.EVENTS_VALRDY && (RNG_INTEN & RNG_INTENCLR_VALRDY_Msk)){
     new_int_line = true;
   }
 
-  if (rng_int_line[inst] == false && new_int_line == true) {
-    rng_int_line[inst] = true;
-    hw_irq_ctrl_raise_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
-                                      nhw_rng_irq_map[inst].int_nbr);
-  } else if (rng_int_line[inst] == true && new_int_line == false) {
-    rng_int_line[inst] = false;
-    hw_irq_ctrl_lower_level_irq_line(nhw_rng_irq_map[inst].cntl_inst,
-                                      nhw_rng_irq_map[inst].int_nbr);
-  }
+  hw_irq_ctrl_toggle_level_irq_line_if(&rng_int_line[inst],
+                                       new_int_line,
+                                       &nhw_rng_irq_map[inst]);
 }
 
 /**
  * TASK_START triggered handler
  */
-void nhw_rng_task_start(void) {
+void nhw_RNG_TASK_START(void) {
   if (RNG_hw_started) {
     return;
   }
@@ -112,85 +107,33 @@ void nhw_rng_task_start(void) {
 /**
  * TASK_STOP triggered handler
  */
-void nhw_rng_task_stop(void) {
+void nhw_RNG_TASK_STOP(void) {
   RNG_hw_started = false;
   Timer_RNG = TIME_NEVER;
   nsi_hws_find_next_event();
 }
 
-
-void nhw_rng_regw_sideeffects_TASK_START(void) {
-  if (NRF_RNG_regs.TASKS_START) { /* LCOV_EXCL_BR_LINE */
-    NRF_RNG_regs.TASKS_START = 0;
-    nhw_rng_task_start();
-  }
-}
-
-void nhw_rng_regw_sideeffects_TASK_STOP(void) {
-  if (NRF_RNG_regs.TASKS_STOP) { /* LCOV_EXCL_BR_LINE */
-    NRF_RNG_regs.TASKS_STOP = 0;
-    nhw_rng_task_stop();
-  }
-}
+NHW_SIDEEFFECTS_TASKS_si(RNG, START)
+NHW_SIDEEFFECTS_TASKS_si(RNG, STOP)
 
 #if (NHW_HAS_DPPI)
-void nhw_rng_regw_sideeffects_SUBSCRIBE_START(unsigned int inst) {
-  static struct nhw_subsc_mem START_subscribed[NHW_RNG_TOTAL_INST];
-
-  nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
-                                       NRF_RNG_regs.SUBSCRIBE_START,
-                                       &START_subscribed[inst],
-                                       (dppi_callback_t)nhw_rng_task_start,
-                                       DPPI_CB_NO_PARAM);
-}
-
-void nhw_rng_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst) {
-  static struct nhw_subsc_mem STOP_subscribed[NHW_RNG_TOTAL_INST];
-
-  nhw_dppi_common_subscribe_sideeffect(nhw_rng_dppi_map[inst],
-                                       NRF_RNG_regs.SUBSCRIBE_STOP,
-                                       &STOP_subscribed[inst],
-                                       (dppi_callback_t)nhw_rng_task_stop,
-                                       DPPI_CB_NO_PARAM);
-}
+NHW_SIDEEFFECTS_SUBSCRIBE_si(RNG, START)
+NHW_SIDEEFFECTS_SUBSCRIBE_si(RNG, STOP)
 #endif /* NHW_HAS_DPPI */
 
-void nhw_rng_regw_sideeffects_INTENSET(void) {
-  if (NRF_RNG_regs.INTENSET) { /* LCOV_EXCL_BR_LINE */
-    RNG_INTEN |= NRF_RNG_regs.INTENSET;
-    NRF_RNG_regs.INTENSET = RNG_INTEN;
-    nhw_rng_eval_interrupt(0);
-  }
-}
+NHW_SIDEEFFECTS_INTSET_si(RNG, NRF_RNG_regs., RNG_INTEN)
+NHW_SIDEEFFECTS_INTCLR_si(RNG, NRF_RNG_regs., RNG_INTEN)
 
-void nhw_rng_regw_sideeffects_INTENCLEAR(void) {
-  if (NRF_RNG_regs.INTENCLR) { /* LCOV_EXCL_BR_LINE */
-    RNG_INTEN &= ~NRF_RNG_regs.INTENCLR;
-    NRF_RNG_regs.INTENSET = RNG_INTEN;
-    NRF_RNG_regs.INTENCLR = 0;
-    nhw_rng_eval_interrupt(0);
-  }
-}
+NHW_SIDEEFFECTS_EVENTS(RNG)
 
-void nhw_rng_regw_sideeffects_EVENTS_all(void) {
-  nhw_rng_eval_interrupt(0);
-}
+NHW_SIGNAL_EVENT_si(RNG, VALRDY)
 
-static void nhw_rng_signal_VALRDY(uint periph_inst) {
+static void nhw_RNG_signal_VALRDY(uint periph_inst) {
   if (NRF_RNG_regs.SHORTS & RNG_SHORTS_VALRDY_STOP_Msk) {
-    nhw_rng_task_stop();
+    nhw_RNG_TASK_STOP();
   }
 
-  NRF_RNG_regs.EVENTS_VALRDY = 1;
-
-  nhw_rng_eval_interrupt(periph_inst);
-
-#if (NHW_HAS_PPI)
-  nrf_ppi_event(RNG_EVENTS_VALRDY);
-#elif (NHW_HAS_DPPI)
-  nhw_dppi_event_signal_if(nhw_rng_dppi_map[periph_inst],
-                           NRF_RNG_regs.PUBLISH_VALRDY);
-#endif
+  nhw_RNG_signal_EVENTS_VALRDY(periph_inst);
 }
 
 /**
@@ -202,7 +145,7 @@ static void nhw_rng_timer_triggered(void) {
 
   nhw_rng_schedule_next(false);
 
-  nhw_rng_signal_VALRDY(0);
+  nhw_RNG_signal_VALRDY(0);
 }
 
 NSI_HW_EVENT(Timer_RNG, nhw_rng_timer_triggered, 50);

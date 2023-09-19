@@ -218,8 +218,8 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     //{ (void*)&(NRF_RTC_regs[2]).TASKS_TRIGOVRFLW , nhw_rtc2_TASKS_TRIGOVRFLW},
 
     //RNG:
-    { (void*)&NRF_RNG_regs.TASKS_START, nhw_rng_task_start},
-    { (void*)&NRF_RNG_regs.TASKS_STOP , nhw_rng_task_stop},
+    { (void*)&NRF_RNG_regs.TASKS_START, nhw_RNG_TASK_START},
+    { (void*)&NRF_RNG_regs.TASKS_STOP , nhw_RNG_TASK_STOP},
 
     //ECB
 
