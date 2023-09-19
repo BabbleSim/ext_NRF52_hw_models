@@ -455,3 +455,28 @@ const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq)
     return NULL;
   }
 }
+
+/*
+ * NOTE: This is not a Interrupt controller function per se, but a common function
+ * for all peripherals to handle evaluate if they want to raise or not
+ * their interrupt line
+ *
+ * int_line      Previous/Current interrutp line level
+ * new_int_line  new interrupt line level
+ * irq_map       Interrupt mapping (interrupt controller and line)
+ */
+void hw_irq_ctrl_toggle_level_irq_line_if(bool *int_line,
+                                          bool new_int_line,
+                                          struct nhw_irq_mapping *irq_map)
+{
+  if (*int_line == false && new_int_line == true) {
+    *int_line = true;
+    hw_irq_ctrl_raise_level_irq_line(irq_map->cntl_inst,
+                                     irq_map->int_nbr);
+  } else if (*int_line == true && new_int_line == false) {
+    *int_line = false;
+    hw_irq_ctrl_lower_level_irq_line(irq_map->cntl_inst,
+                                     irq_map->int_nbr);
+  }
+
+}

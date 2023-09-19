@@ -9,6 +9,7 @@
 #define _NRF_HW_MODEL_SRC_HW_MODELS_IRQ_CTRL_H
 
 #include <stdint.h>
+#include "NHW_common_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,9 @@ uint8_t hw_irq_ctrl_get_prio(unsigned int inst, unsigned int irq);
 void hw_irq_ctrl_prio_set(unsigned int inst, unsigned int irq, unsigned int prio);
 uint32_t hw_irq_ctrl_change_lock(unsigned int inst, uint32_t new_lock);
 const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq);
+void hw_irq_ctrl_toggle_level_irq_line_if(bool *int_line,
+                                          bool new_int_line,
+                                          struct nhw_irq_mapping *irq_map);
 
 /*
  * This interrupt will awake the CPU if IRQs are not locked,
