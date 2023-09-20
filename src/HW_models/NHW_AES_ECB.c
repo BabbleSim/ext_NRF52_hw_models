@@ -97,8 +97,8 @@ static void nhw_ECB_eval_interrupt(uint inst) {
                                        &nhw_ecb_irq_map[inst]);
 }
 
-NHW_SIGNAL_EVENT_si(ECB, ENDECB)
-NHW_SIGNAL_EVENT_si(ECB, ERRORECB)
+static NHW_SIGNAL_EVENT_si(ECB, ENDECB)
+static NHW_SIGNAL_EVENT_si(ECB, ERRORECB)
 
 void nhw_ECB_TASK_STOPECB(void) {
   if (!ECB_Running) {

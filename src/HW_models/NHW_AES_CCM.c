@@ -82,9 +82,9 @@ static void nhw_CCM_eval_interrupt(uint inst) {
                                        &nhw_ccm_irq_map[inst]);
 }
 
-NHW_SIGNAL_EVENT_si(CCM, ENDKSGEN)
-NHW_SIGNAL_EVENT_si(CCM, ENDCRYPT)
-//Unused so far in this model: NHW_SIGNAL_EVENT_si(CCM, ERROR)
+static NHW_SIGNAL_EVENT_si(CCM, ENDKSGEN)
+static NHW_SIGNAL_EVENT_si(CCM, ENDCRYPT)
+//Unused so far in this model: static NHW_SIGNAL_EVENT_si(CCM, ERROR)
 
 static void signal_EVENTS_ENDKSGEN(void) {
   nhw_CCM_signal_EVENTS_ENDKSGEN(0);

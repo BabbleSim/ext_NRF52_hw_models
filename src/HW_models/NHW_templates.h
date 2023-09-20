@@ -67,7 +67,7 @@
  * NOTE: Cannot be used for events with shortcuts
  */
 #define NHW_SIGNAL_EVENT(peri, peri_regs, event) \
-  static void nhw_##peri##_signal_EVENTS_##event(unsigned int inst) { \
+  void nhw_##peri##_signal_EVENTS_##event(unsigned int inst) { \
     peri_regs EVENTS_##event = 1; \
     nhw_##peri##_eval_interrupt(inst); \
     _NHW_XPPI_EVENT(peri, peri_regs, inst, event); \

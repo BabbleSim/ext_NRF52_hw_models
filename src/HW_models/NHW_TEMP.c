@@ -147,7 +147,7 @@ NHW_SIDEEFFECTS_SUBSCRIBE_si(TEMP, START)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(TEMP, STOP)
 #endif /* NHW_HAS_DPPI */
 
-NHW_SIGNAL_EVENT_si(TEMP, DATARDY)
+static NHW_SIGNAL_EVENT_si(TEMP, DATARDY)
 
 /**
  * Time has come when the temperature measurement is ready

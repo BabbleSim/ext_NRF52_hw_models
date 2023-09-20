@@ -81,9 +81,9 @@ static void nhw_AAR_eval_interrupt(uint inst) {
                                        &nhw_aar_irq_map[inst]);
 }
 
-NHW_SIGNAL_EVENT_si(AAR, END)
-NHW_SIGNAL_EVENT_si(AAR, RESOLVED)
-NHW_SIGNAL_EVENT_si(AAR, NOTRESOLVED)
+static NHW_SIGNAL_EVENT_si(AAR, END)
+static NHW_SIGNAL_EVENT_si(AAR, RESOLVED)
+static NHW_SIGNAL_EVENT_si(AAR, NOTRESOLVED)
 
 void nhw_AAR_TASK_START(void) {
   int n_irks;
