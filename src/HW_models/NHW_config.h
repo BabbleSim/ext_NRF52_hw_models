@@ -320,6 +320,11 @@
 
 #define NHW_CORE_NAMES {"Application", "Network"}
 
+#define NHW_RADIO_TOTAL_INST 1
+#define NHW_RADIO_NET0 0
+#define NHW_RADIO_INT_MAP {{1 , 8}} /*Net core,RADIO_IRQn*/
+#define NHW_RADIO_DPPI_MAP {1} /*Network core*/
+
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_NET_0 0
 #define NHW_RNG_INT_MAP  {{1, 9}} /*Network core, "RNG_IRQn"*/

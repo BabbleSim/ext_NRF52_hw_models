@@ -13,8 +13,10 @@
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
-#include "NRF_RADIO.h"
-#include "NRF_RADIO_utils.h"
+#include "NHW_RADIO.h"
+#include "NHW_RADIO_utils.h"
+
+extern NRF_RADIO_Type NRF_RADIO_regs;
 
 static struct {
   /*Ramp up times*/
@@ -77,7 +79,7 @@ void nrfra_timings_init(void) {
 /**
  * Return the Rx chain delay given the configured MODE
  */
-bs_time_t nrfra_timings_get_Rx_chain_delay(void) {
+bs_time_t nhwra_timings_get_Rx_chain_delay(void) {
   int mod_idx = 0;
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     mod_idx = 1;
@@ -94,7 +96,7 @@ bs_time_t nrfra_timings_get_Rx_chain_delay(void) {
  *                switching during its auto IFS mechanism
  * returns the requested rampup time
  */
-bs_time_t nrfra_timings_get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
+bs_time_t nhwra_timings_get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
   int fast  = 0;
   int mod_idx = 0;
   int HWTIFS= 0;
@@ -102,7 +104,7 @@ bs_time_t nrfra_timings_get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
   if ( NRF_RADIO_regs.MODECNF0 & 1 ){ /* MODECNF0.RU */
     fast = 1;
   } else {
-    HWTIFS = from_hw_TIFS | nrfra_is_HW_TIFS_enabled();
+    HWTIFS = from_hw_TIFS | nhwra_is_HW_TIFS_enabled();
   }
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     mod_idx = 1;
@@ -116,11 +118,11 @@ bs_time_t nrfra_timings_get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
   }
 }
 
-bs_time_t nrfra_timings_get_RX_rampdown_time(void){
+bs_time_t nhwra_timings_get_RX_rampdown_time(void){
   return radio_timings.RX_RD_time;
 }
 
-bs_time_t nrfra_timings_get_TX_rampdown_time(void){
+bs_time_t nhwra_timings_get_TX_rampdown_time(void){
   int mod_idx = 0;
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     mod_idx = 1;
@@ -130,7 +132,7 @@ bs_time_t nrfra_timings_get_TX_rampdown_time(void){
   return radio_timings.TX_RD_time[mod_idx];
 }
 
-bs_time_t nrfra_timings_get_TX_chain_delay(void){
+bs_time_t nhwra_timings_get_TX_chain_delay(void){
   return radio_timings.TX_chain_delay;
 }
 

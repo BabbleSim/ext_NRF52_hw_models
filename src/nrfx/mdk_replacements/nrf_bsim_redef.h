@@ -122,8 +122,9 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #define NRF_RESET_NS_BASE          (NRF_RESET_regs[NHW_CLKPWR_NET0])
 #undef NRF_CTRLAP_NS_BASE
 #define NRF_CTRLAP_NS_BASE         NULL
+extern NRF_RADIO_Type NRF_RADIO_regs;
 #undef NRF_RADIO_NS_BASE
-#define NRF_RADIO_NS_BASE          NULL
+#define NRF_RADIO_NS_BASE          (&NRF_RADIO_regs)
 extern NRF_RNG_Type NRF_RNG_regs;
 #undef NRF_RNG_NS_BASE
 #define NRF_RNG_NS_BASE            (&NRF_RNG_regs)

@@ -15,10 +15,12 @@
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
-#include "NRF_RADIO.h"
+#include "NHW_RADIO.h"
+#include "NHW_RADIO_timings.h"
 #include "NRF_HWLowL.h"
-#include "NRF_RADIO_timings.h"
 #include "nsi_hw_scheduler.h"
+
+extern NRF_RADIO_Type NRF_RADIO_regs;
 
 static void nrfra_check_crc_conf_ble(void) {
   if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
@@ -154,7 +156,7 @@ static void nrfra_check_802154_conf(void){
 /*
  * A few checks to ensure the model is only used with the currently supported packet format
  */
-void nrfra_check_packet_conf(void){
+void nhwra_check_packet_conf(void){
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     nrfra_check_ble1M_conf();
@@ -169,13 +171,13 @@ void nrfra_check_packet_conf(void){
   }
 }
 
-uint32_t nrfra_RSSI_value_to_modem_format(double rssi_value){
+uint32_t nhwra_RSSI_value_to_modem_format(double rssi_value){
   rssi_value = -BS_MAX(rssi_value,-127);
   rssi_value = BS_MAX(rssi_value,0);
   return (uint32_t)rssi_value;
 }
 
-uint8_t nrfra_dBm_to_modem_LQIformat(double rssi_value){
+uint8_t nhwra_dBm_to_modem_LQIformat(double rssi_value){
   //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
   //ED_RSSIOFFS = -93
   //=> VALHARDWARE = PRF[dBm] - ED_RSSIOFFS = PRF[dBm] + 93
@@ -191,7 +193,7 @@ double nrfra_LQIformat_to_dBm(uint value){
   return (double)value - 93;
 }
 
-int nrfra_is_HW_TIFS_enabled(void) {
+int nhwra_is_HW_TIFS_enabled(void) {
   if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
       && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
           || ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) )
@@ -208,7 +210,7 @@ int nrfra_is_HW_TIFS_enabled(void) {
  *
  * Note: The abort substructure is NOT filled.
  */
-void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
+void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   //TOLOW: Add support for other packet formats and bitrates
   uint8_t preamble_length = 0;
@@ -294,7 +296,7 @@ void nrfra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
  *
  * Note: The abort substructure is NOT filled.
  */
-void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration) {
+void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration) {
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     tx_req->radio_params.modulation = P2G4_MOD_BLE;
@@ -346,7 +348,7 @@ void nrfra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
  *
  * Note: The abort substructure is NOT filled.
  */
-void nrfra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
+void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
 
   cca_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time()); //We start right now
   cca_req->antenna_gain = 0;
@@ -408,20 +410,20 @@ void nrfra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
 /**
  * Return the CRC length in bytes
  */
-uint nrfra_get_crc_length(void) {
+uint nhwra_get_crc_length(void) {
   return (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk) >> RADIO_CRCCNF_LEN_Pos;
 }
 
 
-uint nrfra_get_MAXLEN(void) {
-  return (NRF_RADIO_regs.PCNF1 & NFCT_MAXLEN_MAXLEN_Msk) >> NFCT_MAXLEN_MAXLEN_Pos;
+uint nhwra_get_MAXLEN(void) {
+  return (NRF_RADIO_regs.PCNF1 & RADIO_PCNF1_MAXLEN_Msk) >> RADIO_PCNF1_MAXLEN_Pos;
 }
 
 /*
  * Return the payload length, NOT including the CRC length
  * (and NOT adding S0 or S1 lengths)
  */
-uint nrfra_get_payload_length(uint8_t *buf){
+uint nhwra_get_payload_length(uint8_t *buf){
   int S0Len;
   int LFLenb, LFLenB;
   uint payload_len = 0;
@@ -435,7 +437,7 @@ uint nrfra_get_payload_length(uint8_t *buf){
   }
 
   if (NRF_RADIO_regs.PCNF0 & RADIO_PCNF0_CRCINC_Msk) {
-    int crc_len = nrfra_get_crc_length();
+    int crc_len = nhwra_get_crc_length();
     if (payload_len >= crc_len) {
       payload_len -= crc_len;
     } else {
@@ -448,8 +450,8 @@ uint nrfra_get_payload_length(uint8_t *buf){
 }
 
 uint nrfra_get_capped_payload_length(uint8_t *buf) {
-  uint payload_lenght = nrfra_get_payload_length(buf);
-  uint max_length = nrfra_get_MAXLEN();
+  uint payload_lenght = nhwra_get_payload_length(buf);
+  uint max_length = nhwra_get_MAXLEN();
   return BS_MIN(payload_lenght, max_length);
 }
 
@@ -459,9 +461,9 @@ uint nrfra_get_capped_payload_length(uint8_t *buf) {
  *    rx_buf: Pointer to the received buffer
  *    rx_packet_size: Number of input bytes in rx_buf
  */
-uint32_t nrfra_get_rx_crc_value(uint8_t *rx_buf, size_t rx_packet_size) {
+uint32_t nhwra_get_rx_crc_value(uint8_t *rx_buf, size_t rx_packet_size) {
   uint32_t crc = 0;
-  uint crc_len = nrfra_get_crc_length();
+  uint crc_len = nhwra_get_crc_length();
   uint payload_len = nrfra_get_capped_payload_length(rx_buf);
 
   //Eventually this should be generalized with the packet configuration
@@ -489,7 +491,7 @@ uint32_t nrfra_get_rx_crc_value(uint8_t *rx_buf, size_t rx_packet_size) {
  * this needs to be reworked together with the start_Tx()
  * function, as it is all way too interdependent
  */
-uint nrfra_tx_copy_payload(uint8_t *tx_buf){
+uint nhwra_tx_copy_payload(uint8_t *tx_buf){
   int S0Len, S1LenB, LFLenB; //All in bytes
   int LFLenb, S1LenAirb;
   int i;
@@ -527,10 +529,10 @@ uint nrfra_tx_copy_payload(uint8_t *tx_buf){
      */
   }
 
-  payload_len = nrfra_get_payload_length(tx_buf);
+  payload_len = nhwra_get_payload_length(tx_buf);
   /* Note that we assume if CRCINC=1, CRCLEN is deducted from the length field
    * before capping the length to MAXLEN */
-  maxlen = nrfra_get_MAXLEN();
+  maxlen = nhwra_get_MAXLEN();
   if (payload_len > maxlen) {
     bs_trace_error_time_line("NRF_RADIO: Transmitting a packet longer than the configured MAXLEN (%i>%i). "
         "This would truncate it and a corrupted packet will be transmitted. "
