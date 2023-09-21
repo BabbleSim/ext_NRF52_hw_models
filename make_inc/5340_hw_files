@@ -23,4 +23,5 @@ src/HW_models/NHW_RTC.c
 src/HW_models/NHW_SWI.c
 src/HW_models/NHW_TIMER.c
 src/HW_models/NHW_TEMP.c
+src/HW_models/NHW_VREQCTRL.c
 src/HW_models/weak_stubs.c

@@ -113,6 +113,18 @@ typedef struct {
   __IOM uint32_t  FORCEOFF;                     /*!< (@ 0x00000004) Force network core off                                     */
 } RESET_NETWORK_Type;                           /*!< Size = 8 (0x8)                                                            */
 
+
+/**
+  * @brief VREQCTRL_VREGRADIO [VREGRADIO] (Unspecified)
+  */
+typedef struct {
+  __IOM uint32_t  VREQH;                        /*!< (@ 0x00000000) Request high voltage on RADIO After requesting
+                                                                    high voltage, the user must wait until VREQHREADY
+                                                                    is set to Ready                                            */
+  __IM  uint32_t  RESERVED;
+  __IM  uint32_t  VREQHREADY;                   /*!< (@ 0x00000008) High voltage on RADIO is ready                             */
+} VREQCTRL_VREGRADIO_Type;                      /*!< Size = 12 (0xc)                                                           */
+
 /* =========================================================================================================================== */
 /* ================                                          AAR                                              ================ */
 /* =========================================================================================================================== */
@@ -5294,6 +5306,21 @@ typedef struct {                                /*!< (@ 0x4100C000) TIMER0_NS St
 #define TIMER_ONESHOTEN_ONESHOTEN_Msk (0x1UL << TIMER_ONESHOTEN_ONESHOTEN_Pos) /*!< Bit mask of ONESHOTEN field. */
 #define TIMER_ONESHOTEN_ONESHOTEN_Disable (0UL) /*!< Disable one-shot operation */
 #define TIMER_ONESHOTEN_ONESHOTEN_Enable (1UL) /*!< Enable one-shot operation */
+
+
+/* =========================================================================================================================== */
+/* ================                                        VREQCTRL                                           ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Voltage request control (VREQCTRL)
+  */
+
+typedef struct {                                /*!< (@ 0x41004000) VREQCTRL_NS Structure                                      */
+  __IM  uint32_t  RESERVED[320];
+  __IOM VREQCTRL_VREGRADIO_Type VREGRADIO;      /*!< (@ 0x00000500) Unspecified                                                */
+} NRF_VREQCTRL_Type;                            /*!< Size = 1292 (0x50c)                                                       */
 
 
 

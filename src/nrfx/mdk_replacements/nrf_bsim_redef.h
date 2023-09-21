@@ -109,8 +109,9 @@ extern NRF_UICR_Type *NRF_UICR_regs_p;
 #define NRF_CTI_NS_BASE            NULL
 #undef NRF_DCNF_NS_BASE
 #define NRF_DCNF_NS_BASE           NULL
+extern NRF_VREQCTRL_Type NRF_VREQCTRL_regs;
 #undef NRF_VREQCTRL_NS_BASE
-#define NRF_VREQCTRL_NS_BASE       NULL
+#define NRF_VREQCTRL_NS_BASE       (&NRF_VREQCTRL_regs)
 extern NRF_CLOCK_Type *NRF_CLOCK_regs[];
 #undef NRF_CLOCK_NS_BASE
 #define NRF_CLOCK_NS_BASE          (NRF_CLOCK_regs[NHW_CLKPWR_NET0])
