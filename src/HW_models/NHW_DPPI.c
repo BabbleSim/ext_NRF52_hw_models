@@ -245,8 +245,8 @@ void nhw_dppi_channel_subscribe(unsigned int dppi_inst,
   struct dppi_registry_el *ch_reg = this->registry[ch_n];
 
   for (int i = 0; i < this->reg_used[ch_n]; i++) {
-    if ((ch_reg->callback == callback) /* LCOV_EXCL_START */
-        && (ch_reg->param == param)) {
+    if ((ch_reg[i].callback == callback) /* LCOV_EXCL_START */
+        && (ch_reg[i].param == param)) {
       bs_trace_error_time_line("%s: Programming error: Attempted to subscribe "
                                "twice to DDPI%i ch %i\n",
                                 __func__, dppi_inst, ch_n);
@@ -329,13 +329,17 @@ void nhw_dppi_event_signal(uint dppi_inst, uint ch_n)
   struct dppi_registry_el *ch_reg = this->registry[ch_n];
 
   for (int i = 0; i < this->reg_used[ch_n]; i++) {
-    if (ch_reg->callback) { /* LCOV_EXCL_BR_LINE */
-      if (ch_reg->param != (void*)DPPI_CB_NO_PARAM) {
-        ch_reg->callback(ch_reg->param);
+    if (ch_reg[i].callback) { /* LCOV_EXCL_BR_LINE */
+      if (ch_reg[i].param != (void*)DPPI_CB_NO_PARAM) {
+        ch_reg[i].callback(ch_reg[i].param);
       } else {
-        ((dppi_callback_noparam_t)ch_reg->callback)();
+        ((dppi_callback_noparam_t)ch_reg[i].callback)();
       }
-    }
+    } else { /* LCOV_EXCL_START */
+      bs_trace_error_time_line("%s: Programming error: Hole in "
+                               " DPPI %i registry, ch%i i=%i\n",
+                               __func__, dppi_inst, ch_n, i);
+    } /* LCOV_EXCL_STOP */
   }
 }
 
