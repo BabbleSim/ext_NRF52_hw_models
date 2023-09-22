@@ -179,9 +179,8 @@ uint32_t nhwra_RSSI_value_to_modem_format(double rssi_value){
 
 uint8_t nhwra_dBm_to_modem_LQIformat(double rssi_value){
   //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
-  //ED_RSSIOFFS = -93
-  //=> VALHARDWARE = PRF[dBm] - ED_RSSIOFFS = PRF[dBm] + 93
-  rssi_value +=93;
+  //=> VALHARDWARE = PRF[dBm] - ED_RSSIOFFS
+  rssi_value -= NHW_RADIO_ED_RSSIOFFS;
   rssi_value = BS_MAX(rssi_value,0);
   rssi_value = BS_MIN(rssi_value,255);
   return (uint8_t)rssi_value;
@@ -189,8 +188,7 @@ uint8_t nhwra_dBm_to_modem_LQIformat(double rssi_value){
 
 double nrfra_LQIformat_to_dBm(uint value){
   //PRF[dBm] = ED_RSSIOFFS + VALHARDWARE
-  //ED_RSSIOFFS = -93
-  return (double)value - 93;
+  return (double)value + NHW_RADIO_ED_RSSIOFFS;
 }
 
 int nhwra_is_HW_TIFS_enabled(void) {

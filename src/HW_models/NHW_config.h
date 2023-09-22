@@ -119,6 +119,7 @@
 #define NHW_RADIO_TOTAL_INST 1
 #define NHW_RADIO_0 0
 #define NHW_RADIO_INT_MAP {{0 , 1}} /*Only core,RADIO_IRQn*/
+#define NHW_RADIO_ED_RSSIOFFS (-93)
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_0 0
@@ -324,6 +325,7 @@
 #define NHW_RADIO_NET0 0
 #define NHW_RADIO_INT_MAP {{1 , 8}} /*Net core,RADIO_IRQn*/
 #define NHW_RADIO_DPPI_MAP {1} /*Network core*/
+#define NHW_RADIO_ED_RSSIOFFS (-93)
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_NET_0 0
