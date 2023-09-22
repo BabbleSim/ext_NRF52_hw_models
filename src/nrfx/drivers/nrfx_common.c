@@ -100,6 +100,8 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return ECB_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, AAR,, _NS)) {
       return AAR_CCM_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, CCM,, _NS)) {
+      return AAR_CCM_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, TEMP,, _NS)) {
       return TEMP_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 0, _NS)) {
