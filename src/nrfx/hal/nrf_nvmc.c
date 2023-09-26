@@ -9,7 +9,7 @@
 #include "hal/nrf_nvmc.h"
 #include "bs_tracing.h"
 #include "bs_utils.h"
-#include "NRF_NVMC.h"
+#include "NHW_NVMC.h"
 #include <nrfx_glue.h>
 
 

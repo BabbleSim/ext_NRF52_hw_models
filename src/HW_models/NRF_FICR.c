@@ -21,7 +21,7 @@
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NRF_FICR.h"
-#include "NRF_NVMC.h"
+#include "NHW_NVMC.h"
 #include <string.h>
 #include "bs_rand_main.h"
 #include "nsi_tasks.h"

@@ -43,46 +43,42 @@
  *  * Warn users if an address is written more than n_write between erases
  */
 
+/*
+ * Notes for 53:
+ *  * CONFIGNS and CONFIG have the same abilities (including enabling a partial erase)
+ *  * There is no handling or differentiation between secure and non secure areas
+ *  * All registers are accessible from all SW (there is no differentiation between secure and not secure registers)
+ *  * There is no modelling of the protection features (Access port protection)
+ *
+ * Main 52-53 diffs:
+ *    Erase (full or partial) by writing 0xFF..FF to first word of page instead of starting erase
+ *    UICR can only be erased with eraseall (not by writing 0xFF on its first word, no ERASEUICR register)
+ *    2 instances of flash and UICR
+ */
+
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include "bs_tracing.h"
 #include "bs_cmd_line.h"
 #include "bs_dynargs.h"
 #include "bs_oswrap.h"
-#include "bs_compat.h"
-#include "NHW_common_types.h"
-#include "NHW_config.h"
-#include "NHW_peri_types.h"
-#include "NRF_NVMC.h"
 #include "nsi_hw_scheduler.h"
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
+#include "NHW_common_types.h"
+#include "NHW_config.h"
+#include "NHW_peri_types.h"
+#include "NHW_NVMC.h"
+#include "NHW_NVM_backend.h"
+#include "NHW_NVM_common.h"
 
 NRF_UICR_Type *NRF_UICR_regs_p;
 NRF_NVMC_Type NRF_NVMC_regs = {0};
 static bs_time_t Timer_NVMC = TIME_NEVER; //Time when the next flash operation will be completed
 
-typedef struct {
-  uint8_t *storage;
-  const char *file_path;
-  const char *type_s;
-  int fd;
-  size_t size;
-  bool erase_at_start;
-  bool rm_at_exit;
-  bool in_ram;
-} storage_state_t;
-
-static storage_state_t flash_st;
-static storage_state_t uicr_st;
-static enum flash_op_t {flash_idle = 0, flash_write, flash_erase, flash_erase_partial, flash_erase_uicr, flash_erase_all} flash_op;
+static nvm_storage_state_t flash_st;
+static nvm_storage_state_t uicr_st;
+static enum flash_op_t flash_op;
 static uint32_t erase_address;
 static bs_time_t time_under_erase[FLASH_N_PAGES];
 static bool page_erased[FLASH_N_PAGES];
@@ -93,19 +89,10 @@ static bs_time_t flash_t_write     =     42;
 static double    flash_partial_erase_factor = 1.0; //actual tERASEPAGEPARTIAL,acc for this given device
 
 struct nvmc_args_t {
-  char *uicr_file;
-  bool uicr_erase;
-  bool uicr_rm;
-  bool uicr_in_ram;
-  char *flash_file;
-  bool flash_erase;
-  bool flash_rm;
-  bool flash_in_ram;
+  struct nhw_nvm_st_args_t uicr;
+  struct nhw_nvm_st_args_t flash;
   bool flash_erase_warnings;
 } nvmc_args;
-
-static void nvmc_initialize_data_storage(storage_state_t *st);
-static void nvmc_clear_storage(storage_state_t *st);
 
 /**
  * Initialize the NVMC and UICR models
@@ -120,24 +107,13 @@ static void nrfhw_nvmc_uicr_init(void) {
   Timer_NVMC = TIME_NEVER;
   nsi_hws_find_next_event();
 
-  flash_st.file_path      = nvmc_args.flash_file;
-  flash_st.erase_at_start = nvmc_args.flash_erase;
-  flash_st.rm_at_exit     = nvmc_args.flash_rm;
-  flash_st.in_ram         = nvmc_args.flash_in_ram;
-  flash_st.size           = FLASH_SIZE;
-  flash_st.type_s         = "flash";
-
-  uicr_st.file_path      = nvmc_args.uicr_file;
-  uicr_st.erase_at_start = nvmc_args.uicr_erase;
-  uicr_st.rm_at_exit     = nvmc_args.uicr_rm;
-  uicr_st.in_ram         = nvmc_args.uicr_in_ram;
-  uicr_st.size           = sizeof(NRF_UICR_Type);
+  nhw_nvm_init_storage(&flash_st, &nvmc_args.flash,
+                       FLASH_SIZE, "flash");
   // We book more than the actual flash area, to avoid segfaults if
   // somebody tries to access the HW control registers
-  uicr_st.type_s         = "UICR";
+  nhw_nvm_init_storage(&uicr_st, &nvmc_args.uicr,
+                       sizeof(NRF_UICR_Type), "UICR");
 
-  nvmc_initialize_data_storage(&flash_st);
-  nvmc_initialize_data_storage(&uicr_st);
   NRF_UICR_regs_p = (NRF_UICR_Type *)uicr_st.storage;
 
   //Reset the partial erase tracking
@@ -162,8 +138,8 @@ NSI_TASK(nrfhw_nvmc_uicr_init, HW_INIT, 100);
  * Clean up the NVMC and UICR model before program exit
  */
 static void nrfhw_nvmc_uicr_clean_up(void) {
-  nvmc_clear_storage(&flash_st);
-  nvmc_clear_storage(&uicr_st);
+  nhw_nvm_clear_storage(&flash_st);
+  nhw_nvm_clear_storage(&uicr_st);
 }
 
 NSI_TASK(nrfhw_nvmc_uicr_clean_up, ON_EXIT_PRE, 100);
@@ -509,173 +485,24 @@ void* nrfhw_nmvc_flash_get_base_address(void){
 	return (void*)&flash_st.storage;
 }
 
-/**
- * Before exiting the program, do whatever is
- * necessary for a given storage (free'ing heap,
- * closing file descriptors, etc)
- */
-static void nvmc_clear_storage(storage_state_t *st){
-
-  if (st->in_ram == true) {
-    if (st->storage != NULL) {
-      free(st->storage);
-      st->storage = NULL;
-    }
-    return;
-  }
-
-  if ((st->storage != MAP_FAILED) && (st->storage != NULL)) {
-    munmap(st->storage, st->size);
-    st->storage = NULL;
-  }
-
-  if (st->fd != -1) {
-    close(st->fd);
-    st->fd = -1;
-  }
-
-  if ((st->rm_at_exit == true) && (st->file_path != NULL)) {
-    /* We try to remove the file but do not error out if we can't */
-    (void) remove(st->file_path);
-    st->file_path = NULL;
-  }
-}
-
-/**
- * At boot, do whatever is necessary for a given storage
- * (allocate memory, open files etc. )
- */
-static void nvmc_initialize_data_storage(storage_state_t *st){
-  struct stat f_stat;
-  int rc;
-
-  st->fd = -1;
-  st->storage = NULL;
-
-  if (st->in_ram == true) {
-    st->storage = (uint8_t *)bs_malloc(st->size);
-
-  } else {
-
-    _bs_create_folders_in_path(st->file_path);
-    st->fd = open(st->file_path, O_RDWR | O_CREAT, (mode_t)0600);
-    if (st->fd == -1) {
-      bs_trace_error_line("%s: Failed to open %s device file %s: %s\n",
-          __func__, st->type_s, st->file_path, strerror(errno));
-    }
-
-    rc = fstat(st->fd, &f_stat);
-    if (rc) {
-      bs_trace_error_line("%s: Failed to get status of %s device file %s: %s\n",
-          __func__, st->type_s, st->file_path, strerror(errno));
-    }
-
-    if (ftruncate(st->fd, st->size) == -1) {
-      bs_trace_error_line("%s: Failed to resize %s device file %s: %s\n",
-          __func__, st->type_s, st->file_path, strerror(errno));
-    }
-
-    st->storage = mmap(NULL, st->size, PROT_WRITE | PROT_READ, MAP_SHARED, st->fd, 0);
-    if (st->storage == MAP_FAILED) {
-      bs_trace_error_line("%s: Failed to mmap %s device file %s: %s\n",
-          __func__, st->type_s, st->file_path, strerror(errno));
-    }
-  }
-
-  if ((st->erase_at_start == true) || (st->in_ram == true) || (f_stat.st_size == 0)) {
-    /* Erase the memory unit by pulling all bits to the configured erase value */
-    (void)memset(st->storage, 0xFF, st->size);
-  }
-}
-
-static void arg_uicr_file_found(char *argv, int offset){
-  nvmc_args.uicr_in_ram = false;
-}
-
-static void arg_flash_file_found(char *argv, int offset){
-  nvmc_args.flash_in_ram = false;
-}
-
-static void arg_uicr_in_ram_found(char *argv, int offset){
-  nvmc_args.uicr_in_ram = true;
-}
-
-static void arg_flash_in_ram_found(char *argv, int offset){
-  nvmc_args.flash_in_ram = true;
-}
+NVM_BACKEND_PARAMS_CALLBACS(uicr)
+NVM_BACKEND_PARAMS_CALLBACS(flash)
 
 static void nvmc_register_cmd_args(void){
 
-  nvmc_args.uicr_in_ram = true;
-  nvmc_args.flash_in_ram = true;
+  nvmc_args.uicr.in_ram = true;
+  nvmc_args.flash.in_ram = true;
 
   static bs_args_struct_t args_struct_toadd[] = {
-  { .is_switch = true,
-    .option = "uicr_erase",
-    .type = 'b',
-    .dest = (void*)&nvmc_args.uicr_erase,
-    .descript = "Reset all UICR registers to their erase values (0xFF) at boot"
-  },
-  { .option ="uicr_file",
-    .name = "path",
-    .type = 's',
-    .dest = (void*)&nvmc_args.uicr_file,
-    .call_when_found = arg_uicr_file_found,
-    .descript = "Path to the binary file where the UICR registers are stored (if set, toggles uicr_in_ram to false)"
-  },
-  { .is_switch = true,
-    .option ="uicr_rm",
-    .type = 'b',
-    .dest = (void*)&nvmc_args.uicr_rm,
-    .descript = "Remove the UICR file when terminating the execution (default no)"
-  },
-  { .is_switch = true,
-    .option ="uicr_in_ram",
-    .type = 'b',
-    .call_when_found = arg_uicr_in_ram_found,
-    .descript = "(default)  Instead of a file, keep the UICR content in RAM. If this is "
-          "set uicr_erase, uicr_file & uicr_rm are ignored, and the UICR content is always reset at startup"
-  },
-  { .is_switch = true,
-    .option ="flash_erase",
-    .type = 'b',
-    .dest = (void*)&nvmc_args.flash_erase,
-    .descript = "Reset the whole flash (not UICR) to its erase values (0xFF) at boot"
-  },
-  { .option ="flash_file",
-    .name = "path",
-    .type = 's',
-    .dest = (void*)&nvmc_args.flash_file,
-    .call_when_found = arg_flash_file_found,
-    .descript = "Path to the binary file where the flash content is stored (if set, toggles flash_in_ram to false)"
-  },
-  { .option ="flash",
-    .name = "path",
-    .type = 's',
-    .dest = (void*)&nvmc_args.flash_file,
-    .call_when_found = arg_flash_file_found,
-    .descript = "Alias for flash_file"
-  },
-  { .is_switch = true,
-    .option = "flash_rm",
-    .type = 'b',
-    .dest = (void*)&nvmc_args.flash_rm,
-    .descript = "Remove the flash file when terminating the execution (default no)"
-  },
-  { .is_switch = true,
-    .option = "flash_in_ram",
-    .type = 'b',
-    .call_when_found = arg_flash_in_ram_found,
-    .descript = "(default) Instead of a file, keep the flash content in RAM. If this is "
-           "set flash_erase, flash_file & flash_rm are ignored, and the flash content is always reset at startup"
-  },
-  { .is_switch = true,
-    .option = "flash_erase_warnings",
-    .type = 'b',
-    .dest = (void*)&nvmc_args.flash_erase_warnings,
-    .descript = "Give warnings when accessing partially erased pages"
-  },
-  ARG_TABLE_ENDMARKER
+    NVM_BACKEND_PARAMS(uicr, "UICR"),
+    NVM_BACKEND_PARAMS(flash, "FLASH"),
+    { .is_switch = true,
+      .option = "flash_erase_warnings",
+      .type = 'b',
+      .dest = (void*)&nvmc_args.flash_erase_warnings,
+      .descript = "Give warnings when accessing partially erased pages"
+    },
+    ARG_TABLE_ENDMARKER
   };
 
   bs_add_extra_dynargs(args_struct_toadd);
