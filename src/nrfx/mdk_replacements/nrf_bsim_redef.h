@@ -76,9 +76,9 @@ extern NRF_GPIO_Type NRF_GPIO_regs[];
 extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 #undef NRF_GPIOTE_BASE
 #define NRF_GPIOTE_BASE                   (&NRF_GPIOTE_regs)
-extern NRF_NVMC_Type NRF_NVMC_regs;
+extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 #undef NRF_NVMC_BASE
-#define NRF_NVMC_BASE                     (&NRF_NVMC_regs)
+#define NRF_NVMC_BASE                     (NRF_NVMC_regs_p[0])
 extern NRF_EGU_Type NRF_EGU_regs[6];
 #undef NRF_EGU0_BASE
 #define NRF_EGU0_BASE                     (&NRF_EGU_regs[0])
@@ -93,8 +93,8 @@ extern NRF_EGU_Type NRF_EGU_regs[6];
 #undef NRF_EGU5_BASE
 #define NRF_EGU5_BASE                     (&NRF_EGU_regs[5])
 #undef NRF_UICR_BASE
-extern NRF_UICR_Type *NRF_UICR_regs_p;
-#define NRF_UICR_BASE                     (NRF_UICR_regs_p)
+extern NRF_UICR_Type *NRF_UICR_regs_p[];
+#define NRF_UICR_BASE                     (NRF_UICR_regs_p[0])
 
 /********************************************************************/
 /********************************************************************/
@@ -103,8 +103,9 @@ extern NRF_UICR_Type *NRF_UICR_regs_p;
 
 #undef NRF_FICR_NS_BASE
 #define NRF_FICR_NS_BASE           NULL
+extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #undef NRF_UICR_NS_BASE
-#define NRF_UICR_NS_BASE           NULL
+#define NRF_UICR_NS_BASE           (NRF_UICR_regs_p[NHW_UICR_NET0])
 #undef NRF_CTI_NS_BASE
 #define NRF_CTI_NS_BASE            NULL
 #undef NRF_DCNF_NS_BASE
@@ -190,8 +191,9 @@ extern int NRF_SWI_regs[];
 #define NRF_APPMUTEX_S_BASE        NULL
 #undef NRF_ACL_NS_BASE
 #define NRF_ACL_NS_BASE            NULL
+extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 #undef NRF_NVMC_NS_BASE
-#define NRF_NVMC_NS_BASE           NULL
+#define NRF_NVMC_NS_BASE           (NRF_NVMC_regs_p[NHW_NVMC_NET0])
 #undef NRF_VMC_NS_BASE
 #define NRF_VMC_NS_BASE            NULL
 #undef NRF_P0_NS_BASE
@@ -210,8 +212,9 @@ extern int NRF_SWI_regs[];
 #define NRF_CACHEINFO_S_BASE        NULL
 #undef NRF_FICR_S_BASE
 #define NRF_FICR_S_BASE             NULL
+extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #undef NRF_UICR_S_BASE
-#define NRF_UICR_S_BASE             NULL
+#define NRF_UICR_S_BASE             (NRF_UICR_regs_p[NHW_UICR_APP0])
 #undef NRF_CTI_S_BASE
 #define NRF_CTI_S_BASE              NULL
 #undef NRF_TAD_S_BASE
@@ -473,12 +476,13 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_USBREGULATOR_S_BASE     NULL
 #undef NRF_KMU_NS_BASE
 #define NRF_KMU_NS_BASE             NULL
+extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 #undef NRF_NVMC_NS_BASE
-#define NRF_NVMC_NS_BASE            NULL
+#define NRF_NVMC_NS_BASE            (NRF_NVMC_regs_p[NHW_NVMC_APP0])
 #undef NRF_KMU_S_BASE
 #define NRF_KMU_S_BASE              NULL
 #undef NRF_NVMC_S_BASE
-#define NRF_NVMC_S_BASE             NULL
+#define NRF_NVMC_S_BASE             (NRF_NVMC_regs_p[NHW_NVMC_APP0])
 #undef NRF_P0_NS_BASE
 #define NRF_P0_NS_BASE              NULL
 #undef NRF_P1_NS_BASE

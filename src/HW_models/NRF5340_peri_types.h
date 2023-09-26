@@ -1906,6 +1906,83 @@ typedef struct {                                /*!< (@ 0x4100F000) DPPIC_NS Str
 #define DPPIC_CHG_CH0_Included (1UL) /*!< Include */
 
 
+/* =========================================================================================================================== */
+/* ================                                          NVMC                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Non-volatile memory controller (NVMC)
+  *
+  * Note: This is the app core register layouts
+  * as by now the icache registers are just ignored
+  */
+
+typedef struct {                                /*!< (@ 0x40039000) NVMC_NS Structure                                          */
+  __IM  uint32_t  RESERVED[256];
+  __IM  uint32_t  READY;                        /*!< (@ 0x00000400) Ready flag                                                 */
+  __IM  uint32_t  RESERVED1;
+  __IM  uint32_t  READYNEXT;                    /*!< (@ 0x00000408) Ready flag                                                 */
+  __IM  uint32_t  RESERVED2[62];
+  __IOM uint32_t  CONFIG;                       /*!< (@ 0x00000504) Configuration register                                     */
+  __IM  uint32_t  RESERVED3;
+  __OM  uint32_t  ERASEALL;                     /*!< (@ 0x0000050C) Register for erasing all non-volatile user memory          */
+  __IM  uint32_t  RESERVED4[3];
+  __IOM uint32_t  ERASEPAGEPARTIALCFG;          /*!< (@ 0x0000051C) Register for partial erase configuration                   */
+  __IM  uint32_t  RESERVED5[25];
+  __IOM uint32_t  CONFIGNS;                     /*!< (@ 0x00000584) Non-secure configuration register                          */
+  __OM  uint32_t  WRITEUICRNS;                  /*!< (@ 0x00000588) Non-secure APPROTECT enable register                       */
+} NRF_NVMC_Type;                                /*!< Size = 1420 (0x58c)                                                       */
+
+
+/* Peripheral: NVMC */
+/* Description: Non-volatile memory controller */
+
+/* Register: NVMC_READY */
+/* Description: Ready flag */
+
+/* Bit 0 : NVMC is ready or busy */
+#define NVMC_READY_READY_Pos (0UL) /*!< Position of READY field. */
+#define NVMC_READY_READY_Msk (0x1UL << NVMC_READY_READY_Pos) /*!< Bit mask of READY field. */
+#define NVMC_READY_READY_Busy (0UL) /*!< NVMC is busy (ongoing write or erase operation) */
+#define NVMC_READY_READY_Ready (1UL) /*!< NVMC is ready */
+
+/* Register: NVMC_READYNEXT */
+/* Description: Ready flag */
+
+/* Bit 0 : NVMC can accept a new write operation */
+#define NVMC_READYNEXT_READYNEXT_Pos (0UL) /*!< Position of READYNEXT field. */
+#define NVMC_READYNEXT_READYNEXT_Msk (0x1UL << NVMC_READYNEXT_READYNEXT_Pos) /*!< Bit mask of READYNEXT field. */
+#define NVMC_READYNEXT_READYNEXT_Busy (0UL) /*!< NVMC cannot accept any write operation */
+#define NVMC_READYNEXT_READYNEXT_Ready (1UL) /*!< NVMC is ready */
+
+/* Register: NVMC_CONFIG */
+/* Description: Configuration register */
+
+/* Bits 2..0 : Program memory access mode. It is strongly recommended to only activate erase and write modes when they are actively used. Enabling write or erase will invalidate the cache and keep it invalidated. */
+#define NVMC_CONFIG_WEN_Pos (0UL) /*!< Position of WEN field. */
+#define NVMC_CONFIG_WEN_Msk (0x7UL << NVMC_CONFIG_WEN_Pos) /*!< Bit mask of WEN field. */
+#define NVMC_CONFIG_WEN_Ren (0UL) /*!< Read only access */
+#define NVMC_CONFIG_WEN_Wen (1UL) /*!< Write enabled */
+#define NVMC_CONFIG_WEN_Een (2UL) /*!< Erase enabled */
+#define NVMC_CONFIG_WEN_PEen (4UL) /*!< Partial erase enabled */
+
+/* Register: NVMC_ERASEALL */
+/* Description: Register for erasing all non-volatile user memory */
+
+/* Bit 0 : Erase all non-volatile memory including UICR registers. Before the non-volatile memory can be erased, erasing must be enabled by setting CONFIG.WEN=Een. */
+#define NVMC_ERASEALL_ERASEALL_Pos (0UL) /*!< Position of ERASEALL field. */
+#define NVMC_ERASEALL_ERASEALL_Msk (0x1UL << NVMC_ERASEALL_ERASEALL_Pos) /*!< Bit mask of ERASEALL field. */
+#define NVMC_ERASEALL_ERASEALL_NoOperation (0UL) /*!< No operation */
+#define NVMC_ERASEALL_ERASEALL_Erase (1UL) /*!< Start chip erase */
+
+/* Register: NVMC_ERASEPAGEPARTIALCFG */
+/* Description: Register for partial erase configuration */
+
+/* Bits 6..0 : Duration of the partial erase in milliseconds */
+#define NVMC_ERASEPAGEPARTIALCFG_DURATION_Pos (0UL) /*!< Position of DURATION field. */
+#define NVMC_ERASEPAGEPARTIALCFG_DURATION_Msk (0x7FUL << NVMC_ERASEPAGEPARTIALCFG_DURATION_Pos) /*!< Bit mask of DURATION field. */
+
 
 /* =========================================================================================================================== */
 /* ================                                         POWER_NS                                          ================ */
@@ -5306,6 +5383,21 @@ typedef struct {                                /*!< (@ 0x4100C000) TIMER0_NS St
 #define TIMER_ONESHOTEN_ONESHOTEN_Msk (0x1UL << TIMER_ONESHOTEN_ONESHOTEN_Pos) /*!< Bit mask of ONESHOTEN field. */
 #define TIMER_ONESHOTEN_ONESHOTEN_Disable (0UL) /*!< Disable one-shot operation */
 #define TIMER_ONESHOTEN_ONESHOTEN_Enable (1UL) /*!< Enable one-shot operation */
+
+/* =========================================================================================================================== */
+/* ================                                          UICR                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief User Information Configuration Registers (UICR)
+  * At this point just a chunk of reserved space of 2KiB
+  */
+
+typedef struct {                                /*!< (@ 0x10001000) UICR Structure                                          */
+  __IM  uint32_t  RESERVED[1024];
+} NRF_UICR_Type;                                /*!< Size = 4096 */
+
 
 
 /* =========================================================================================================================== */

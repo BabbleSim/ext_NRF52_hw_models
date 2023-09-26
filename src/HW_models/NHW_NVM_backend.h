@@ -38,17 +38,17 @@ void nhw_nvm_clear_storage(nvm_storage_state_t *st);
 void nhw_nvm_init_storage(nvm_storage_state_t *st, struct nhw_nvm_st_args_t *args,
                           size_t size, char *type);
 
-#define NVM_BACKEND_PARAMS(x, X)                                              \
+#define NVM_BACKEND_PARAMS(x, arg, X)                                         \
 { .is_switch = true,                                                          \
   .option = NSI_STRINGIFY(x) "_erase",                                        \
   .type = 'b',                                                                \
-  .dest = (void*)&nvmc_args. x .erase,                                        \
+  .dest = (void*)&nvmc_args. arg .erase,                                        \
   .descript = "Reset the " # X " storage to their erase values (0xFF) at boot"\
 },                                                                            \
 { .option = NSI_STRINGIFY(x) "_file",                                         \
   .name = "path",                                                             \
   .type = 's',                                                                \
-  .dest = (void*)&nvmc_args. x .file,                                         \
+  .dest = (void*)&nvmc_args. arg .file,                                         \
   .call_when_found = arg_##x##_file_found,                                    \
   .descript = "Path to the binary file where the " #X " content "             \
   "is stored (if set, toggles " NSI_STRINGIFY(x) "_in_ram to false)"          \
@@ -56,14 +56,14 @@ void nhw_nvm_init_storage(nvm_storage_state_t *st, struct nhw_nvm_st_args_t *arg
 { .option = NSI_STRINGIFY(x),                                                 \
   .name = "path",                                                             \
   .type = 's',                                                                \
-  .dest = (void*)&nvmc_args. x . file,                                        \
+  .dest = (void*)&nvmc_args. arg . file,                                        \
   .call_when_found = arg_##x##_file_found,                                    \
   .descript = "Alias for " NSI_STRINGIFY(x) "_file"                           \
 },                                                                            \
 { .is_switch = true,                                                          \
   .option = NSI_STRINGIFY(x) "_rm",                                           \
   .type = 'b',                                                                \
-  .dest = (void*)&nvmc_args. x .rm,                                           \
+  .dest = (void*)&nvmc_args. arg .rm,                                           \
   .descript = "Remove the " # X " file when terminating the execution "       \
                "(default no)"                                                 \
 },                                                                            \
@@ -76,12 +76,12 @@ void nhw_nvm_init_storage(nvm_storage_state_t *st, struct nhw_nvm_st_args_t *arg
         "are ignored, and the " #X " content is always reset at startup"      \
 }
 
-#define NVM_BACKEND_PARAMS_CALLBACS(x) \
+#define NVM_BACKEND_PARAMS_CALLBACS(x, args) \
 static void arg_##x##_file_found(char *argv, int offset){ \
-  nvmc_args. x .in_ram = false; \
+  nvmc_args. args .in_ram = false; \
 } \
 static void arg_##x##_in_ram_found(char *argv, int offset){ \
-  nvmc_args. x .in_ram = true; \
+  nvmc_args. args .in_ram = true; \
 }
 
 

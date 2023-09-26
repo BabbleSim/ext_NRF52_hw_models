@@ -32,6 +32,10 @@ NRF_FICR_Type NRF_FICR_regs;
 static void nrf_ficr_init(void) {
   memset(&NRF_FICR_regs, 0xFF, sizeof(NRF_FICR_regs));
 
+#define FLASH_PAGE_SIZE (4*1024)
+#define FLASH_N_PAGES    128
+#define FLASH_SIZE (FLASH_N_PAGES*FLASH_PAGE_SIZE)
+
   NRF_FICR_regs.CODEPAGESIZE = FLASH_PAGE_SIZE;
   NRF_FICR_regs.CODESIZE     = FLASH_N_PAGES;
 

@@ -116,6 +116,19 @@
 [47] = "SPIM3",\
 }}
 
+#define NHW_NVMC_UICR_TOTAL_INST 1
+#define NHW_NVMC_HAS_ERASEREGS 1
+#define NHW_FLASH_START_ADDR {0x00000000}
+#define NHW_FLASH_PAGESIZE {(4*1024)}
+#define NHW_FLASH_N_PAGES {128}
+#define NHW_UICR_SIZE {776 /*64*4*/ /*bytes*/}
+        /* In case somebody tries to access the UICR registers, we book
+         * more space than its actual flash area (64*4)*/
+#define NHW_NVMC_FLASH_T_ERASEALL (173000)
+#define NHW_NVMC_FLASH_T_ERASEPAGE (87500)
+#define NHW_NVMC_FLASH_T_WRITE        (42)
+#define NHW_NVMC_FLASH_PARTIAL_ERASE_FACTOR (1.0)
+
 #define NHW_RADIO_TOTAL_INST 1
 #define NHW_RADIO_0 0
 #define NHW_RADIO_INT_MAP {{0 , 1}} /*Only core,RADIO_IRQn*/
@@ -320,6 +333,22 @@
 }}
 
 #define NHW_CORE_NAMES {"Application", "Network"}
+
+#define NHW_NVMC_UICR_TOTAL_INST 2
+#define NHW_NVMC_APP0 0
+#define NHW_NVMC_NET0 1
+#define NHW_UICR_APP0 0
+#define NHW_UICR_NET0 1
+#define NHW_NVMC_HAS_ERASEREGS 0
+#define NHW_FLASH_START_ADDR {0x00000000, 0x01000000}
+#define NHW_FLASH_PAGESIZE {(4*1024), (2*1024)}
+#define NHW_FLASH_N_PAGES {256, 128}
+#define NHW_UICR_SIZE {4096, 800 /*bytes*/}
+         //App UICR size including the KEYSLOT
+#define NHW_NVMC_FLASH_T_ERASEALL (173000)
+#define NHW_NVMC_FLASH_T_ERASEPAGE (87500)
+#define NHW_NVMC_FLASH_T_WRITE        (43)
+#define NHW_NVMC_FLASH_PARTIAL_ERASE_FACTOR (1.0)
 
 #define NHW_RADIO_TOTAL_INST 1
 #define NHW_RADIO_NET0 0
