@@ -55,6 +55,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "bs_types.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
@@ -106,6 +107,8 @@ static void nhw_dppi_init(void) {
   static uint nhw_dppi_dppi_map[NHW_DPPI_TOTAL_INST] = NHW_DPPI_DPPI_MAP;
   static uint nhw_dppi_n_ch[NHW_DPPI_TOTAL_INST] = NHW_DPPI_N_CH;
   static uint nhw_dppi_n_chg[NHW_DPPI_TOTAL_INST] = NHW_DPPI_N_CHG;
+
+  memset(NRF_DPPIC_regs, 0x0, sizeof(NRF_DPPIC_regs));
 
   for (int i = 0; i < NHW_DPPI_TOTAL_INST; i ++) {
     struct dppi_status *el = &nhw_dppi_st[i];
