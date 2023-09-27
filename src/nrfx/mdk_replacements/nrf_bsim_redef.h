@@ -101,8 +101,9 @@ extern NRF_UICR_Type *NRF_UICR_regs_p[];
 /********************************************************************/
 #elif defined(NRF5340_XXAA_NETWORK)
 
+extern void *NRF_FICR_regs_p[];
 #undef NRF_FICR_NS_BASE
-#define NRF_FICR_NS_BASE           NULL
+#define NRF_FICR_NS_BASE           (NRF_FICR_regs_p[NHW_FICR_NET])
 extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #undef NRF_UICR_NS_BASE
 #define NRF_UICR_NS_BASE           (NRF_UICR_regs_p[NHW_UICR_NET0])
@@ -210,8 +211,9 @@ extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 #define NRF_CACHEDATA_S_BASE        NULL
 #undef NRF_CACHEINFO_S_BASE
 #define NRF_CACHEINFO_S_BASE        NULL
+extern void *NRF_FICR_regs_p[];
 #undef NRF_FICR_S_BASE
-#define NRF_FICR_S_BASE             NULL
+#define NRF_FICR_S_BASE             (NRF_FICR_regs_p[NHW_FICR_APP])
 extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #undef NRF_UICR_S_BASE
 #define NRF_UICR_S_BASE             (NRF_UICR_regs_p[NHW_UICR_APP0])

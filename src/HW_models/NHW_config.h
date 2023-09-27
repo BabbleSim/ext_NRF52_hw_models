@@ -263,6 +263,9 @@
 #define NHW_DPPI_N_CH {32, 32} /* Number of channels in each DPPI */
 #define NHW_DPPI_N_CHG {6, 6}  /* Number of channel groups in each DPPI */
 
+#define NHW_FICR_APP 0
+#define NHW_FICR_NET 1
+
 #define NHW_INTCTRL_TOTAL_INST 2
 #define NHW_INTCTRL_MAX_INTLINES 58
 

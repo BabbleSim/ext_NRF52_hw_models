@@ -20,8 +20,6 @@
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
-#include "NRF_FICR.h"
-#include "NHW_NVMC.h"
 #include <string.h>
 #include "bs_rand_main.h"
 #include "nsi_tasks.h"
@@ -29,7 +27,7 @@
 
 NRF_FICR_Type NRF_FICR_regs;
 
-static void nrf_ficr_init(void) {
+static void nhw_52_ficr_init(void) {
   memset(&NRF_FICR_regs, 0xFF, sizeof(NRF_FICR_regs));
 
 #define FLASH_PAGE_SIZE (4*1024)
@@ -57,4 +55,4 @@ static void nrf_ficr_init(void) {
   NRF_FICR_regs.PRODTEST[2] = 0xBB42319F;
 }
 
-NSI_TASK(nrf_ficr_init, HW_INIT, 100);
+NSI_TASK(nhw_52_ficr_init, HW_INIT, 100);

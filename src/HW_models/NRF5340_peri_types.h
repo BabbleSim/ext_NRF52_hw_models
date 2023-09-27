@@ -58,6 +58,41 @@ typedef struct {
   __IM  uint32_t  DATA;                         /*!< (@ 0x00000004) Description cluster: Data                                  */
 } FICR_TRIMCNF_Type;                            /*!< Size = 8 (0x8)                                                            */
 
+
+/**
+  * @brief FICR_NFC [NFC] (Unspecified)
+  */
+typedef struct {
+  __IM  uint32_t  TAGHEADER0;                   /*!< (@ 0x00000000) Default header for NFC Tag. Software can read
+                                                                    these values to populate NFCID1_3RD_LAST,
+                                                                    NFCID1_2ND_LAST and NFCID1_LAST.                           */
+  __IM  uint32_t  TAGHEADER1;                   /*!< (@ 0x00000004) Default header for NFC Tag. Software can read
+                                                                    these values to populate NFCID1_3RD_LAST,
+                                                                    NFCID1_2ND_LAST and NFCID1_LAST.                           */
+  __IM  uint32_t  TAGHEADER2;                   /*!< (@ 0x00000008) Default header for NFC Tag. Software can read
+                                                                    these values to populate NFCID1_3RD_LAST,
+                                                                    NFCID1_2ND_LAST and NFCID1_LAST.                           */
+  __IM  uint32_t  TAGHEADER3;                   /*!< (@ 0x0000000C) Default header for NFC Tag. Software can read
+                                                                    these values to populate NFCID1_3RD_LAST,
+                                                                    NFCID1_2ND_LAST and NFCID1_LAST.                           */
+} FICR_NFC_Type;                                /*!< Size = 16 (0x10)                                                          */
+
+
+/**
+  * @brief FICR_TRNG90B [TRNG90B] (NIST800-90B RNG calibration data)
+  */
+typedef struct {
+  __IM  uint32_t  BYTES;                        /*!< (@ 0x00000000) Amount of bytes for the required entropy bits              */
+  __IM  uint32_t  RCCUTOFF;                     /*!< (@ 0x00000004) Repetition counter cutoff                                  */
+  __IM  uint32_t  APCUTOFF;                     /*!< (@ 0x00000008) Adaptive proportion cutoff                                 */
+  __IM  uint32_t  STARTUP;                      /*!< (@ 0x0000000C) Amount of bytes for the startup tests                      */
+  __IM  uint32_t  ROSC1;                        /*!< (@ 0x00000010) Sample count for ring oscillator 1                         */
+  __IM  uint32_t  ROSC2;                        /*!< (@ 0x00000014) Sample count for ring oscillator 2                         */
+  __IM  uint32_t  ROSC3;                        /*!< (@ 0x00000018) Sample count for ring oscillator 3                         */
+  __IM  uint32_t  ROSC4;                        /*!< (@ 0x0000001C) Sample count for ring oscillator 4                         */
+} FICR_TRNG90B_Type;                            /*!< Size = 32 (0x20)                                                          */
+
+
 /**
   * @brief RADIO_PSEL [PSEL] (Unspecified)
   */
@@ -1904,6 +1939,40 @@ typedef struct {                                /*!< (@ 0x4100F000) DPPIC_NS Str
 #define DPPIC_CHG_CH0_Msk (0x1UL << DPPIC_CHG_CH0_Pos) /*!< Bit mask of CH0 field. */
 #define DPPIC_CHG_CH0_Excluded (0UL) /*!< Exclude */
 #define DPPIC_CHG_CH0_Included (1UL) /*!< Include */
+
+/* =========================================================================================================================== */
+/* ================                                          FICR                                             ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Factory Information Configuration Registers (FICR)
+  */
+
+typedef struct {                                /*!< (@ 0x00FF0000) FICR_S Structure                                           */
+  __IM  uint32_t  RESERVED[128];
+  __IOM FICR_INFO_Type INFO;                    /*!< (@ 0x00000200) Device info                                                */
+  __IM  uint32_t  RESERVED1[53];
+  __IOM FICR_TRIMCNF_Type TRIMCNF[32];          /*!< (@ 0x00000300) Unspecified                                                */
+  __IM  uint32_t  RESERVED2[20];
+  __IOM FICR_NFC_Type NFC;                      /*!< (@ 0x00000450) Unspecified                                                */
+  __IM  uint32_t  RESERVED3[488];
+  __IOM FICR_TRNG90B_Type TRNG90B;              /*!< (@ 0x00000C00) NIST800-90B RNG calibration data                           */
+  __IM  uint32_t  XOSC32MTRIM;                  /*!< (@ 0x00000C20) XOSC32M capacitor selection trim values                    */
+} NRF_FICR_APP_Type;                            /*!< Size = 3108 (0xc24)                                                       */
+
+typedef struct {                                /*!< (@ 0x01FF0000) FICR_NS Structure                                          */
+  __IM  uint32_t  RESERVED[128];
+  __IOM FICR_INFO_Type INFO;                    /*!< (@ 0x00000200) Device info                                                */
+  __IM  uint32_t  RESERVED1[21];
+  __IM  uint32_t  ER[4];                        /*!< (@ 0x00000280) Description collection: Encryption Root, word
+                                                                    n                                                          */
+  __IM  uint32_t  IR[4];                        /*!< (@ 0x00000290) Description collection: Identity Root, word n              */
+  __IM  uint32_t  DEVICEADDRTYPE;               /*!< (@ 0x000002A0) Device address type                                        */
+  __IM  uint32_t  DEVICEADDR[2];                /*!< (@ 0x000002A4) Description collection: Device address n                   */
+  __IM  uint32_t  RESERVED2[21];
+  __IOM FICR_TRIMCNF_Type TRIMCNF[32];          /*!< (@ 0x00000300) Unspecified                                                */
+} NRF_FICR_NET_Type;                            /*!< Size = 1024 (0x400)                                                       */
 
 
 /* =========================================================================================================================== */
