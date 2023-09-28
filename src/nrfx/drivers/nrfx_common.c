@@ -12,8 +12,8 @@
 IRQn_Type nrfx_get_irq_number(void const * p_reg){
 
 #define IS_PERIPHERAL_REG(p, per, nbr, post) \
-    (p >= (void*)NRF_##per##nbr####post##_BASE) && \
-    ((intptr_t)p < (intptr_t)NRF_##per##nbr####post##_BASE + sizeof(NRF_##per##_Type))
+    (p >= (void*)NRF_##per##nbr##post##_BASE) && \
+    ((intptr_t)p < (intptr_t)NRF_##per##nbr##post##_BASE + sizeof(NRF_##per##_Type))
 
 #if defined(NRF52833_XXAA)
   /*
