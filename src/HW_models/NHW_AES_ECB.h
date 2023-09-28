@@ -11,8 +11,8 @@
 extern "C"{
 #endif
 
-void nhw_ecb_regw_sideeffects_INTENSET(void);
-void nhw_ecb_regw_sideeffects_INTENCLEAR(void);
+void nhw_ECB_regw_sideeffects_INTENSET(void);
+void nhw_ECB_regw_sideeffects_INTENCLR(void);
 void nhw_ECB_regw_sideeffects_TASKS_STARTECB(void);
 void nhw_ECB_regw_sideeffects_TASKS_STOPECB(void);
 void nhw_ECB_regw_sideeffects_SUBSCRIBE_STARTECB(unsigned int inst);

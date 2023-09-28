@@ -13,7 +13,7 @@ extern "C"{
 void nhw_TEMP_regw_sideeffects_TASKS_START(void);
 void nhw_TEMP_regw_sideeffects_TASKS_STOP(void);
 void nhw_TEMP_regw_sideeffects_INTENSET(void);
-void nhw_TEMP_regw_sideeffects_INTENCLEAR(void);
+void nhw_TEMP_regw_sideeffects_INTENCLR(void);
 void nhw_TEMP_TASK_START(void);
 void nhw_TEMP_TASK_STOP(void);
 void nhw_TEMP_regw_sideeffects_SUBSCRIBE_START(unsigned int inst);

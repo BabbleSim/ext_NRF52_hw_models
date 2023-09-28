@@ -25,13 +25,13 @@ void nrf_ecb_task_trigger(NRF_ECB_Type * p_reg, nrf_ecb_task_t task)
 void nrf_ecb_int_enable(NRF_ECB_Type * p_reg, uint32_t mask)
 {
   p_reg->INTENSET = mask;
-  nhw_ecb_regw_sideeffects_INTENSET();
+  nhw_ECB_regw_sideeffects_INTENSET();
 }
 
 void nrf_ecb_int_disable(NRF_ECB_Type * p_reg, uint32_t mask)
 {
   p_reg->INTENCLR = mask;
-  nhw_ecb_regw_sideeffects_INTENCLEAR();
+  nhw_ECB_regw_sideeffects_INTENCLR();
 }
 
 void nrf_ecb_event_clear(NRF_ECB_Type * p_reg, nrf_ecb_event_t event)

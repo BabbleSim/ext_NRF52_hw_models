@@ -31,7 +31,7 @@ void nrf_temp_int_enable(NRF_TEMP_Type * p_reg, uint32_t mask)
 void nrf_temp_int_disable(NRF_TEMP_Type * p_reg, uint32_t mask)
 {
   NRF_TEMP_regs.INTENCLR = mask;
-  nhw_TEMP_regw_sideeffects_INTENCLEAR();
+  nhw_TEMP_regw_sideeffects_INTENCLR();
 }
 
 void nrf_temp_event_clear(NRF_TEMP_Type * p_reg, nrf_temp_event_t event)
