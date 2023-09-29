@@ -2,7 +2,7 @@ For general information about these models refer to [README.md](README.md)
 
 You will only need to continue reading if you are curious about how these
 models are built, or if you want to use them for some other purpose than
-with Zephyr's nrf52_bsim.
+with Zephyr's nrf5*_bsim.
 
 ## Requirements
 
@@ -13,8 +13,8 @@ We are not interested in modelling the particularities of the HW when
 they are not relevant for the SW execution.
 Therefore many details can be simplified or omited all together.
 
-The focus of these models is on the Zephyr BLE stack, and therefore
-only the peripherals which are necessary for its proper function have
+The focus of these models is on the BLE and 15.4 stacks, and therefore
+mostly the peripherals which are necessary for its proper function have
 been modelled so far.
 
 Regarding the time accuracy, these models will focus mostly on the radio
@@ -61,13 +61,13 @@ The overall HW scheduler provided by the native_simulator, will advance simulate
 when needed, and call into the corresponding HW submodule "event|task runner"
 whenever its event time is reached.
 
-Note that several HW submodules may be scheduled to run in the same µs.
-In this case, they will be handled in different "delta cycles" in that same µs.
+Note that several HW submodules may be scheduled to run in the same microsecond.
+In this case, they will be handled in different "delta cycles" in that same microsecond.
 Each timer|event has a given priority, and therefore will always be called
 in the same order relative to other HW events which may be schedule in the
-same µs.<br>
+same microsecond.<br>
 Note also, that any HW submodule may schedule a new event to be called in the
-same µs in which it is running. This can be done for any purpose,
+same microsecond in which it is running. This can be done for any purpose,
 like for example to deffer a sideeffect of writing to a register from a SW
 thread into the HW models thread.
 When they do so, their "event|task runner" will be called right after in the
@@ -81,8 +81,8 @@ This structure will be allocated somewhere in the process memory, but certainly
 not in the same address as in the real HW.
 Therefore any access to the real registers must be, in someway, corrected
 to access this structure instead.
-In Zephyr's nrf52_bsim case, this is achieved by providing a version of the
-macros which, in real point to the peripherals base addresses, which points
+In Zephyr's nrf5*_bsim case, this is achieved by providing a version of the
+macros which, in real HW point to the peripherals base addresses, which points
 to these structures.
 
 Writing to this structure in itself will only cause that memory location to be
@@ -95,26 +95,27 @@ For example, in real HW, writting a `1` to
 `NRF_RNG->TASKS_START` will start the random number generation.
 
 For these type of registers with sideeffects, the HW models must be triggered,
-this is achieved by calling `nrf_<periperal>_regw_sideeffects_<register name>()`
+this is achieved by calling `nhw_<periperal>_regw_sideeffects_<register name>()`
 after the write itself.
-In the nrf52_bsim case, this is done in the replacement nRFx HAL function.
+In Zephyr's nrf5*_bsim case, this is done in the replacement nRFx HAL function.
 
 ### HW interrupts
 
 For a HW model to raise an interrupt all it will need to do is call into the
-interrupt controller model function `hw_irq_ctrl_set_irq(<irq_nbr>)`.
+interrupt controller model functions
+`hw_irq_ctrl_raise/lower_level_irq_line(<cpu_nbr>, <irq_number>)`.
 
 The interrupt controller will update its status, and if the interrupt was not
-masked, one delta cycle later, awake the CPU by calling
-`posix_interrupt_raised()`.
+masked, one delta cycle later, awake the CPU by calling the corresponding
+`nsif_cpun_irq_raised(<cpu_nbr>)`.
 
-In the nrf52_bsim `posix_interrupt_raised()` is provided by the Zephyr
-POSIX arch `inf_clock`.
+In Zephyr's nrf5*_bsim `nsif_cpun_irq_raised(<cpu_nbr>)` is provided by the Zephyr
+board code.
 
 ### Structure of the HW models:
 
 The actual HW models of the SOC peripherals are split in one file per peripheral.
-The files are named `NRF_<PERIPHERAL>.{c|h}`.
+The files are named `NHW_<PERIPHERAL>.{c|h}`.
 
 Mostly all these models have the following functions:
 
@@ -129,14 +130,14 @@ These models use:
 Overall, they follow a pattern where each peripheral has these types of functions:
 
 ```
-nrf_<periperal>_init()            : To initialize the model
-nrf_<periperal>_cleanup()         : To free any resources used by the model
-nrf_<periperal>_<TASK name>()     : Perform the actions triggered by <TASK>
-nrf_<periperal>_regw_sideeffects_<register name>()
+nhw_<periperal>_init()            : To initialize the model
+nhw_<periperal>_cleanup()         : To free any resources used by the model
+nhw_<periperal>_<TASK name>()     : Perform the actions triggered by <TASK>
+nhw_<periperal>_regw_sideeffects_<register name>()
                                   : Trigger any possible sideeffect from writing
                                     to that regiter
 Timer_<peripheral> &
-nrf_<periperal>_timer_triggered() : Models which take time to perform their work
+nhw_<periperal>_timer_triggered() : Models which take time to perform their work
                                     Use a registered event. When that event timer
                                     is reached, this function is called to perform
                                     any neccessary step, including update that
@@ -154,7 +155,7 @@ specified in the linked documentation.
 ## Integrating these models in another system
 
 This subsection provides information you would need if you try to use
-these models without the nrf52_bsim wrapping logic.
+these models without Zephyr's nrf5*_bsim wrapping logic.
 
 ### Models interface towards a simulation scheduler
 
@@ -206,7 +207,7 @@ Meaning, only one function may be called at a time.<br>
 This is not going to be a problem if only one thread calls into the HW models.
 It won't be a problem either if by any other synchronization mechanism it is
 ensured only one thread calls into these HW models at a time.
-(this second case is how it is done in the nrf52_bsim)
+(this second case is how it is done in Zephyr's nrf5*_bsim)
 
 ### Command line intercace arguments
 
@@ -217,5 +218,5 @@ The integration program should support this.
 The way to describe the command line arguments follows Babblesim's
 `libUtilv1` command line parsing convention.
 
-You can check the nrf52_bsim wrapping code for an insight on how
+You can check Zephyr's nrf5*_bsim wrapping code for an insight on how
 you can use these component.

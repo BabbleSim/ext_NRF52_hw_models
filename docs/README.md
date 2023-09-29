@@ -5,11 +5,14 @@ HAL functions. When used in combination with the real nrfx, these should enable 
 meant for the nrfx to run without needing further changes.
 This includes Zephyr SW.
 
-Where relevant
-[differences](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
-exist, these models try to align with an
-[nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1).
-Though it is the intention that models of other nordic SOCs will be included in the future.
+These models include models of peripherals for an
+[nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1) 
+and an [nRF5340](https://infocenter.nordicsemi.com/topic/struct_nrf53/struct/nrf5340.html?cp=4_0).
+<br> Note that for these models use case an nRF52833 is very similar to other 
+[nRF52 series devices](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
+, so even if you are developing for another variant in that series these models may be enough for
+you.<br>
+It is the intention that models of other nordic SOCs will be included in the future.
 
 These models library is intended to be used as an extension to the
 [native simulator](https://github.com/BabbleSim/native_simulator/).
@@ -44,12 +47,12 @@ default.
 The NRF_RADIO peripheral model uses [BabbleSim](http://babblesim.github.io)
 for the radio environment simulation.
 
-For more information about the HW models, or how to use them without the
-nrf52_bsim please refer to [README_HW_models.md](./README_HW_models.md)
+For more information about the HW models, or how to use them without
+Zephyr please refer to [README_HW_models.md](./README_HW_models.md)
 
 ## What these models include
 
-Not all SOC peripherals are modelled yet, and for some of the included peripherals
+Not all SOCs peripherals are modelled yet, and for some of the included peripherals
 not all features or options are modelled. This is typically the case for HW functionality
 which is not used by the Zephyr drivers/OS.
 You can find what features of which peripherals are included so far, and with what approximations in

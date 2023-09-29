@@ -53,8 +53,8 @@ time(microsecond),port,pin,level
 101624,0,0,1
 ```
 
-Where pin 0 in port 0, is toggled at boot, 200µs, 600µs, 800µs, 1ms (up and immediately down),
-and 101.624ms.
+Where pin 0 in port 0, is toggled at boot, 200microseconds, 600microseconds, 800microseconds, 1ms
+(up and immediately down), and 101.624ms.
 
 ### Configuration file format
 
@@ -82,7 +82,7 @@ For example:
 short 0.1 1.2
 short 0.1 1.3
 ```
-To short pint 1 from port 0, to both pins 2 and 3 from port 1,<br>
+To short pin 1 from port 0, to both pins 2 and 3 from port 1,<br>
 
 ```
 short 1.0 0.2
