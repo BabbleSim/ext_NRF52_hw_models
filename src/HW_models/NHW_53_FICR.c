@@ -7,7 +7,8 @@
 
 /*
  * Factory information configuration registers
- * https://infocenter.nordicsemi.com/topic/ps_nrf52833/ficr.html?cp=5_1_0_3_3
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/chapters/ficr/doc/ficr.html?cp=4_0_0_4_3_1
+ * https://infocenter.nordicsemi.com/topic/ps_nrf5340/chapters/ficr.network/doc/ficr.network.html?cp=4_0_0_5_3_0
  */
 
 /*
