@@ -97,13 +97,13 @@ static void nrf_rtc_subscribe_common(NRF_RTC_Type * p_reg,
   int i = rtc_number_from_ptr(p_reg);
 
   if (task == NRF_RTC_TASK_START) {
-    nrf_rtc_regw_sideeffects_SUBSCRIBE_START(i);
+    nhw_rtc_regw_sideeffects_SUBSCRIBE_START(i);
   } else if (task == NRF_RTC_TASK_STOP) {
-    nrf_rtc_regw_sideeffects_SUBSCRIBE_STOP(i);
+    nhw_rtc_regw_sideeffects_SUBSCRIBE_STOP(i);
   } else if (task == NRF_RTC_TASK_CLEAR) {
-    nrf_rtc_regw_sideeffects_SUBSCRIBE_CLEAR(i);
+    nhw_rtc_regw_sideeffects_SUBSCRIBE_CLEAR(i);
   } else if (task == NRF_RTC_TASK_TRIGGER_OVERFLOW) {
-    nrf_rtc_regw_sideeffects_SUBSCRIBE_TRIGOVRFLW(i);
+    nhw_rtc_regw_sideeffects_SUBSCRIBE_TRIGOVRFLW(i);
 #if defined(RTC_TASKS_CAPTURE_TASKS_CAPTURE_Msk)
   } else if (task >= NRF_RTC_TASK_CAPTURE_0) {
     int cc_n = (task - NRF_RTC_TASK_CAPTURE_0)/sizeof(uint32_t);
