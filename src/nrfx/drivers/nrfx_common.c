@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019 Oticon A/S
- * Copyright (c) 2020 Nordic Semiconductor ASA
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -9,11 +9,14 @@
 #include "nrfx.h"
 #include "bs_tracing.h"
 
-IRQn_Type nrfx_get_irq_number(void const * p_reg){
+#define PERIPHERAL_REG_BASE(per, nbr, post) \
+    (void*)NRF_##per##nbr##post##_BASE
 
 #define IS_PERIPHERAL_REG(p, per, nbr, post) \
-    (p >= (void*)NRF_##per##nbr##post##_BASE) && \
-    ((intptr_t)p < (intptr_t)NRF_##per##nbr##post##_BASE + sizeof(NRF_##per##_Type))
+    (p >= PERIPHERAL_REG_BASE(per, nbr, post)) && \
+    ((intptr_t)p < (intptr_t)PERIPHERAL_REG_BASE(per, nbr, post) + sizeof(NRF_##per##_Type))
+
+IRQn_Type nrfx_get_irq_number(void const * p_reg){
 
 #if defined(NRF52833_XXAA)
   /*
@@ -76,7 +79,7 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return 0x1F;
   /*32-..*/
   } else {
-    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to this HW models\n");
+    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to these HW models\n");
     return 0; /* unreachable */
   }
 
@@ -125,7 +128,7 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
   } else if (IS_PERIPHERAL_REG(p_reg, SWI, 3, _NS)) {
       return SWI3_IRQn;
   } else {
-    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to this HW models\n");
+    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to these HW models\n");
     return 0; /* unreachable */
   }
 #elif defined(NRF5340_XXAA_APPLICATION)
@@ -181,7 +184,7 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
   /* 57 KMU */
   /* 68 CRYPTOCELL */
   } else {
-    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to this HW models\n");
+    bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to these HW models\n");
     return 0; /* unreachable */
   }
 
@@ -189,5 +192,4 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
 #error "Unsuported SOC"
 #endif
 
-#undef IS_PERIPHERAL_REG
 }

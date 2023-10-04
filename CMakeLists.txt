@@ -23,6 +23,7 @@ if(CONFIG_SOC_SERIES_BSIM_NRFXX)
   # of those from the original nrfx.
   target_include_directories(zephyr_interface BEFORE INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/mdk_replacements
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/nrfx/hal_replacements
   )
 
   zephyr_include_directories(
