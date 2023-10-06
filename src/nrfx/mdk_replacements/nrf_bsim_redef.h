@@ -155,8 +155,9 @@ extern NRF_RTC_Type NRF_RTC_regs[];
 #define NRF_RTC0_NS_BASE           (&NRF_RTC_regs[NHW_RTC_NET0])
 #undef NRF_RTC1_NS_BASE
 #define NRF_RTC1_NS_BASE           (&NRF_RTC_regs[NHW_RTC_NET1])
+extern NRF_IPC_Type NRF_IPC_regs[NHW_IPC_TOTAL_INST];
 #undef NRF_IPC_NS_BASE
-#define NRF_IPC_NS_BASE            NULL
+#define NRF_IPC_NS_BASE            (&NRF_IPC_regs[NHW_IPC_NET0])
 #undef NRF_SPIM0_NS_BASE
 #define NRF_SPIM0_NS_BASE          NULL
 #undef NRF_SPIS0_NS_BASE
@@ -442,10 +443,11 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_I2S0_NS_BASE            NULL
 #undef NRF_I2S0_S_BASE
 #define NRF_I2S0_S_BASE             NULL
+extern NRF_IPC_Type NRF_IPC_regs[NHW_IPC_TOTAL_INST];
 #undef NRF_IPC_NS_BASE
-#define NRF_IPC_NS_BASE             NULL
+#define NRF_IPC_NS_BASE             (&NRF_IPC_regs[NHW_IPC_APP0])
 #undef NRF_IPC_S_BASE
-#define NRF_IPC_S_BASE              NULL
+#define NRF_IPC_S_BASE              (&NRF_IPC_regs[NHW_IPC_APP0])
 #undef NRF_QSPI_NS_BASE
 #define NRF_QSPI_NS_BASE            NULL
 #undef NRF_QSPI_S_BASE

@@ -28,7 +28,7 @@ Notation:
 | **GPIO** | General purpose input/output | &#x2714; | &#x10102; | For 52: See [NRF_GPIO.c](../src/HW_models/NRF_GPIO.c) |
 | **GPIOTE** | GPIO tasks and events | &#x2705; | &#x10102; | For 52: Complete with very minor differences, see [NRF_GPIOTE.c](../src/HW_models/NRF_GPIOTE.c) |
 | **I2S** | Inter-IC sound interface | &#x10102; | &#x10102; |  |
-| **IPC** | Interprocessor communication | &#x10102; | &#x10102; |  |
+| **IPC** | Interprocessor communication | N/A | &#x2714; | See [NHW_IPC.c](../src/HW_models/NHW_IPC.c) |
 | **KMU** | Key management unit | &#x10102; | &#x10102; |  |
 | **LPCOMP** | Low-power comparator | &#x10102; | &#x10102; |  |
 | **MUTEX** | Mutual exclusive peripheral | N/A | &#x10102; |  |

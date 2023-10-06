@@ -1975,6 +1975,45 @@ typedef struct {                                /*!< (@ 0x01FF0000) FICR_NS Stru
 } NRF_FICR_NET_Type;                            /*!< Size = 1024 (0x400)                                                       */
 
 
+
+/* =========================================================================================================================== */
+/* ================                                          IPC_NS                                           ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief Interprocessor communication (IPC_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x41012000) IPC_NS Structure                                           */
+  __OM  uint32_t  TASKS_SEND[16];               /*!< (@ 0x00000000) Description collection: Trigger events on IPC
+                                                                    channel enabled in SEND_CNF[n]                             */
+  __IM  uint32_t  RESERVED[16];
+  __IOM uint32_t  SUBSCRIBE_SEND[16];           /*!< (@ 0x00000080) Description collection: Subscribe configuration
+                                                                    for task SEND[n]                                           */
+  __IM  uint32_t  RESERVED1[16];
+  __IOM uint32_t  EVENTS_RECEIVE[16];           /*!< (@ 0x00000100) Description collection: Event received on one
+                                                                    or more of the enabled IPC channels in RECEIVE_CNF[n]      */
+  __IM  uint32_t  RESERVED2[16];
+  __IOM uint32_t  PUBLISH_RECEIVE[16];          /*!< (@ 0x00000180) Description collection: Publish configuration
+                                                                    for event RECEIVE[n]                                       */
+  __IM  uint32_t  RESERVED3[80];
+  __IOM uint32_t  INTEN;                        /*!< (@ 0x00000300) Enable or disable interrupt                                */
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  INTPEND;                      /*!< (@ 0x0000030C) Pending interrupts                                         */
+  __IM  uint32_t  RESERVED4[128];
+  __IOM uint32_t  SEND_CNF[16];                 /*!< (@ 0x00000510) Description collection: Send event configuration
+                                                                    for TASKS_SEND[n]                                          */
+  __IM  uint32_t  RESERVED5[16];
+  __IOM uint32_t  RECEIVE_CNF[16];              /*!< (@ 0x00000590) Description collection: Receive event configuration
+                                                                    for EVENTS_RECEIVE[n]                                      */
+  __IM  uint32_t  RESERVED6[16];
+  __IOM uint32_t  GPMEM[2];                     /*!< (@ 0x00000610) Description collection: General purpose memory             */
+} NRF_IPC_Type;                                 /*!< Size = 1560 (0x618)                                                       */
+
+
+
 /* =========================================================================================================================== */
 /* ================                                          NVMC                                             ================ */
 /* =========================================================================================================================== */

@@ -263,6 +263,17 @@
 #define NHW_DPPI_N_CH {32, 32} /* Number of channels in each DPPI */
 #define NHW_DPPI_N_CHG {6, 6}  /* Number of channel groups in each DPPI */
 
+#define NHW_IPC_TOTAL_INST 2
+#define NHW_IPC_APP0 0
+#define NHW_IPC_NET0 1
+#define NHW_IPC_INT_MAP {{0 , 42}, \
+                         {1 , 18}}
+                        /* {App, IPC}
+                         * {Network, IPC}
+                         * */
+#define NHW_IPC_DPPI_MAP {0, 1} /*App, network */
+#define NHW_IPC_N_CH     {16, 16}
+
 #define NHW_FICR_APP 0
 #define NHW_FICR_NET 1
 
