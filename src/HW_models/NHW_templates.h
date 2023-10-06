@@ -109,6 +109,31 @@
     }                                                 \
   }
 
+#define NHW_SIDEEFFECTS_INTSET(peri, peri_regs, inten) \
+  void nhw_##peri##_regw_sideeffects_INTENSET(uint inst) { \
+    if ( peri_regs INTENSET ){ /* LCOV_EXCL_BR_LINE */\
+      inten |= peri_regs INTENSET;                    \
+      peri_regs INTENSET = inten;                     \
+      nhw_##peri##_eval_interrupt(inst);              \
+    }                                                 \
+  }
+
+#define NHW_SIDEEFFECTS_INTEN(peri, peri_regs, inten) \
+  void nhw_##peri##_regw_sideeffects_INTEN(uint inst) { \
+    peri_regs INTENSET = inten;                     \
+    nhw_##peri##_eval_interrupt(inst);              \
+  }
+
+#define NHW_SIDEEFFECTS_INTCLR(peri, peri_regs, inten) \
+  void nhw_##peri##_regw_sideeffects_INTENCLR(uint inst) { \
+    if ( peri_regs INTENCLR ){/* LCOV_EXCL_BR_LINE */ \
+       inten &= ~(peri_regs INTENCLR);                \
+       peri_regs INTENSET = inten;                    \
+       peri_regs INTENCLR = 0;                        \
+       nhw_##peri## _eval_interrupt(inst);            \
+    }                                                 \
+  }
+
 #define NHW_CHECK_INTERRUPT_si(peri, event, inten) \
   if (NRF_##peri##_regs.EVENTS_##event && (inten &  peri##_INTENSET_##event##_Msk)){ \
     new_int_line = true; \
