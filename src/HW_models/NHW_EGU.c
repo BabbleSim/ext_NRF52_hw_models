@@ -106,15 +106,9 @@ static void nhw_egu_eval_interrupt(uint inst)
     }
   }
 
-  if (new_egu_int_line && (egu_int_line[inst] == false)) {
-    egu_int_line[inst] = true;
-    hw_irq_ctrl_raise_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
-                                     nhw_egu_irq_map[inst].int_nbr);
-  } else if ((new_egu_int_line == false) && egu_int_line[inst]) {
-    egu_int_line[inst] = false;
-    hw_irq_ctrl_lower_level_irq_line(nhw_egu_irq_map[inst].cntl_inst,
-                                     nhw_egu_irq_map[inst].int_nbr);
-  }
+  hw_irq_ctrl_toggle_level_irq_line_if(&egu_int_line[inst],
+                                       new_egu_int_line,
+                                       &nhw_egu_irq_map[inst]);
 }
 
 static inline void nhw_egu_check_inst_event(uint egu_inst, uint nbr, const char *type)
