@@ -187,10 +187,11 @@ extern int NRF_SWI_regs[];
 #define NRF_SWI2_NS_BASE            (&NRF_SWI_regs[NHW_SWI_NET2])
 #undef NRF_SWI3_NS_BASE
 #define NRF_SWI3_NS_BASE            (&NRF_SWI_regs[NHW_SWI_NET3])
+extern NRF_MUTEX_Type NRF_MUTEX_regs;
 #undef NRF_APPMUTEX_NS_BASE
-#define NRF_APPMUTEX_NS_BASE       NULL
+#define NRF_APPMUTEX_NS_BASE       (&NRF_MUTEX_regs)
 #undef NRF_APPMUTEX_S_BASE
-#define NRF_APPMUTEX_S_BASE        NULL
+#define NRF_APPMUTEX_S_BASE        (&NRF_MUTEX_regs)
 #undef NRF_ACL_NS_BASE
 #define NRF_ACL_NS_BASE            NULL
 extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
@@ -458,10 +459,11 @@ extern NRF_IPC_Type NRF_IPC_regs[NHW_IPC_TOTAL_INST];
 #define NRF_NFCT_S_BASE             NULL
 #undef NRF_GPIOTE1_NS_BASE
 #define NRF_GPIOTE1_NS_BASE         NULL
+extern NRF_MUTEX_Type NRF_MUTEX_regs;
 #undef NRF_MUTEX_NS_BASE
-#define NRF_MUTEX_NS_BASE           NULL
+#define NRF_MUTEX_NS_BASE           (&NRF_MUTEX_regs)
 #undef NRF_MUTEX_S_BASE
-#define NRF_MUTEX_S_BASE            NULL
+#define NRF_MUTEX_S_BASE            (&NRF_MUTEX_regs)
 #undef NRF_QDEC0_NS_BASE
 #define NRF_QDEC0_NS_BASE           NULL
 #undef NRF_QDEC0_S_BASE

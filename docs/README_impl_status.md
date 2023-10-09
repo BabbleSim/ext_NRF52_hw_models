@@ -31,7 +31,7 @@ Notation:
 | **IPC** | Interprocessor communication | N/A | &#x2714; | See [NHW_IPC.c](../src/HW_models/NHW_IPC.c) |
 | **KMU** | Key management unit | &#x10102; | &#x10102; |  |
 | **LPCOMP** | Low-power comparator | &#x10102; | &#x10102; |  |
-| **MUTEX** | Mutual exclusive peripheral | N/A | &#x10102; |  |
+| **MUTEX** | Mutual exclusive peripheral | N/A | &#x2705; |  |
 | **MWU** | Memory watch unit | &#x10102; | N/A |  |
 | **NFCT** | Near field communication tag | &#x10102; | &#x10102; |  |
 | **NVMC** | Non-volatile memory controller | &#x2714; | &#x2714; | See [NHW_NVMC.c](../src/HW_models/NHW_NVMC.c) |

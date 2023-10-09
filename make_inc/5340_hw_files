@@ -15,6 +15,7 @@ src/HW_models/NHW_CLOCK.c
 src/HW_models/NHW_EGU.c
 src/HW_models/NHW_IPC.c
 src/HW_models/NHW_misc.c
+src/HW_models/NHW_MUTEX.c
 src/HW_models/NHW_NVMC.c
 src/HW_models/NHW_NVM_backend.c
 src/HW_models/NHW_RADIO.c
