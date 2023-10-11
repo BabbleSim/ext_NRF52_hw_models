@@ -135,7 +135,7 @@ int hw_irq_ctrl_get_highest_prio_irq(unsigned int inst)
   int winner_prio = 256;
 
   while (irq_status != 0U) {
-    int irq_nbr = nsi_find_lsb_set(irq_status) - 1;
+    int irq_nbr = nsi_find_lsb_set64(irq_status) - 1;
 
     irq_status &= ~((uint64_t) 1 << irq_nbr);
     if ((winner_prio > (int)this->irq_prio[irq_nbr])
