@@ -2,6 +2,7 @@ src/nrfx/drivers/nrfx_common.c
 src/nrfx/hal/nrf_clock.c
 src/nrfx/hal/nrf_dppi.c
 src/nrfx/hal/nrf_egu.c
+src/nrfx/hal/nrf_hack.c
 src/nrfx/hal/nrf_ipc.c
 src/nrfx/hal/nrf_mutex.c
 src/nrfx/hal/nrf_nvmc.c

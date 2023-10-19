@@ -23,14 +23,20 @@
 void nrf_dppi_hack_subscribe_set(void *sub_reg, unsigned int channel);
 void nrf_dppi_hack_subscribe_clear(void *sub_reg);
 
-/*#undef NRF_DPPI_ENDPOINT_SETUP
-#define NRF_DPPI_ENDPOINT_SETUP(task_or_event, dppi_chan) \
-  nrf_dppi_hack_subscribe_set((void *)task_or_event, dppi_chan); */
-//For this to work, we would need to change the hack version so it would get a task or event instead of adding here NRF_SUBSCRIBE_PUBLISH_OFFSET
+#undef NRF_DPPI_ENDPOINT_SETUP
+#define NRF_DPPI_ENDPOINT_SETUP(task_or_event, dppi_chan)                            \
+  do {                                                                               \
+    uint32_t tmp = task_or_event + NRF_SUBSCRIBE_PUBLISH_OFFSET(task_or_event);      \
+    *(volatile uint32_t *)tmp = ((uint32_t)dppi_chan | NRF_SUBSCRIBE_PUBLISH_ENABLE);\
+    nrf_dppi_hack_subscribe_set((void *)tmp, dppi_chan);                             \
+  } while(0)
 
-/*#undef NRF_DPPI_ENDPOINT_CLEAR
-#define NRF_DPPI_ENDPOINT_CLEAR(task_or_event) \
-  nrf_dppi_hack_subscribe_clear((void *)task_or_event);*/
-//For this to work, we would need to change the hack version so it would get a task or event instead of adding here NRF_SUBSCRIBE_PUBLISH_OFFSET
+#undef NRF_DPPI_ENDPOINT_CLEAR
+#define NRF_DPPI_ENDPOINT_CLEAR(task_or_event)                                  \
+  do {                                                                          \
+    uint32_t tmp = task_or_event + NRF_SUBSCRIBE_PUBLISH_OFFSET(task_or_event); \
+    *(volatile uint32_t *)tmp = 0;                                              \
+    nrf_dppi_hack_subscribe_clear((void *)tmp);                                 \
+  } while(0)
 
 #endif /* HAL_REPLACEMENTS_HAL_NRF_DPPI_H */
