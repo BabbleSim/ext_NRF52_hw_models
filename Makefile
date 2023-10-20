@@ -13,10 +13,20 @@ default: NRF52833
 compile: NRF52833
 
 NRF52833:
-	@$(MAKE) -f 52833.mk
+	@$(MAKE) --no-print-directory -f 52833.mk
 
 NRF5340:
-	@$(MAKE) -f 5340.mk
+	@$(MAKE) --no-print-directory -f 5340.mk hw
+	@$(MAKE) --no-print-directory -f 5340.mk hal_net
+	@$(MAKE) --no-print-directory -f 5340.mk hal_app
+
+NRF5340_hal_net:
+	@$(MAKE) --no-print-directory -f 5340.mk hw
+	@$(MAKE) --no-print-directory -f 5340.mk hal_net
+
+NRF5340_hal_app:
+	@$(MAKE) --no-print-directory -f 5340.mk hw
+	@$(MAKE) --no-print-directory -f 5340.mk hal_app
 
 # Let's just let the 52833 build handle any other target by default
 %::

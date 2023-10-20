@@ -4,16 +4,32 @@
 
 include make_inc/pre.mk
 
-VARIANT=NRF5340
-HAL_VARIANT=NRF5340_XXAA_NETWORK
-
 HW_SRCS_FILE=make_inc/5340_hw_files
-HAL_SRCS_FILE=make_inc/5340_net_hal_files
+HAL_NET_SRCS_FILE=make_inc/5340_net_hal_files
+HAL_APP_SRCS_FILE=make_inc/5340_app_hal_files
 
 SRCS_HW=$(shell cat ${HW_SRCS_FILE})
-SRCS_HAL=$(shell cat ${HAL_SRCS_FILE})
+SRCS_HAL_NET=$(shell cat ${HAL_NET_SRCS_FILE})
+SRCS_HAL_APP=$(shell cat ${HAL_APP_SRCS_FILE})
 
-SRCS=${SRCS_HW} ${SRCS_HAL}
+ifneq (,$(findstring hal_net,$(MAKECMDGOALS)))
+ SRCS:=${SRCS_HAL_NET}
+ LIB_VARIANT:=_hal_net
+ HAL_VARIANT=NRF5340_XXAA_NETWORK
+else ifneq (,$(findstring hal_app,$(MAKECMDGOALS)))
+ SRCS:=${SRCS_HAL_APP}
+ LIB_VARIANT:=_hal_app
+ HAL_VARIANT=NRF5340_XXAA_APPLICATION
+else #hw
+ SRCS:=${SRCS_HW}
+ LIB_VARIANT:=
+ HAL_VARIANT=NRF5340_XXAA_NETWORK
+endif
+VARIANT=NRF5340${LIB_VARIANT}
+
+hw: all
+hal_net: all
+hal_app: all
 
 INCLUDES:=-I${NATIVE_SIM_PATH}/common/src/include/ \
           -I${NATIVE_SIM_PATH}/common/src/ \
@@ -40,8 +56,13 @@ WARNINGS:=-Wall -Wpedantic
 COVERAGE:=
 CFLAGS=${ARCH} ${DEBUG} ${OPT} ${WARNINGS} -MMD -MP -std=gnu11 \
         ${INCLUDES} -fdata-sections -ffunction-sections \
-        -D${VARIANT} -D_XOPEN_SOURCE=500 -D${HAL_VARIANT}
+        -DNRF5340 -D_XOPEN_SOURCE=500 -D${HAL_VARIANT}
 LDFLAGS:=${ARCH} ${COVERAGE}
 CPPFLAGS:=
 
 include make_inc/common_post.mk
+
+.PHONY: hw hal_net hal_app
+
+# Let's explicitly tell make there is rule to make this file 
+5340.mk: ;
