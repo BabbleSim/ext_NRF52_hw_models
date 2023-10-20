@@ -6,7 +6,7 @@ OBJS=$(abspath $(addprefix $(COMPONENT_OUTPUT_DIR)/,${SRCS:.c=.${VARIANT}.o}))
 LIBFILE=${LIB_NAME}.a
 VERSION_FILE:=${LIB_NAME}.version
 
-all: install
+all: compile
 
 DEPENDFILES:=$(addsuffix .d,$(basename ${OBJS})) 
 
@@ -62,5 +62,7 @@ ${BSIM_LIBS_DIR}/% : $(COMPONENT_OUTPUT_DIR)/%
 
 install: ${BSIM_LIBS_DIR}/${LIBFILE} ${BSIM_LIBS_DIR}/${VERSION_FILE}
 
-make/pre.mk: ;
-make/common_post.mk: ;
+# Let's explicitly tell make there is rules to make these make files: 
+make_inc/pre.mk: ;
+make_inc/common_post.mk: ;
+${BSIM_BASE_PATH}/common/pre.make.inc: ;
