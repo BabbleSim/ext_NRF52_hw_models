@@ -19,6 +19,10 @@ extern "C" {
 #error This file should not be included in builds with Zephyr. Use the one provided by the nordic_hal zephyr module in that case.
 #endif
 
+#ifndef NRFX_DELAY_US
+#define NRFX_DELAY_US(x)
+#endif
+
 #include "nrfx_glue_bsim.h"
 
 #ifdef __cplusplus
