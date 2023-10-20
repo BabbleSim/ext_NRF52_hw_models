@@ -22,7 +22,7 @@ If you want to integrate them in another way, please check the section
 When compiling this component using the provided Makefile (not with Zephyr's build system),
 the environment variable `NRFX_BASE` and `NATIVE_SIM_PATH` must be set.
 `NRFX_BASE` must point to the path where a nrfx has been cloned.
-The nrfx must be at least version 2.3.0.
+The nrfx must be at least version 3.2.0.
 So for example, if the nrfx has been cloned as:
 
 ```
