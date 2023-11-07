@@ -449,7 +449,7 @@ const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq)
 {
   static const char *irqnames[NHW_INTCTRL_TOTAL_INST][NHW_INTCTRL_MAX_INTLINES] = NHW_INT_NAMES;
 
-  if (irq < sizeof(irqnames)/sizeof(irqnames[0])) {
+  if ((inst < NHW_INTCTRL_TOTAL_INST) && (irq < NHW_INTCTRL_MAX_INTLINES)) {
     return irqnames[inst][irq];
   } else {
     return NULL;
