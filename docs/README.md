@@ -6,9 +6,9 @@ meant for the nrfx to run without needing further changes.
 This includes Zephyr SW.
 
 These models include models of peripherals for an
-[nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1) 
+[nRF52833](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html?cp=5_1)
 and an [nRF5340](https://infocenter.nordicsemi.com/topic/struct_nrf53/struct/nrf5340.html?cp=4_0).
-<br> Note that for these models use case an nRF52833 is very similar to other 
+<br> Note that for these models use case an nRF52833 is very similar to other
 [nRF52 series devices](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
 , so even if you are developing for another variant in that series these models may be enough for
 you.<br>
@@ -21,9 +21,9 @@ If you want to integrate them in another way, please check the section
 
 When compiling this component using the provided Makefile (not with Zephyr's build system),
 the environment variable `NRFX_BASE` and `NATIVE_SIM_PATH` must be set.
-`NRFX_BASE` must point to the path where a nrfx has been cloned.
+`NRFX_BASE` must point to the path where nrfx has been cloned.
 The nrfx must be at least version 3.2.0.
-So for example, if the nrfx has been cloned as:
+So for example, if nrfx has been cloned as:
 
 ```
 cd /some_path/nrfx/
@@ -41,7 +41,7 @@ See the [nrfx/hal/README.md](../src/nrfx/hal/README.md) for more details.
 
 These models can be used directly with
 [Zephyr's nrf52_bsim target](https://docs.zephyrproject.org/latest/boards/posix/nrf52_bsim/doc/index.html).
-In that case, the Zephyr's versions of the nrfx HAL and the native simulator will be used by
+In that case, Zephyr's versions of the nrfx HAL and native simulator will be used by
 default.
 
 The NRF_RADIO peripheral model uses [BabbleSim](http://babblesim.github.io)

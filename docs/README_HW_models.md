@@ -209,7 +209,7 @@ It won't be a problem either if by any other synchronization mechanism it is
 ensured only one thread calls into these HW models at a time.
 (this second case is how it is done in Zephyr's nrf5*_bsim)
 
-### Command line intercace arguments
+### Command line interface arguments
 
 These models register their own command line arguments/options using
 babblesim's command line argument utilities.
