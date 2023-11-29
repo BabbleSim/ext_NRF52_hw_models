@@ -147,6 +147,17 @@ static void nrf_dppi_hack_get_task_from_ptr(void *task_reg,
 #undef IF_PER
 }
 
+/*
+ * Given a *<subscribe>* register (NOT a task register),
+ * set it to be enabled and connected to <channel>, by calling the appropriate
+ * HAL set replacement function.
+ *
+ * This function provides the backend for the NRF_DPPI_ENDPOINT_SETUP HAL macro
+ * for simulation.
+ *
+ * Note: This function also accepts publish registers, but ignores them
+ * (so as to be callable from NRF_DPPI_ENDPOINT_SETUP() without any check)
+ */
 void nrf_dppi_hack_subscribe_set(void *sub_reg, unsigned int channel)
 {
   void *p_reg;
@@ -162,6 +173,17 @@ void nrf_dppi_hack_subscribe_set(void *sub_reg, unsigned int channel)
   }
 }
 
+/*
+ * Given a *<subscribe>* register (NOT a task register),
+ * clear it/set it to be disabled, by calling the appropriate
+ * HAL clear replacement function.
+ *
+ * This function provides the backend for the NRF_DPPI_ENDPOINT_CLEAR HAL macro
+ * for simulation.
+ *
+ * Note: This function also accepts publish registers, but ignores them
+ * (so as to be callable from NRF_DPPI_ENDPOINT_SETUP() without any check)
+ */
 void nrf_dppi_hack_subscribe_clear(void *sub_reg)
 {
   void *p_reg;
