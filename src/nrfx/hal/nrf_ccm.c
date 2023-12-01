@@ -54,6 +54,8 @@ static void nrf_ccm_subscribe_common(NRF_CCM_Type * p_reg,
       nhw_CCM_regw_sideeffects_SUBSCRIBE_CRYPT(0);
   } else if ( task == NRF_CCM_TASK_STOP ) {
       nhw_CCM_regw_sideeffects_SUBSCRIBE_STOP(0);
+  } else if ( task == NRF_CCM_TASK_RATEOVERRIDE ) {
+      nhw_CCM_regw_sideeffects_SUBSCRIBE_RATEOVERRIDE(0);
   } else {
       bs_trace_error_line_time("Attempted to subscribe to an not-supported task in the nrf_ccm (%i)\n",
                                task);

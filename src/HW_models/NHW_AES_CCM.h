@@ -27,6 +27,7 @@ void nhw_CCM_regw_sideeffects_EVENTS_all(unsigned int inst);
 void nhw_CCM_regw_sideeffects_SUBSCRIBE_KSGEN(unsigned int inst);
 void nhw_CCM_regw_sideeffects_SUBSCRIBE_CRYPT(unsigned int inst);
 void nhw_CCM_regw_sideeffects_SUBSCRIBE_STOP(unsigned int inst);
+void nhw_CCM_regw_sideeffects_SUBSCRIBE_RATEOVERRIDE(unsigned int inst);
 
 #ifdef __cplusplus
 }
