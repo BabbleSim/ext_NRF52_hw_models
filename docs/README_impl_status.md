@@ -53,7 +53,7 @@ Notation:
 | **TEMP** | Temperature sensor | &#x2714; | &#x2714; | See [NHW_TEMP.c](../src/HW_models/NHW_TEMP.c) |
 | **TIMER** | Timer/counter | &#x2705; | &#x2705; |  |
 | **TWI[M/S]** | I2C compatible two-wire interface | &#x10102; | &#x10102; |  |
-| **UART[E]** | Universal asynchronous receiver/transmitter [with EasyDMA] | &#x10102; | &#x10102; |  |
+| **UART[E]** | Universal asynchronous receiver/transmitter [with EasyDMA] | &#x2714; | &#x2714; | For 53: It cannot be used yet w Zephyr as the Zephyr driver requires a working nRF53 GPIO |
 | **UICR** | User information configuration registers | &#x2714; | &#x2714; | See [NHW_NVMC.c](../src/HW_models/NHW_NVMC.c) |
 | **USBD** | Universal serial bus device | &#x10102; | &#x10102; |  |
 | **USBREG** | Universal serial bus device | N/A | &#x10102; |  |

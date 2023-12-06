@@ -27,6 +27,14 @@
     } \
   }
 
+#define NHW_SIDEEFFECTS_TASKS(peri, peri_regs, task) \
+  void nhw_##peri##_regw_sideeffects_TASKS_##task(unsigned int inst) { \
+    if ( peri_regs TASKS_##task ) { \
+      peri_regs TASKS_##task = 0; \
+      nhw_##peri##_TASK_##task(inst); \
+    } \
+  }
+
 /*
  * SUBSCRIBE register write side-effects
  */
@@ -58,6 +66,14 @@
                               peri_regs PUBLISH_##event)
 #endif /* (NHW_HAS_PPI) / (NHW_HAS_DPPI)*/
 
+
+#define _NHW_SIGNAL_EVENT_body(peri, peri_regs, event) \
+  { \
+    peri_regs EVENTS_##event = 1; \
+    nhw_##peri##_eval_interrupt(inst); \
+    _NHW_XPPI_EVENT(peri, peri_regs, inst, event); \
+  }
+
 /*
  * Signal an event:
  *  * Set the corresponding event register
@@ -65,24 +81,21 @@
  *  * Send the event either to the PPI or DPPI (if enabled)
  *
  * NOTE: Cannot be used for events with shortcuts
+ * NOTE: Cannot be used for multi-instance peripherals connected to the PPI
  */
 #define NHW_SIGNAL_EVENT(peri, peri_regs, event) \
-  void nhw_##peri##_signal_EVENTS_##event(unsigned int inst) { \
-    peri_regs EVENTS_##event = 1; \
-    nhw_##peri##_eval_interrupt(inst); \
-    _NHW_XPPI_EVENT(peri, peri_regs, inst, event); \
-  }
+  void nhw_##peri##_signal_EVENTS_##event(unsigned int inst) \
+    _NHW_SIGNAL_EVENT_body(peri, peri_regs, event)
 
 /*
  * Signal an event. Like NHW_SIGNAL_EVENT()
  * but when the event has shortcuts.
+ *
+ * NOTE: Cannot be used for multi-instance peripherals connected to the PPI
  */
 #define NHW_SIGNAL_EVENT_ns(peri, peri_regs, event) \
-  void nhw_##peri##_signal_EVENTS_##event##_noshort(unsigned int inst) { \
-    peri_regs EVENTS_##event = 1; \
-    nhw_##peri##_eval_interrupt(inst); \
-    _NHW_XPPI_EVENT(peri, peri_regs, inst, event); \
-  }
+  void nhw_##peri##_signal_EVENTS_##event##_noshort(unsigned int inst) \
+    _NHW_SIGNAL_EVENT_body(peri, peri_regs, event)
 
 #define NHW_SIGNAL_EVENT_si(peri, event) \
     NHW_SIGNAL_EVENT(peri, NRF_##peri##_regs. , event)
@@ -134,6 +147,11 @@
     }                                                 \
   }
 
+#define NHW_CHECK_INTERRUPT(peri, peri_regs, event, inten) \
+  if (peri_regs EVENTS_##event && (inten &  peri##_INTENSET_##event##_Msk)){ \
+    new_int_line = true; \
+  }
+
 #define NHW_CHECK_INTERRUPT_si(peri, event, inten) \
   if (NRF_##peri##_regs.EVENTS_##event && (inten &  peri##_INTENSET_##event##_Msk)){ \
     new_int_line = true; \
@@ -142,6 +160,11 @@
 #define NHW_SHORT_si(peri, event, task) \
   if (NRF_##peri##_regs.SHORTS & peri##_SHORTS_##event##_##task##_Msk) { \
     nhw_##peri##_TASK_##task(); \
+  }
+
+#define NHW_SHORT(peri, inst, peri_regs, event, task) \
+  if (peri_regs SHORTS & peri##_SHORTS_##event##_##task##_Msk) { \
+    nhw_##peri##_TASK_##task(inst); \
   }
 
 #endif /* _NRF_HW_MODEL_NHW_TEMPLATES_H */

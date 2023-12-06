@@ -14,3 +14,5 @@ src/nrfx/hal/nrf_rng.c
 src/nrfx/hal/nrf_aar.c
 src/nrfx/hal/nrf_ppi.c
 src/nrfx/hal/nrf_ecb.c
+src/nrfx/hal/nrf_uart.c
+src/nrfx/hal/nrf_uarte.c

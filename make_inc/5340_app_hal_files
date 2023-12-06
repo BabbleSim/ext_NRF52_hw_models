@@ -9,3 +9,4 @@ src/nrfx/hal/nrf_nvmc.c
 src/nrfx/hal/nrf_rtc.c
 src/nrfx/hal/nrf_timer.c
 src/nrfx/hal/nrf_hal_originals.c
+src/nrfx/hal/nrf_uarte.c

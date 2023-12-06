@@ -95,6 +95,13 @@ extern NRF_EGU_Type NRF_EGU_regs[6];
 #undef NRF_UICR_BASE
 extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #define NRF_UICR_BASE                     (NRF_UICR_regs_p[0])
+extern NRF_UARTE_Type NRF_UARTE_regs[];
+#undef NRF_UART0_BASE
+#define NRF_UART0_BASE                    (&NRF_UARTE_regs[NHW_UART_0])
+#undef NRF_UARTE0_BASE
+#define NRF_UARTE0_BASE                   (&NRF_UARTE_regs[NHW_UART_0])
+#undef NRF_UARTE1_BASE
+#define NRF_UARTE1_BASE                   (&NRF_UARTE_regs[NHW_UART_1])
 
 /********************************************************************/
 /********************************************************************/
@@ -166,8 +173,9 @@ extern NRF_IPC_Type NRF_IPC_regs[NHW_IPC_TOTAL_INST];
 #define NRF_TWIM0_NS_BASE          NULL
 #undef NRF_TWIS0_NS_BASE
 #define NRF_TWIS0_NS_BASE          NULL
+extern NRF_UARTE_Type NRF_UARTE_regs[];
 #undef NRF_UARTE0_NS_BASE
-#define NRF_UARTE0_NS_BASE         NULL
+#define NRF_UARTE0_NS_BASE         (&NRF_UARTE_regs[NHW_UARTE_NET0])
 extern NRF_EGU_Type NRF_EGU_regs[];
 #undef NRF_EGU0_NS_BASE
 #define NRF_EGU0_NS_BASE           (&NRF_EGU_regs[NHW_EGU_NET0])
@@ -270,8 +278,9 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #define NRF_TWIM0_NS_BASE           NULL
 #undef NRF_TWIS0_NS_BASE
 #define NRF_TWIS0_NS_BASE           NULL
+extern NRF_UARTE_Type NRF_UARTE_regs[];
 #undef NRF_UARTE0_NS_BASE
-#define NRF_UARTE0_NS_BASE          NULL
+#define NRF_UARTE0_NS_BASE          (&NRF_UARTE_regs[NHW_UARTE_APP0])
 #undef NRF_SPIM0_S_BASE
 #define NRF_SPIM0_S_BASE            NULL
 #undef NRF_SPIS0_S_BASE
@@ -281,7 +290,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS0_S_BASE
 #define NRF_TWIS0_S_BASE            NULL
 #undef NRF_UARTE0_S_BASE
-#define NRF_UARTE0_S_BASE           NULL
+#define NRF_UARTE0_S_BASE          (&NRF_UARTE_regs[NHW_UARTE_APP0])
 #undef NRF_SPIM1_NS_BASE
 #define NRF_SPIM1_NS_BASE           NULL
 #undef NRF_SPIS1_NS_BASE
@@ -291,7 +300,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS1_NS_BASE
 #define NRF_TWIS1_NS_BASE           NULL
 #undef NRF_UARTE1_NS_BASE
-#define NRF_UARTE1_NS_BASE          NULL
+#define NRF_UARTE1_NS_BASE          (&NRF_UARTE_regs[NHW_UARTE_APP1])
 #undef NRF_SPIM1_S_BASE
 #define NRF_SPIM1_S_BASE            NULL
 #undef NRF_SPIS1_S_BASE
@@ -301,7 +310,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS1_S_BASE
 #define NRF_TWIS1_S_BASE            NULL
 #undef NRF_UARTE1_S_BASE
-#define NRF_UARTE1_S_BASE           NULL
+#define NRF_UARTE1_S_BASE           (&NRF_UARTE_regs[NHW_UARTE_APP1])
 #undef NRF_SPIM4_NS_BASE
 #define NRF_SPIM4_NS_BASE           NULL
 #undef NRF_SPIM4_S_BASE
@@ -315,7 +324,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS2_NS_BASE
 #define NRF_TWIS2_NS_BASE           NULL
 #undef NRF_UARTE2_NS_BASE
-#define NRF_UARTE2_NS_BASE          NULL
+#define NRF_UARTE2_NS_BASE          (&NRF_UARTE_regs[NHW_UARTE_APP2])
 #undef NRF_SPIM2_S_BASE
 #define NRF_SPIM2_S_BASE            NULL
 #undef NRF_SPIS2_S_BASE
@@ -325,7 +334,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS2_S_BASE
 #define NRF_TWIS2_S_BASE            NULL
 #undef NRF_UARTE2_S_BASE
-#define NRF_UARTE2_S_BASE           NULL
+#define NRF_UARTE2_S_BASE           (&NRF_UARTE_regs[NHW_UARTE_APP2])
 #undef NRF_SPIM3_NS_BASE
 #define NRF_SPIM3_NS_BASE           NULL
 #undef NRF_SPIS3_NS_BASE
@@ -335,7 +344,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS3_NS_BASE
 #define NRF_TWIS3_NS_BASE           NULL
 #undef NRF_UARTE3_NS_BASE
-#define NRF_UARTE3_NS_BASE          NULL
+#define NRF_UARTE3_NS_BASE          (&NRF_UARTE_regs[NHW_UARTE_APP3])
 #undef NRF_SPIM3_S_BASE
 #define NRF_SPIM3_S_BASE            NULL
 #undef NRF_SPIS3_S_BASE
@@ -345,7 +354,7 @@ extern NRF_RESET_Type *NRF_RESET_regs[];
 #undef NRF_TWIS3_S_BASE
 #define NRF_TWIS3_S_BASE            NULL
 #undef NRF_UARTE3_S_BASE
-#define NRF_UARTE3_S_BASE           NULL
+#define NRF_UARTE3_S_BASE           (&NRF_UARTE_regs[NHW_UARTE_APP3])
 #undef NRF_GPIOTE0_S_BASE
 #define NRF_GPIOTE0_S_BASE          NULL
 #undef NRF_SAADC_NS_BASE

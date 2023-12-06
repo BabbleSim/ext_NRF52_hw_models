@@ -150,6 +150,48 @@ typedef struct {
 
 
 /**
+  * @brief UART_PSEL [PSEL] (Unspecified)
+  */
+typedef struct {
+  __IOM uint32_t  RTS;                          /*!< (@ 0x00000000) Pin select for RTS                                         */
+  __IOM uint32_t  TXD;                          /*!< (@ 0x00000004) Pin select for TXD                                         */
+  __IOM uint32_t  CTS;                          /*!< (@ 0x00000008) Pin select for CTS                                         */
+  __IOM uint32_t  RXD;                          /*!< (@ 0x0000000C) Pin select for RXD                                         */
+} UART_PSEL_Type;                               /*!< Size = 16 (0x10)                                                          */
+
+
+/**
+  * @brief UARTE_PSEL [PSEL] (Unspecified)
+  */
+typedef struct {
+  __IOM uint32_t  RTS;                          /*!< (@ 0x00000000) Pin select for RTS signal                                  */
+  __IOM uint32_t  TXD;                          /*!< (@ 0x00000004) Pin select for TXD signal                                  */
+  __IOM uint32_t  CTS;                          /*!< (@ 0x00000008) Pin select for CTS signal                                  */
+  __IOM uint32_t  RXD;                          /*!< (@ 0x0000000C) Pin select for RXD signal                                  */
+} UARTE_PSEL_Type;                              /*!< Size = 16 (0x10)                                                          */
+
+
+/**
+  * @brief UARTE_RXD [RXD] (RXD EasyDMA channel)
+  */
+typedef struct {
+  __IOM uint32_t  PTR;                          /*!< (@ 0x00000000) Data pointer                                               */
+  __IOM uint32_t  MAXCNT;                       /*!< (@ 0x00000004) Maximum number of bytes in receive buffer                  */
+  __IM  uint32_t  AMOUNT;                       /*!< (@ 0x00000008) Number of bytes transferred in the last transaction        */
+} UARTE_RXD_Type;                               /*!< Size = 12 (0xc)                                                           */
+
+
+/**
+  * @brief UARTE_TXD [TXD] (TXD EasyDMA channel)
+  */
+typedef struct {
+  __IOM uint32_t  PTR;                          /*!< (@ 0x00000000) Data pointer                                               */
+  __IOM uint32_t  MAXCNT;                       /*!< (@ 0x00000004) Maximum number of bytes in transmit buffer                 */
+  __IM  uint32_t  AMOUNT;                       /*!< (@ 0x00000008) Number of bytes transferred in the last transaction        */
+} UARTE_TXD_Type;                               /*!< Size = 12 (0xc)                                                           */
+
+
+/**
   * @brief VREQCTRL_VREGRADIO [VREGRADIO] (Unspecified)
   */
 typedef struct {
@@ -5506,6 +5548,622 @@ typedef struct {                                /*!< (@ 0x4100C000) TIMER0_NS St
 #define TIMER_ONESHOTEN_ONESHOTEN_Msk (0x1UL << TIMER_ONESHOTEN_ONESHOTEN_Pos) /*!< Bit mask of ONESHOTEN field. */
 #define TIMER_ONESHOTEN_ONESHOTEN_Disable (0UL) /*!< Disable one-shot operation */
 #define TIMER_ONESHOTEN_ONESHOTEN_Enable (1UL) /*!< Enable one-shot operation */
+
+
+/* =========================================================================================================================== */
+/* ================                                           UART0                                           ================ */
+/* =========================================================================================================================== */
+
+/**
+  * @brief Universal Asynchronous Receiver/Transmitter (UART0)
+  */
+
+typedef struct {                                /*!< (@ 0x40002000) UART0 Structure                                            */
+  __OM  uint32_t  TASKS_STARTRX;                /*!< (@ 0x00000000) Start UART receiver                                        */
+  __OM  uint32_t  TASKS_STOPRX;                 /*!< (@ 0x00000004) Stop UART receiver                                         */
+  __OM  uint32_t  TASKS_STARTTX;                /*!< (@ 0x00000008) Start UART transmitter                                     */
+  __OM  uint32_t  TASKS_STOPTX;                 /*!< (@ 0x0000000C) Stop UART transmitter                                      */
+  __IM  uint32_t  RESERVED[3];
+  __OM  uint32_t  TASKS_SUSPEND;                /*!< (@ 0x0000001C) Suspend UART                                               */
+  __IM  uint32_t  RESERVED1[56];
+  __IOM uint32_t  EVENTS_CTS;                   /*!< (@ 0x00000100) CTS is activated (set low). Clear To Send.                 */
+  __IOM uint32_t  EVENTS_NCTS;                  /*!< (@ 0x00000104) CTS is deactivated (set high). Not Clear To Send.          */
+  __IOM uint32_t  EVENTS_RXDRDY;                /*!< (@ 0x00000108) Data received in RXD                                       */
+  __IM  uint32_t  RESERVED2[4];
+  __IOM uint32_t  EVENTS_TXDRDY;                /*!< (@ 0x0000011C) Data sent from TXD                                         */
+  __IM  uint32_t  RESERVED3;
+  __IOM uint32_t  EVENTS_ERROR;                 /*!< (@ 0x00000124) Error detected                                             */
+  __IM  uint32_t  RESERVED4[7];
+  __IOM uint32_t  EVENTS_RXTO;                  /*!< (@ 0x00000144) Receiver timeout                                           */
+  __IM  uint32_t  RESERVED5[46];
+  __IOM uint32_t  SHORTS;                       /*!< (@ 0x00000200) Shortcuts between local events and tasks                   */
+  __IM  uint32_t  RESERVED6[64];
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED7[93];
+  __IOM uint32_t  ERRORSRC;                     /*!< (@ 0x00000480) Error source                                               */
+  __IM  uint32_t  RESERVED8[31];
+  __IOM uint32_t  ENABLE;                       /*!< (@ 0x00000500) Enable UART                                                */
+  __IM  uint32_t  RESERVED9;
+  __IOM UART_PSEL_Type PSEL;                    /*!< (@ 0x00000508) Unspecified                                                */
+  __IM  uint32_t  RXD;                          /*!< (@ 0x00000518) RXD register                                               */
+  __OM  uint32_t  TXD;                          /*!< (@ 0x0000051C) TXD register                                               */
+  __IM  uint32_t  RESERVED10;
+  __IOM uint32_t  BAUDRATE;                     /*!< (@ 0x00000524) Baud rate. Accuracy depends on the HFCLK source
+                                                                    selected.                                                  */
+  __IM  uint32_t  RESERVED11[17];
+  __IOM uint32_t  CONFIG;                       /*!< (@ 0x0000056C) Configuration of parity and hardware flow control          */
+} NRF_UART_Type;                                /*!< Size = 1392 (0x570)                                                       */
+
+
+/* Peripheral: UART */
+/* Description: Universal Asynchronous Receiver/Transmitter */
+
+/* Register: UART_SHORTS */
+/* Description: Shortcuts between local events and tasks */
+
+/* Bit 4 : Shortcut between event NCTS and task STOPRX */
+#define UART_SHORTS_NCTS_STOPRX_Pos (4UL) /*!< Position of NCTS_STOPRX field. */
+#define UART_SHORTS_NCTS_STOPRX_Msk (0x1UL << UART_SHORTS_NCTS_STOPRX_Pos) /*!< Bit mask of NCTS_STOPRX field. */
+#define UART_SHORTS_NCTS_STOPRX_Disabled (0UL) /*!< Disable shortcut */
+#define UART_SHORTS_NCTS_STOPRX_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 3 : Shortcut between event CTS and task STARTRX */
+#define UART_SHORTS_CTS_STARTRX_Pos (3UL) /*!< Position of CTS_STARTRX field. */
+#define UART_SHORTS_CTS_STARTRX_Msk (0x1UL << UART_SHORTS_CTS_STARTRX_Pos) /*!< Bit mask of CTS_STARTRX field. */
+#define UART_SHORTS_CTS_STARTRX_Disabled (0UL) /*!< Disable shortcut */
+#define UART_SHORTS_CTS_STARTRX_Enabled (1UL) /*!< Enable shortcut */
+
+/* Register: UART_ERRORSRC */
+/* Description: Error source */
+
+/* Bit 3 : Break condition */
+#define UART_ERRORSRC_BREAK_Pos (3UL) /*!< Position of BREAK field. */
+#define UART_ERRORSRC_BREAK_Msk (0x1UL << UART_ERRORSRC_BREAK_Pos) /*!< Bit mask of BREAK field. */
+#define UART_ERRORSRC_BREAK_NotPresent (0UL) /*!< Read: error not present */
+#define UART_ERRORSRC_BREAK_Present (1UL) /*!< Read: error present */
+
+/* Bit 2 : Framing error occurred */
+#define UART_ERRORSRC_FRAMING_Pos (2UL) /*!< Position of FRAMING field. */
+#define UART_ERRORSRC_FRAMING_Msk (0x1UL << UART_ERRORSRC_FRAMING_Pos) /*!< Bit mask of FRAMING field. */
+#define UART_ERRORSRC_FRAMING_NotPresent (0UL) /*!< Read: error not present */
+#define UART_ERRORSRC_FRAMING_Present (1UL) /*!< Read: error present */
+
+/* Bit 1 : Parity error */
+#define UART_ERRORSRC_PARITY_Pos (1UL) /*!< Position of PARITY field. */
+#define UART_ERRORSRC_PARITY_Msk (0x1UL << UART_ERRORSRC_PARITY_Pos) /*!< Bit mask of PARITY field. */
+#define UART_ERRORSRC_PARITY_NotPresent (0UL) /*!< Read: error not present */
+#define UART_ERRORSRC_PARITY_Present (1UL) /*!< Read: error present */
+
+/* Bit 0 : Overrun error */
+#define UART_ERRORSRC_OVERRUN_Pos (0UL) /*!< Position of OVERRUN field. */
+#define UART_ERRORSRC_OVERRUN_Msk (0x1UL << UART_ERRORSRC_OVERRUN_Pos) /*!< Bit mask of OVERRUN field. */
+#define UART_ERRORSRC_OVERRUN_NotPresent (0UL) /*!< Read: error not present */
+#define UART_ERRORSRC_OVERRUN_Present (1UL) /*!< Read: error present */
+
+/* Register: UART_ENABLE */
+/* Description: Enable UART */
+
+/* Bits 3..0 : Enable or disable UART */
+#define UART_ENABLE_ENABLE_Pos (0UL) /*!< Position of ENABLE field. */
+#define UART_ENABLE_ENABLE_Msk (0xFUL << UART_ENABLE_ENABLE_Pos) /*!< Bit mask of ENABLE field. */
+#define UART_ENABLE_ENABLE_Disabled (0UL) /*!< Disable UART */
+#define UART_ENABLE_ENABLE_Enabled (4UL) /*!< Enable UART */
+
+/* Register: UART_PSEL_RTS */
+/* Description: Pin select for RTS */
+
+/* Bit 31 : Connection */
+#define UART_PSEL_RTS_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UART_PSEL_RTS_CONNECT_Msk (0x1UL << UART_PSEL_RTS_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UART_PSEL_RTS_CONNECT_Connected (0UL) /*!< Connect */
+#define UART_PSEL_RTS_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UART_PSEL_RTS_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UART_PSEL_RTS_PORT_Msk (0x1UL << UART_PSEL_RTS_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UART_PSEL_RTS_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UART_PSEL_RTS_PIN_Msk (0x1FUL << UART_PSEL_RTS_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UART_PSEL_TXD */
+/* Description: Pin select for TXD */
+
+/* Bit 31 : Connection */
+#define UART_PSEL_TXD_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UART_PSEL_TXD_CONNECT_Msk (0x1UL << UART_PSEL_TXD_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UART_PSEL_TXD_CONNECT_Connected (0UL) /*!< Connect */
+#define UART_PSEL_TXD_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UART_PSEL_TXD_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UART_PSEL_TXD_PORT_Msk (0x1UL << UART_PSEL_TXD_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UART_PSEL_TXD_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UART_PSEL_TXD_PIN_Msk (0x1FUL << UART_PSEL_TXD_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UART_PSEL_CTS */
+/* Description: Pin select for CTS */
+
+/* Bit 31 : Connection */
+#define UART_PSEL_CTS_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UART_PSEL_CTS_CONNECT_Msk (0x1UL << UART_PSEL_CTS_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UART_PSEL_CTS_CONNECT_Connected (0UL) /*!< Connect */
+#define UART_PSEL_CTS_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UART_PSEL_CTS_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UART_PSEL_CTS_PORT_Msk (0x1UL << UART_PSEL_CTS_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UART_PSEL_CTS_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UART_PSEL_CTS_PIN_Msk (0x1FUL << UART_PSEL_CTS_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UART_PSEL_RXD */
+/* Description: Pin select for RXD */
+
+/* Bit 31 : Connection */
+#define UART_PSEL_RXD_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UART_PSEL_RXD_CONNECT_Msk (0x1UL << UART_PSEL_RXD_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UART_PSEL_RXD_CONNECT_Connected (0UL) /*!< Connect */
+#define UART_PSEL_RXD_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UART_PSEL_RXD_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UART_PSEL_RXD_PORT_Msk (0x1UL << UART_PSEL_RXD_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UART_PSEL_RXD_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UART_PSEL_RXD_PIN_Msk (0x1FUL << UART_PSEL_RXD_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UART_RXD */
+/* Description: RXD register */
+
+/* Bits 7..0 : RX data received in previous transfers, double buffered */
+#define UART_RXD_RXD_Pos (0UL) /*!< Position of RXD field. */
+#define UART_RXD_RXD_Msk (0xFFUL << UART_RXD_RXD_Pos) /*!< Bit mask of RXD field. */
+
+/* Register: UART_TXD */
+/* Description: TXD register */
+
+/* Bits 7..0 : TX data to be transferred */
+#define UART_TXD_TXD_Pos (0UL) /*!< Position of TXD field. */
+#define UART_TXD_TXD_Msk (0xFFUL << UART_TXD_TXD_Pos) /*!< Bit mask of TXD field. */
+
+/* Register: UART_BAUDRATE */
+/* Description: Baud rate. Accuracy depends on the HFCLK source selected. */
+
+/* Bits 31..0 : Baud rate */
+#define UART_BAUDRATE_BAUDRATE_Pos (0UL) /*!< Position of BAUDRATE field. */
+#define UART_BAUDRATE_BAUDRATE_Msk (0xFFFFFFFFUL << UART_BAUDRATE_BAUDRATE_Pos) /*!< Bit mask of BAUDRATE field. */
+#define UART_BAUDRATE_BAUDRATE_Baud1200 (0x0004F000UL) /*!< 1200 baud (actual rate: 1205) */
+#define UART_BAUDRATE_BAUDRATE_Baud2400 (0x0009D000UL) /*!< 2400 baud (actual rate: 2396) */
+#define UART_BAUDRATE_BAUDRATE_Baud4800 (0x0013B000UL) /*!< 4800 baud (actual rate: 4808) */
+#define UART_BAUDRATE_BAUDRATE_Baud9600 (0x00275000UL) /*!< 9600 baud (actual rate: 9598) */
+#define UART_BAUDRATE_BAUDRATE_Baud14400 (0x003B0000UL) /*!< 14400 baud (actual rate: 14414) */
+#define UART_BAUDRATE_BAUDRATE_Baud19200 (0x004EA000UL) /*!< 19200 baud (actual rate: 19208) */
+#define UART_BAUDRATE_BAUDRATE_Baud28800 (0x0075F000UL) /*!< 28800 baud (actual rate: 28829) */
+#define UART_BAUDRATE_BAUDRATE_Baud31250 (0x00800000UL) /*!< 31250 baud */
+#define UART_BAUDRATE_BAUDRATE_Baud38400 (0x009D5000UL) /*!< 38400 baud (actual rate: 38462) */
+#define UART_BAUDRATE_BAUDRATE_Baud56000 (0x00E50000UL) /*!< 56000 baud (actual rate: 55944) */
+#define UART_BAUDRATE_BAUDRATE_Baud57600 (0x00EBF000UL) /*!< 57600 baud (actual rate: 57762) */
+#define UART_BAUDRATE_BAUDRATE_Baud76800 (0x013A9000UL) /*!< 76800 baud (actual rate: 76923) */
+#define UART_BAUDRATE_BAUDRATE_Baud115200 (0x01D7E000UL) /*!< 115200 baud (actual rate: 115942) */
+#define UART_BAUDRATE_BAUDRATE_Baud230400 (0x03AFB000UL) /*!< 230400 baud (actual rate: 231884) */
+#define UART_BAUDRATE_BAUDRATE_Baud250000 (0x04000000UL) /*!< 250000 baud */
+#define UART_BAUDRATE_BAUDRATE_Baud460800 (0x075F7000UL) /*!< 460800 baud (actual rate: 470588) */
+#define UART_BAUDRATE_BAUDRATE_Baud921600 (0x0EBED000UL) /*!< 921600 baud (actual rate: 941176) */
+#define UART_BAUDRATE_BAUDRATE_Baud1M (0x10000000UL) /*!< 1Mega baud */
+
+/* Register: UART_CONFIG */
+/* Description: Configuration of parity and hardware flow control */
+
+/* Bit 8 : Even or odd parity type */
+#define UART_CONFIG_PARITYTYPE_Pos (8UL) /*!< Position of PARITYTYPE field. */
+#define UART_CONFIG_PARITYTYPE_Msk (0x1UL << UART_CONFIG_PARITYTYPE_Pos) /*!< Bit mask of PARITYTYPE field. */
+#define UART_CONFIG_PARITYTYPE_Even (0UL) /*!< Even parity */
+#define UART_CONFIG_PARITYTYPE_Odd (1UL) /*!< Odd parity */
+
+/* Bit 4 : Stop bits */
+#define UART_CONFIG_STOP_Pos (4UL) /*!< Position of STOP field. */
+#define UART_CONFIG_STOP_Msk (0x1UL << UART_CONFIG_STOP_Pos) /*!< Bit mask of STOP field. */
+#define UART_CONFIG_STOP_One (0UL) /*!< One stop bit */
+#define UART_CONFIG_STOP_Two (1UL) /*!< Two stop bits */
+
+/* Bits 3..1 : Parity */
+#define UART_CONFIG_PARITY_Pos (1UL) /*!< Position of PARITY field. */
+#define UART_CONFIG_PARITY_Msk (0x7UL << UART_CONFIG_PARITY_Pos) /*!< Bit mask of PARITY field. */
+#define UART_CONFIG_PARITY_Excluded (0x0UL) /*!< Exclude parity bit */
+#define UART_CONFIG_PARITY_Included (0x7UL) /*!< Include parity bit */
+
+/* Bit 0 : Hardware flow control */
+#define UART_CONFIG_HWFC_Pos (0UL) /*!< Position of HWFC field. */
+#define UART_CONFIG_HWFC_Msk (0x1UL << UART_CONFIG_HWFC_Pos) /*!< Bit mask of HWFC field. */
+#define UART_CONFIG_HWFC_Disabled (0UL) /*!< Disabled */
+#define UART_CONFIG_HWFC_Enabled (1UL) /*!< Enabled */
+
+
+/* =========================================================================================================================== */
+/* ================                                         UARTE0_NS                                         ================ */
+/* =========================================================================================================================== */
+
+
+/**
+  * @brief UART with EasyDMA 0 (UARTE0_NS)
+  */
+
+typedef struct {                                /*!< (@ 0x40008000) UARTE0_NS Structure                                        */
+  __OM  uint32_t  TASKS_STARTRX;                /*!< (@ 0x00000000) Start UART receiver                                        */
+  __OM  uint32_t  TASKS_STOPRX;                 /*!< (@ 0x00000004) Stop UART receiver                                         */
+  __OM  uint32_t  TASKS_STARTTX;                /*!< (@ 0x00000008) Start UART transmitter                                     */
+  __OM  uint32_t  TASKS_STOPTX;                 /*!< (@ 0x0000000C) Stop UART transmitter                                      */
+  __IM  uint32_t  RESERVED[7];
+  __OM  uint32_t  TASKS_FLUSHRX;                /*!< (@ 0x0000002C) Flush RX FIFO into RX buffer                               */
+  __IM  uint32_t  RESERVED1[20];
+  __IOM uint32_t  SUBSCRIBE_STARTRX;            /*!< (@ 0x00000080) Subscribe configuration for task STARTRX                   */
+  __IOM uint32_t  SUBSCRIBE_STOPRX;             /*!< (@ 0x00000084) Subscribe configuration for task STOPRX                    */
+  __IOM uint32_t  SUBSCRIBE_STARTTX;            /*!< (@ 0x00000088) Subscribe configuration for task STARTTX                   */
+  __IOM uint32_t  SUBSCRIBE_STOPTX;             /*!< (@ 0x0000008C) Subscribe configuration for task STOPTX                    */
+  __IM  uint32_t  RESERVED2[7];
+  __IOM uint32_t  SUBSCRIBE_FLUSHRX;            /*!< (@ 0x000000AC) Subscribe configuration for task FLUSHRX                   */
+  __IM  uint32_t  RESERVED3[20];
+  __IOM uint32_t  EVENTS_CTS;                   /*!< (@ 0x00000100) CTS is activated (set low). Clear To Send.                 */
+  __IOM uint32_t  EVENTS_NCTS;                  /*!< (@ 0x00000104) CTS is deactivated (set high). Not Clear To Send.          */
+  __IOM uint32_t  EVENTS_RXDRDY;                /*!< (@ 0x00000108) Data received in RXD (but potentially not yet
+                                                                    transferred to Data RAM)                                   */
+  __IM  uint32_t  RESERVED4;
+  __IOM uint32_t  EVENTS_ENDRX;                 /*!< (@ 0x00000110) Receive buffer is filled up                                */
+  __IM  uint32_t  RESERVED5[2];
+  __IOM uint32_t  EVENTS_TXDRDY;                /*!< (@ 0x0000011C) Data sent from TXD                                         */
+  __IOM uint32_t  EVENTS_ENDTX;                 /*!< (@ 0x00000120) Last TX byte transmitted                                   */
+  __IOM uint32_t  EVENTS_ERROR;                 /*!< (@ 0x00000124) Error detected                                             */
+  __IM  uint32_t  RESERVED6[7];
+  __IOM uint32_t  EVENTS_RXTO;                  /*!< (@ 0x00000144) Receiver timeout                                           */
+  __IM  uint32_t  RESERVED7;
+  __IOM uint32_t  EVENTS_RXSTARTED;             /*!< (@ 0x0000014C) UART receiver has started                                  */
+  __IOM uint32_t  EVENTS_TXSTARTED;             /*!< (@ 0x00000150) UART transmitter has started                               */
+  __IM  uint32_t  RESERVED8;
+  __IOM uint32_t  EVENTS_TXSTOPPED;             /*!< (@ 0x00000158) Transmitter stopped                                        */
+  __IM  uint32_t  RESERVED9[9];
+  __IOM uint32_t  PUBLISH_CTS;                  /*!< (@ 0x00000180) Publish configuration for event CTS                        */
+  __IOM uint32_t  PUBLISH_NCTS;                 /*!< (@ 0x00000184) Publish configuration for event NCTS                       */
+  __IOM uint32_t  PUBLISH_RXDRDY;               /*!< (@ 0x00000188) Publish configuration for event RXDRDY                     */
+  __IM  uint32_t  RESERVED10;
+  __IOM uint32_t  PUBLISH_ENDRX;                /*!< (@ 0x00000190) Publish configuration for event ENDRX                      */
+  __IM  uint32_t  RESERVED11[2];
+  __IOM uint32_t  PUBLISH_TXDRDY;               /*!< (@ 0x0000019C) Publish configuration for event TXDRDY                     */
+  __IOM uint32_t  PUBLISH_ENDTX;                /*!< (@ 0x000001A0) Publish configuration for event ENDTX                      */
+  __IOM uint32_t  PUBLISH_ERROR;                /*!< (@ 0x000001A4) Publish configuration for event ERROR                      */
+  __IM  uint32_t  RESERVED12[7];
+  __IOM uint32_t  PUBLISH_RXTO;                 /*!< (@ 0x000001C4) Publish configuration for event RXTO                       */
+  __IM  uint32_t  RESERVED13;
+  __IOM uint32_t  PUBLISH_RXSTARTED;            /*!< (@ 0x000001CC) Publish configuration for event RXSTARTED                  */
+  __IOM uint32_t  PUBLISH_TXSTARTED;            /*!< (@ 0x000001D0) Publish configuration for event TXSTARTED                  */
+  __IM  uint32_t  RESERVED14;
+  __IOM uint32_t  PUBLISH_TXSTOPPED;            /*!< (@ 0x000001D8) Publish configuration for event TXSTOPPED                  */
+  __IM  uint32_t  RESERVED15[9];
+  __IOM uint32_t  SHORTS;                       /*!< (@ 0x00000200) Shortcuts between local events and tasks                   */
+  __IM  uint32_t  RESERVED16[63];
+  __IOM uint32_t  INTEN;                        /*!< (@ 0x00000300) Enable or disable interrupt                                */
+  __IOM uint32_t  INTENSET;                     /*!< (@ 0x00000304) Enable interrupt                                           */
+  __IOM uint32_t  INTENCLR;                     /*!< (@ 0x00000308) Disable interrupt                                          */
+  __IM  uint32_t  RESERVED17[93];
+  __IOM uint32_t  ERRORSRC;                     /*!< (@ 0x00000480) Error source                                               */
+  __IM  uint32_t  RESERVED18[31];
+  __IOM uint32_t  ENABLE;                       /*!< (@ 0x00000500) Enable UART                                                */
+  __IM  uint32_t  RESERVED19;
+  __IOM UARTE_PSEL_Type PSEL;                   /*!< (@ 0x00000508) Unspecified                                                */
+  __IM  uint32_t  RESERVED20[3];
+  __IOM uint32_t  BAUDRATE;                     /*!< (@ 0x00000524) Baud rate. Accuracy depends on the HFCLK source
+                                                                    selected.                                                  */
+  __IM  uint32_t  RESERVED21[3];
+  __IOM UARTE_RXD_Type RXD;                     /*!< (@ 0x00000534) RXD EasyDMA channel                                        */
+  __IM  uint32_t  RESERVED22;
+  __IOM UARTE_TXD_Type TXD;                     /*!< (@ 0x00000544) TXD EasyDMA channel                                        */
+  __IM  uint32_t  RESERVED23[7];
+  __IOM uint32_t  CONFIG;                       /*!< (@ 0x0000056C) Configuration of parity and hardware flow control          */
+} NRF_UARTE_Type;                               /*!< Size = 1392 (0x570)                                                       */
+
+
+/* Peripheral: UARTE */
+/* Description: UART with EasyDMA 0 */
+
+/* Register: UARTE_SHORTS */
+/* Description: Shortcuts between local events and tasks */
+
+/* Bit 6 : Shortcut between event ENDRX and task STOPRX */
+#define UARTE_SHORTS_ENDRX_STOPRX_Pos (6UL) /*!< Position of ENDRX_STOPRX field. */
+#define UARTE_SHORTS_ENDRX_STOPRX_Msk (0x1UL << UARTE_SHORTS_ENDRX_STOPRX_Pos) /*!< Bit mask of ENDRX_STOPRX field. */
+#define UARTE_SHORTS_ENDRX_STOPRX_Disabled (0UL) /*!< Disable shortcut */
+#define UARTE_SHORTS_ENDRX_STOPRX_Enabled (1UL) /*!< Enable shortcut */
+
+/* Bit 5 : Shortcut between event ENDRX and task STARTRX */
+#define UARTE_SHORTS_ENDRX_STARTRX_Pos (5UL) /*!< Position of ENDRX_STARTRX field. */
+#define UARTE_SHORTS_ENDRX_STARTRX_Msk (0x1UL << UARTE_SHORTS_ENDRX_STARTRX_Pos) /*!< Bit mask of ENDRX_STARTRX field. */
+#define UARTE_SHORTS_ENDRX_STARTRX_Disabled (0UL) /*!< Disable shortcut */
+#define UARTE_SHORTS_ENDRX_STARTRX_Enabled (1UL) /*!< Enable shortcut */
+
+/* Register: UARTE_INTENSET */
+/* Description: Enable interrupt */
+
+/* Bit 22 : Write '1' to enable interrupt for event TXSTOPPED */
+#define UARTE_INTENSET_TXSTOPPED_Pos (22UL) /*!< Position of TXSTOPPED field. */
+#define UARTE_INTENSET_TXSTOPPED_Msk (0x1UL << UARTE_INTENSET_TXSTOPPED_Pos) /*!< Bit mask of TXSTOPPED field. */
+#define UARTE_INTENSET_TXSTOPPED_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_TXSTOPPED_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_TXSTOPPED_Set (1UL) /*!< Enable */
+
+/* Bit 20 : Write '1' to enable interrupt for event TXSTARTED */
+#define UARTE_INTENSET_TXSTARTED_Pos (20UL) /*!< Position of TXSTARTED field. */
+#define UARTE_INTENSET_TXSTARTED_Msk (0x1UL << UARTE_INTENSET_TXSTARTED_Pos) /*!< Bit mask of TXSTARTED field. */
+#define UARTE_INTENSET_TXSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_TXSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_TXSTARTED_Set (1UL) /*!< Enable */
+
+/* Bit 19 : Write '1' to enable interrupt for event RXSTARTED */
+#define UARTE_INTENSET_RXSTARTED_Pos (19UL) /*!< Position of RXSTARTED field. */
+#define UARTE_INTENSET_RXSTARTED_Msk (0x1UL << UARTE_INTENSET_RXSTARTED_Pos) /*!< Bit mask of RXSTARTED field. */
+#define UARTE_INTENSET_RXSTARTED_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_RXSTARTED_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_RXSTARTED_Set (1UL) /*!< Enable */
+
+/* Bit 17 : Write '1' to enable interrupt for event RXTO */
+#define UARTE_INTENSET_RXTO_Pos (17UL) /*!< Position of RXTO field. */
+#define UARTE_INTENSET_RXTO_Msk (0x1UL << UARTE_INTENSET_RXTO_Pos) /*!< Bit mask of RXTO field. */
+#define UARTE_INTENSET_RXTO_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_RXTO_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_RXTO_Set (1UL) /*!< Enable */
+
+/* Bit 9 : Write '1' to enable interrupt for event ERROR */
+#define UARTE_INTENSET_ERROR_Pos (9UL) /*!< Position of ERROR field. */
+#define UARTE_INTENSET_ERROR_Msk (0x1UL << UARTE_INTENSET_ERROR_Pos) /*!< Bit mask of ERROR field. */
+#define UARTE_INTENSET_ERROR_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_ERROR_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_ERROR_Set (1UL) /*!< Enable */
+
+/* Bit 8 : Write '1' to enable interrupt for event ENDTX */
+#define UARTE_INTENSET_ENDTX_Pos (8UL) /*!< Position of ENDTX field. */
+#define UARTE_INTENSET_ENDTX_Msk (0x1UL << UARTE_INTENSET_ENDTX_Pos) /*!< Bit mask of ENDTX field. */
+#define UARTE_INTENSET_ENDTX_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_ENDTX_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_ENDTX_Set (1UL) /*!< Enable */
+
+/* Bit 7 : Write '1' to enable interrupt for event TXDRDY */
+#define UARTE_INTENSET_TXDRDY_Pos (7UL) /*!< Position of TXDRDY field. */
+#define UARTE_INTENSET_TXDRDY_Msk (0x1UL << UARTE_INTENSET_TXDRDY_Pos) /*!< Bit mask of TXDRDY field. */
+#define UARTE_INTENSET_TXDRDY_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_TXDRDY_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_TXDRDY_Set (1UL) /*!< Enable */
+
+/* Bit 4 : Write '1' to enable interrupt for event ENDRX */
+#define UARTE_INTENSET_ENDRX_Pos (4UL) /*!< Position of ENDRX field. */
+#define UARTE_INTENSET_ENDRX_Msk (0x1UL << UARTE_INTENSET_ENDRX_Pos) /*!< Bit mask of ENDRX field. */
+#define UARTE_INTENSET_ENDRX_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_ENDRX_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_ENDRX_Set (1UL) /*!< Enable */
+
+/* Bit 2 : Write '1' to enable interrupt for event RXDRDY */
+#define UARTE_INTENSET_RXDRDY_Pos (2UL) /*!< Position of RXDRDY field. */
+#define UARTE_INTENSET_RXDRDY_Msk (0x1UL << UARTE_INTENSET_RXDRDY_Pos) /*!< Bit mask of RXDRDY field. */
+#define UARTE_INTENSET_RXDRDY_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_RXDRDY_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_RXDRDY_Set (1UL) /*!< Enable */
+
+/* Bit 1 : Write '1' to enable interrupt for event NCTS */
+#define UARTE_INTENSET_NCTS_Pos (1UL) /*!< Position of NCTS field. */
+#define UARTE_INTENSET_NCTS_Msk (0x1UL << UARTE_INTENSET_NCTS_Pos) /*!< Bit mask of NCTS field. */
+#define UARTE_INTENSET_NCTS_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_NCTS_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_NCTS_Set (1UL) /*!< Enable */
+
+/* Bit 0 : Write '1' to enable interrupt for event CTS */
+#define UARTE_INTENSET_CTS_Pos (0UL) /*!< Position of CTS field. */
+#define UARTE_INTENSET_CTS_Msk (0x1UL << UARTE_INTENSET_CTS_Pos) /*!< Bit mask of CTS field. */
+#define UARTE_INTENSET_CTS_Disabled (0UL) /*!< Read: Disabled */
+#define UARTE_INTENSET_CTS_Enabled (1UL) /*!< Read: Enabled */
+#define UARTE_INTENSET_CTS_Set (1UL) /*!< Enable */
+
+
+/* Register: UARTE_ERRORSRC */
+/* Description: Error source This register is read/write one to clear. */
+
+/* Bit 3 : Break condition */
+#define UARTE_ERRORSRC_BREAK_Pos (3UL) /*!< Position of BREAK field. */
+#define UARTE_ERRORSRC_BREAK_Msk (0x1UL << UARTE_ERRORSRC_BREAK_Pos) /*!< Bit mask of BREAK field. */
+#define UARTE_ERRORSRC_BREAK_NotPresent (0UL) /*!< Read: error not present */
+#define UARTE_ERRORSRC_BREAK_Present (1UL) /*!< Read: error present */
+
+/* Bit 2 : Framing error occurred */
+#define UARTE_ERRORSRC_FRAMING_Pos (2UL) /*!< Position of FRAMING field. */
+#define UARTE_ERRORSRC_FRAMING_Msk (0x1UL << UARTE_ERRORSRC_FRAMING_Pos) /*!< Bit mask of FRAMING field. */
+#define UARTE_ERRORSRC_FRAMING_NotPresent (0UL) /*!< Read: error not present */
+#define UARTE_ERRORSRC_FRAMING_Present (1UL) /*!< Read: error present */
+
+/* Bit 1 : Parity error */
+#define UARTE_ERRORSRC_PARITY_Pos (1UL) /*!< Position of PARITY field. */
+#define UARTE_ERRORSRC_PARITY_Msk (0x1UL << UARTE_ERRORSRC_PARITY_Pos) /*!< Bit mask of PARITY field. */
+#define UARTE_ERRORSRC_PARITY_NotPresent (0UL) /*!< Read: error not present */
+#define UARTE_ERRORSRC_PARITY_Present (1UL) /*!< Read: error present */
+
+/* Bit 0 : Overrun error */
+#define UARTE_ERRORSRC_OVERRUN_Pos (0UL) /*!< Position of OVERRUN field. */
+#define UARTE_ERRORSRC_OVERRUN_Msk (0x1UL << UARTE_ERRORSRC_OVERRUN_Pos) /*!< Bit mask of OVERRUN field. */
+#define UARTE_ERRORSRC_OVERRUN_NotPresent (0UL) /*!< Read: error not present */
+#define UARTE_ERRORSRC_OVERRUN_Present (1UL) /*!< Read: error present */
+
+/* Register: UARTE_ENABLE */
+/* Description: Enable UART */
+
+/* Bits 3..0 : Enable or disable UARTE */
+#define UARTE_ENABLE_ENABLE_Pos (0UL) /*!< Position of ENABLE field. */
+#define UARTE_ENABLE_ENABLE_Msk (0xFUL << UARTE_ENABLE_ENABLE_Pos) /*!< Bit mask of ENABLE field. */
+#define UARTE_ENABLE_ENABLE_Disabled (0UL) /*!< Disable UARTE */
+#define UARTE_ENABLE_ENABLE_Enabled (8UL) /*!< Enable UARTE */
+
+/* Register: UARTE_PSEL_RTS */
+/* Description: Pin select for RTS signal */
+
+/* Bit 31 : Connection */
+#define UARTE_PSEL_RTS_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UARTE_PSEL_RTS_CONNECT_Msk (0x1UL << UARTE_PSEL_RTS_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UARTE_PSEL_RTS_CONNECT_Connected (0UL) /*!< Connect */
+#define UARTE_PSEL_RTS_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UARTE_PSEL_RTS_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UARTE_PSEL_RTS_PORT_Msk (0x1UL << UARTE_PSEL_RTS_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UARTE_PSEL_RTS_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UARTE_PSEL_RTS_PIN_Msk (0x1FUL << UARTE_PSEL_RTS_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UARTE_PSEL_TXD */
+/* Description: Pin select for TXD signal */
+
+/* Bit 31 : Connection */
+#define UARTE_PSEL_TXD_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UARTE_PSEL_TXD_CONNECT_Msk (0x1UL << UARTE_PSEL_TXD_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UARTE_PSEL_TXD_CONNECT_Connected (0UL) /*!< Connect */
+#define UARTE_PSEL_TXD_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UARTE_PSEL_TXD_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UARTE_PSEL_TXD_PORT_Msk (0x1UL << UARTE_PSEL_TXD_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UARTE_PSEL_TXD_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UARTE_PSEL_TXD_PIN_Msk (0x1FUL << UARTE_PSEL_TXD_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UARTE_PSEL_CTS */
+/* Description: Pin select for CTS signal */
+
+/* Bit 31 : Connection */
+#define UARTE_PSEL_CTS_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UARTE_PSEL_CTS_CONNECT_Msk (0x1UL << UARTE_PSEL_CTS_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UARTE_PSEL_CTS_CONNECT_Connected (0UL) /*!< Connect */
+#define UARTE_PSEL_CTS_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UARTE_PSEL_CTS_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UARTE_PSEL_CTS_PORT_Msk (0x1UL << UARTE_PSEL_CTS_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UARTE_PSEL_CTS_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UARTE_PSEL_CTS_PIN_Msk (0x1FUL << UARTE_PSEL_CTS_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UARTE_PSEL_RXD */
+/* Description: Pin select for RXD signal */
+
+/* Bit 31 : Connection */
+#define UARTE_PSEL_RXD_CONNECT_Pos (31UL) /*!< Position of CONNECT field. */
+#define UARTE_PSEL_RXD_CONNECT_Msk (0x1UL << UARTE_PSEL_RXD_CONNECT_Pos) /*!< Bit mask of CONNECT field. */
+#define UARTE_PSEL_RXD_CONNECT_Connected (0UL) /*!< Connect */
+#define UARTE_PSEL_RXD_CONNECT_Disconnected (1UL) /*!< Disconnect */
+
+/* Bit 5 : Port number */
+#define UARTE_PSEL_RXD_PORT_Pos (5UL) /*!< Position of PORT field. */
+#define UARTE_PSEL_RXD_PORT_Msk (0x1UL << UARTE_PSEL_RXD_PORT_Pos) /*!< Bit mask of PORT field. */
+
+/* Bits 4..0 : Pin number */
+#define UARTE_PSEL_RXD_PIN_Pos (0UL) /*!< Position of PIN field. */
+#define UARTE_PSEL_RXD_PIN_Msk (0x1FUL << UARTE_PSEL_RXD_PIN_Pos) /*!< Bit mask of PIN field. */
+
+/* Register: UARTE_BAUDRATE */
+/* Description: Baud rate. Accuracy depends on the HFCLK source selected. */
+
+/* Bits 31..0 : Baud rate */
+#define UARTE_BAUDRATE_BAUDRATE_Pos (0UL) /*!< Position of BAUDRATE field. */
+#define UARTE_BAUDRATE_BAUDRATE_Msk (0xFFFFFFFFUL << UARTE_BAUDRATE_BAUDRATE_Pos) /*!< Bit mask of BAUDRATE field. */
+#define UARTE_BAUDRATE_BAUDRATE_Baud1200 (0x0004F000UL) /*!< 1200 baud (actual rate: 1205) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud2400 (0x0009D000UL) /*!< 2400 baud (actual rate: 2396) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud4800 (0x0013B000UL) /*!< 4800 baud (actual rate: 4808) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud9600 (0x00275000UL) /*!< 9600 baud (actual rate: 9598) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud14400 (0x003AF000UL) /*!< 14400 baud (actual rate: 14401) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud19200 (0x004EA000UL) /*!< 19200 baud (actual rate: 19208) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud28800 (0x0075C000UL) /*!< 28800 baud (actual rate: 28777) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud31250 (0x00800000UL) /*!< 31250 baud */
+#define UARTE_BAUDRATE_BAUDRATE_Baud38400 (0x009D0000UL) /*!< 38400 baud (actual rate: 38369) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud56000 (0x00E50000UL) /*!< 56000 baud (actual rate: 55944) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud57600 (0x00EB0000UL) /*!< 57600 baud (actual rate: 57554) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud76800 (0x013A9000UL) /*!< 76800 baud (actual rate: 76923) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud115200 (0x01D60000UL) /*!< 115200 baud (actual rate: 115108) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud230400 (0x03B00000UL) /*!< 230400 baud (actual rate: 231884) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud250000 (0x04000000UL) /*!< 250000 baud */
+#define UARTE_BAUDRATE_BAUDRATE_Baud460800 (0x07400000UL) /*!< 460800 baud (actual rate: 457143) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud921600 (0x0F000000UL) /*!< 921600 baud (actual rate: 941176) */
+#define UARTE_BAUDRATE_BAUDRATE_Baud1M (0x10000000UL) /*!< 1 megabaud */
+
+/* Register: UARTE_RXD_PTR */
+/* Description: Data pointer */
+
+/* Bits 31..0 : Data pointer */
+#define UARTE_RXD_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
+#define UARTE_RXD_PTR_PTR_Msk (0xFFFFFFFFUL << UARTE_RXD_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
+
+/* Register: UARTE_RXD_MAXCNT */
+/* Description: Maximum number of bytes in receive buffer */
+
+/* Bits 15..0 : Maximum number of bytes in receive buffer */
+#define UARTE_RXD_MAXCNT_MAXCNT_Pos (0UL) /*!< Position of MAXCNT field. */
+#define UARTE_RXD_MAXCNT_MAXCNT_Msk (0xFFFFUL << UARTE_RXD_MAXCNT_MAXCNT_Pos) /*!< Bit mask of MAXCNT field. */
+
+/* Register: UARTE_RXD_AMOUNT */
+/* Description: Number of bytes transferred in the last transaction */
+
+/* Bits 15..0 : Number of bytes transferred in the last transaction */
+#define UARTE_RXD_AMOUNT_AMOUNT_Pos (0UL) /*!< Position of AMOUNT field. */
+#define UARTE_RXD_AMOUNT_AMOUNT_Msk (0xFFFFUL << UARTE_RXD_AMOUNT_AMOUNT_Pos) /*!< Bit mask of AMOUNT field. */
+
+/* Register: UARTE_TXD_PTR */
+/* Description: Data pointer */
+
+/* Bits 31..0 : Data pointer */
+#define UARTE_TXD_PTR_PTR_Pos (0UL) /*!< Position of PTR field. */
+#define UARTE_TXD_PTR_PTR_Msk (0xFFFFFFFFUL << UARTE_TXD_PTR_PTR_Pos) /*!< Bit mask of PTR field. */
+
+/* Register: UARTE_TXD_MAXCNT */
+/* Description: Maximum number of bytes in transmit buffer */
+
+/* Bits 15..0 : Maximum number of bytes in transmit buffer */
+#define UARTE_TXD_MAXCNT_MAXCNT_Pos (0UL) /*!< Position of MAXCNT field. */
+#define UARTE_TXD_MAXCNT_MAXCNT_Msk (0xFFFFUL << UARTE_TXD_MAXCNT_MAXCNT_Pos) /*!< Bit mask of MAXCNT field. */
+
+/* Register: UARTE_TXD_AMOUNT */
+/* Description: Number of bytes transferred in the last transaction */
+
+/* Bits 15..0 : Number of bytes transferred in the last transaction */
+#define UARTE_TXD_AMOUNT_AMOUNT_Pos (0UL) /*!< Position of AMOUNT field. */
+#define UARTE_TXD_AMOUNT_AMOUNT_Msk (0xFFFFUL << UARTE_TXD_AMOUNT_AMOUNT_Pos) /*!< Bit mask of AMOUNT field. */
+
+/* Register: UARTE_CONFIG */
+/* Description: Configuration of parity and hardware flow control */
+
+/* Bit 8 : Even or odd parity type */
+#define UARTE_CONFIG_PARITYTYPE_Pos (8UL) /*!< Position of PARITYTYPE field. */
+#define UARTE_CONFIG_PARITYTYPE_Msk (0x1UL << UARTE_CONFIG_PARITYTYPE_Pos) /*!< Bit mask of PARITYTYPE field. */
+#define UARTE_CONFIG_PARITYTYPE_Even (0UL) /*!< Even parity */
+#define UARTE_CONFIG_PARITYTYPE_Odd (1UL) /*!< Odd parity */
+
+/* Bit 4 : Stop bits */
+#define UARTE_CONFIG_STOP_Pos (4UL) /*!< Position of STOP field. */
+#define UARTE_CONFIG_STOP_Msk (0x1UL << UARTE_CONFIG_STOP_Pos) /*!< Bit mask of STOP field. */
+#define UARTE_CONFIG_STOP_One (0UL) /*!< One stop bit */
+#define UARTE_CONFIG_STOP_Two (1UL) /*!< Two stop bits */
+
+/* Bits 3..1 : Parity */
+#define UARTE_CONFIG_PARITY_Pos (1UL) /*!< Position of PARITY field. */
+#define UARTE_CONFIG_PARITY_Msk (0x7UL << UARTE_CONFIG_PARITY_Pos) /*!< Bit mask of PARITY field. */
+#define UARTE_CONFIG_PARITY_Excluded (0x0UL) /*!< Exclude parity bit */
+#define UARTE_CONFIG_PARITY_Included (0x7UL) /*!< Include even parity bit */
+
+/* Bit 0 : Hardware flow control */
+#define UARTE_CONFIG_HWFC_Pos (0UL) /*!< Position of HWFC field. */
+#define UARTE_CONFIG_HWFC_Msk (0x1UL << UARTE_CONFIG_HWFC_Pos) /*!< Bit mask of HWFC field. */
+#define UARTE_CONFIG_HWFC_Disabled (0UL) /*!< Disabled */
+#define UARTE_CONFIG_HWFC_Enabled (1UL) /*!< Enabled */
+
 
 /* =========================================================================================================================== */
 /* ================                                          UICR                                             ================ */

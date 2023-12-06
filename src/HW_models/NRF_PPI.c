@@ -31,6 +31,7 @@
 #include "NHW_CLOCK.h"
 #include "NHW_RADIO.h"
 #include "NHW_EGU.h"
+#include "NHW_UART.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
 #include "nsi_tasks.h"
@@ -112,7 +113,22 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
     { (void*)&NRF_RADIO_regs.TASKS_EDSTOP,       nhw_RADIO_TASK_EDSTOP},
     { (void*)&NRF_RADIO_regs.TASKS_CCASTART,     nhw_RADIO_TASK_CCASTART},
     { (void*)&NRF_RADIO_regs.TASKS_CCASTOP,      nhw_RADIO_TASK_CCASTOP},
+
     //UART
+    { (void*)&NRF_UARTE_regs[0].TASKS_STARTRX,  nhw_uarte0_TASKS_STARTRX},
+    { (void*)&NRF_UARTE_regs[0].TASKS_STOPRX,   nhw_uarte0_TASKS_STOPRX},
+    { (void*)&NRF_UARTE_regs[0].TASKS_STARTTX,  nhw_uarte0_TASKS_STARTTX},
+    { (void*)&NRF_UARTE_regs[0].TASKS_STOPTX,   nhw_uarte0_TASKS_STOPTX},
+    { (void*)&((NRF_UART_Type *)&NRF_UARTE_regs[0])->TASKS_SUSPEND,   nhw_uarte0_TASKS_SUSPEND},
+    { (void*)&NRF_UARTE_regs[0].TASKS_FLUSHRX,  nhw_uarte0_TASKS_FLUSHRX},
+
+    { (void*)&NRF_UARTE_regs[1].TASKS_STARTRX,  nhw_uarte1_TASKS_STARTRX},
+    { (void*)&NRF_UARTE_regs[1].TASKS_STOPRX,   nhw_uarte1_TASKS_STOPRX},
+    { (void*)&NRF_UARTE_regs[1].TASKS_STARTTX,  nhw_uarte1_TASKS_STARTTX},
+    { (void*)&NRF_UARTE_regs[1].TASKS_STOPTX,   nhw_uarte1_TASKS_STOPTX},
+    { (void*)&((NRF_UART_Type *)&NRF_UARTE_regs[1])->TASKS_SUSPEND,   nhw_uarte1_TASKS_SUSPEND},
+    { (void*)&NRF_UARTE_regs[1].TASKS_FLUSHRX,  nhw_uarte1_TASKS_FLUSHRX},
+
     //SPI0
     //TWI0
     //SPI1
@@ -387,6 +403,18 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     {RADIO_EVENTS_PHYEND,  &NRF_RADIO_regs.EVENTS_PHYEND},
     {RADIO_EVENTS_CTEPRESENT,&NRF_RADIO_regs.EVENTS_CTEPRESENT},
 
+    {UARTE0_EVENTS_CTS      , &NRF_UARTE_regs[0].EVENTS_CTS      },
+    {UARTE0_EVENTS_NCTS     , &NRF_UARTE_regs[0].EVENTS_NCTS     },
+    {UARTE0_EVENTS_RXDRDY   , &NRF_UARTE_regs[0].EVENTS_RXDRDY   },
+    {UARTE0_EVENTS_ENDRX    , &NRF_UARTE_regs[0].EVENTS_ENDRX    },
+    {UARTE0_EVENTS_TXDRDY   , &NRF_UARTE_regs[0].EVENTS_TXDRDY   },
+    {UARTE0_EVENTS_ENDTX    , &NRF_UARTE_regs[0].EVENTS_ENDTX    },
+    {UARTE0_EVENTS_ERROR    , &NRF_UARTE_regs[0].EVENTS_ERROR    },
+    {UARTE0_EVENTS_RXTO     , &NRF_UARTE_regs[0].EVENTS_RXTO     },
+    {UARTE0_EVENTS_RXSTARTED, &NRF_UARTE_regs[0].EVENTS_RXSTARTED},
+    {UARTE0_EVENTS_TXSTARTED, &NRF_UARTE_regs[0].EVENTS_TXSTARTED},
+    {UARTE0_EVENTS_TXSTOPPED, &NRF_UARTE_regs[0].EVENTS_TXSTOPPED},
+
     {GPIOTE_EVENTS_IN_0, &NRF_GPIOTE_regs.EVENTS_IN[0]},
     {GPIOTE_EVENTS_IN_1, &NRF_GPIOTE_regs.EVENTS_IN[1]},
     {GPIOTE_EVENTS_IN_2, &NRF_GPIOTE_regs.EVENTS_IN[2]},
@@ -554,6 +582,18 @@ static const ppi_event_table_t ppi_events_table[] = { //better keep same order a
     {RTC2_EVENTS_COMPARE_1, &NRF_RTC_regs[2].EVENTS_COMPARE[1]},
     {RTC2_EVENTS_COMPARE_2, &NRF_RTC_regs[2].EVENTS_COMPARE[2]},
     {RTC2_EVENTS_COMPARE_3, &NRF_RTC_regs[2].EVENTS_COMPARE[3]},
+
+    {UARTE1_EVENTS_CTS      , &NRF_UARTE_regs[1].EVENTS_CTS      },
+    {UARTE1_EVENTS_NCTS     , &NRF_UARTE_regs[1].EVENTS_NCTS     },
+    {UARTE1_EVENTS_RXDRDY   , &NRF_UARTE_regs[1].EVENTS_RXDRDY   },
+    {UARTE1_EVENTS_ENDRX    , &NRF_UARTE_regs[1].EVENTS_ENDRX    },
+    {UARTE1_EVENTS_TXDRDY   , &NRF_UARTE_regs[1].EVENTS_TXDRDY   },
+    {UARTE1_EVENTS_ENDTX    , &NRF_UARTE_regs[1].EVENTS_ENDTX    },
+    {UARTE1_EVENTS_ERROR    , &NRF_UARTE_regs[1].EVENTS_ERROR    },
+    {UARTE1_EVENTS_RXTO     , &NRF_UARTE_regs[1].EVENTS_RXTO     },
+    {UARTE1_EVENTS_RXSTARTED, &NRF_UARTE_regs[1].EVENTS_RXSTARTED},
+    {UARTE1_EVENTS_TXSTARTED, &NRF_UARTE_regs[1].EVENTS_TXSTARTED},
+    {UARTE1_EVENTS_TXSTOPPED, &NRF_UARTE_regs[1].EVENTS_TXSTOPPED},
 
     {NUMBER_PPI_EVENTS, NULL} //End marker
 };
