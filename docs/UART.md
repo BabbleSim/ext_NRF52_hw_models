@@ -3,10 +3,10 @@
 A model of the UART and UART-E peripherals is included with these models.
 
 You can find information about their limitations and approximations in
-[the source files](../src/HW_models/NRF_UART.c).
+[the source files](../src/HW_models/NHW_UART.c).
 
 The UART models are divided in 2 parts:
-* A peripheral model, which emulates a nRF UART(E).
+* A peripheral model, which emulates both the nRF UART and UART-E.
 * A backend which can send and receive the data somewhere.
 
 When using the peripheral you select which backend is used for each UART instance
@@ -19,7 +19,7 @@ nothing is received.
 Each UART can be configured to log to a file the Tx and/or Rx bytes.
 Enabling this and selecting the file is done with command line options.
 When enabled, the model will dump one line in this file per byte, with two columns:
-The first column is a timestamp, in microseconds, when the frame *ended*.
+The first column is a timestamp, in microseconds, when the frame *ended*;
 The second column is the byte itself.
 
 ### Test API
@@ -27,7 +27,7 @@ The second column is the byte itself.
 The UART also has a test API which allows embedded code to register callbacks to be
 called whenever a byte is transmitted or received. This callback can replace the byte before
 the UART peripheral processes it further. Check
-[the UART header file](../src/HW_models/NRF_UART.h) for more info.
+[the UART header file](../src/HW_models/NHW_UART.h) for more info.
 It is also possible for test code to call `nhw_UARTE_digest_Rx_byte()` to inject
 bytes into the UART peripheral like if they arrived thru the Rx line.
 
@@ -60,8 +60,8 @@ just disconnect the backend and continue running.
 For performance reasons, the backend does not react immediately to a CTS/RTS pin toggle from the
 other side. Instead up to 1 frame time (1 byte time) will elapse between the pin toggle
 and the UART peripheral model being notified. Note that the UART peripheral has a 6 byte Rx FIFO,
-and that it toggles RTS while there is still 4 spaces left. So even though this will, in some cases,
-cause up to 1 extra byte to be send to the other side, it should not cause any transmission losses.
+and that it toggles RTS while there are still 4 spaces left. So even though this will, in some cases,
+cause up to 1 extra byte to be sent to the other side, it should not cause any transmission losses.
 
 If there is a miss-configuration between the devices (bit rate, parity or number of stop bits),
 the backend will print a warning for each received byte, but the ERRORSRC register in the UART
@@ -70,13 +70,13 @@ peripheral won't be set due to fame, or parity errors, or break conditions.
 #### Loopback
 
 It is possible to connect a UART instance Tx directly to its Rx (or to another instance Rx),
-and have the RTR will be propagated to the CTS.
+and have the RTR propagated to the CTS.
 To do this, just configure the same FIFO file name for both the Rx and Tx, for example like:
 `-uart0_fifob_rxfile=looped_back -uart0_fifob_txfile=looped_back`
 
 **IMPOTANT**:
   Do not connect both devices which are connected thru the UART to the Physical layer
-  simulation. Connect only the one which has the controller.
+  simulation. Connect only the one which has the BLE/15.4 controller.
   Otherwise, with the current implementation the simulation will deadlock with very high
   likelihood, and if it does not deadlock it will slow down the simulation considerably.
   You can still provide the sim_id and an unused device number to the other device, but
