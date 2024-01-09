@@ -40,6 +40,7 @@ uint32_t nhw_UARTE_regr_sideeffects_RXD(unsigned int inst);
 void nhw_UARTE_regw_sideeffects_TXD(unsigned int inst);
 
 void nhw_UARTE_regw_sideeffects_ENABLE(unsigned int inst);
+void nhw_UARTE_regw_sideeffects_CONFIG(unsigned int inst);
 
 #if (NHW_HAS_PPI)
 void nhw_uarte0_TASKS_STARTRX(void);

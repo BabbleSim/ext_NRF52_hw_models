@@ -85,6 +85,28 @@ void nrf_uart_disable(NRF_UART_Type * p_reg)
   nhw_UARTE_regw_sideeffects_ENABLE(i);
 }
 
+void nrf_uart_enable(NRF_UART_Type * p_reg)
+{
+  int i = uart_number_from_ptr(p_reg);
+  p_reg->ENABLE = UART_ENABLE_ENABLE_Enabled;
+  nhw_UARTE_regw_sideeffects_ENABLE(i);
+}
+
+void nrf_uart_configure(NRF_UART_Type           * p_reg,
+                        nrf_uart_config_t const * p_cfg)
+{
+  int i = uart_number_from_ptr(p_reg);
+  p_reg->CONFIG = (uint32_t)p_cfg->parity
+#if defined(UART_CONFIG_STOP_Msk)
+                  | (uint32_t)p_cfg->stop
+#endif
+#if defined(UART_CONFIG_PARITYTYPE_Msk)
+                  | (uint32_t)p_cfg->paritytype
+#endif
+                  | (uint32_t)p_cfg->hwfc;
+  nhw_UARTE_regw_sideeffects_CONFIG(i);
+}
+
 #if defined(DPPI_PRESENT)
 
 static void nrf_uart_subscribe_common(NRF_UART_Type * p_reg,

@@ -416,16 +416,20 @@ static bool flow_control_on(uint inst) {
   return (NRF_UART_regs[inst]->CONFIG & UART_CONFIG_HWFC_Msk) != 0;
 }
 
+static void propagate_RTS_R(uint inst, struct uarte_status *u_el) {
+  if (flow_control_on(inst)) {
+    if (u_el->backend.RTS_pin_toggle_f) {
+      u_el->backend.RTS_pin_toggle_f(inst, u_el->RTSR);
+    }
+  }
+}
+
 static void lower_RTS_R(uint inst, struct uarte_status *u_el) {
   if (u_el->RTSR == false) {
     return;
   }
   u_el->RTSR = false;
-  if (flow_control_on(inst)) {
-    if (u_el->backend.RTS_pin_toggle_f) {
-      u_el->backend.RTS_pin_toggle_f(inst, false);
-    }
-  }
+  propagate_RTS_R(inst, u_el);
 }
 
 static void raise_RTS_R(uint inst, struct uarte_status *u_el) {
@@ -433,11 +437,7 @@ static void raise_RTS_R(uint inst, struct uarte_status *u_el) {
     return;
   }
   u_el->RTSR = true;
-  if (flow_control_on(inst)) {
-    if (u_el->backend.RTS_pin_toggle_f) {
-      u_el->backend.RTS_pin_toggle_f(inst, true);
-    }
-  }
+  propagate_RTS_R(inst, u_el);
 }
 
 static void notify_backend_RxOnOff(uint inst, struct uarte_status *u_el, bool OnNotOff) {
@@ -519,6 +519,10 @@ void nhw_UARTE_CTS_raised(uint inst) {
     return;
   }
   nhw_uarte_st[inst].CTS_blocking = true;
+
+  if ( !(uart_enabled(inst) || uarte_enabled(inst)) ) {
+    return;
+  }
   nhw_UARTE_signal_EVENTS_NCTS(inst);
 }
 
@@ -845,11 +849,12 @@ void nhw_UARTE_TASK_SUSPEND(int inst) {
 }
 
 void nhw_UARTE_regw_sideeffects_ENABLE(unsigned int inst) {
+  struct uarte_status * u_el = &nhw_uarte_st[inst];
+
   if (NRF_UARTE_regs[inst].ENABLE != 0) {
+    propagate_RTS_R(inst, u_el);
     return;
   }
-
-  struct uarte_status * u_el = &nhw_uarte_st[inst];
 
   if (u_el->tx_status != Tx_Off) {
     bs_trace_warning_time_line("UART%i disabled while Tx was not Off (%i)\n", inst, u_el->tx_status);
@@ -885,6 +890,13 @@ void nhw_UARTE_regw_sideeffects_ENABLE(unsigned int inst) {
   u_el->rx_dma_status = DMA_Off;
 
   notify_backend_RxOnOff(inst, u_el, false);
+}
+
+void nhw_UARTE_regw_sideeffects_CONFIG(unsigned int inst) {
+  if (NRF_UARTE_regs[inst].ENABLE != 0) {
+    struct uarte_status *u_el = &nhw_uarte_st[inst];
+    propagate_RTS_R(inst, u_el);
+  }
 }
 
 uint32_t nhw_UARTE_regr_sideeffects_ERRORSRC(unsigned int inst) {

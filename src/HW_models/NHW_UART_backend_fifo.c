@@ -144,6 +144,7 @@ static void nhw_ufifo_backend_init(void) {
     st.uart_enable_notify_f = nhw_ufifo_enable_notify;
 
     nhw_UARTE_backend_register(i, &st);
+    nhw_UARTE_CTS_raised(i);
 
     u_el->Tx_timer = 0;
     u_el->Rx_timer = uf_mdt;

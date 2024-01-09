@@ -65,11 +65,33 @@ uint32_t nrf_uarte_errorsrc_get_and_clear(NRF_UARTE_Type * p_reg)
   return nhw_UARTE_regr_sideeffects_ERRORSRC(i);
 }
 
+void nrf_uarte_enable(NRF_UARTE_Type * p_reg)
+{
+  int i = uarte_number_from_ptr(p_reg);
+  p_reg->ENABLE = UARTE_ENABLE_ENABLE_Enabled;
+  nhw_UARTE_regw_sideeffects_ENABLE(i);
+}
+
 void nrf_uarte_disable(NRF_UARTE_Type * p_reg)
 {
   int i = uarte_number_from_ptr(p_reg);
   p_reg->ENABLE = UARTE_ENABLE_ENABLE_Disabled;
   nhw_UARTE_regw_sideeffects_ENABLE(i);
+}
+
+void nrf_uarte_configure(NRF_UARTE_Type           * p_reg,
+                         nrf_uarte_config_t const * p_cfg)
+{
+  int i = uarte_number_from_ptr(p_reg);
+  p_reg->CONFIG = (uint32_t)p_cfg->parity
+#if defined(UARTE_CONFIG_STOP_Msk)
+                  | (uint32_t)p_cfg->stop
+#endif
+#if defined(UARTE_CONFIG_PARITYTYPE_Msk)
+                  | (uint32_t)p_cfg->paritytype
+#endif
+                  | (uint32_t)p_cfg->hwfc;
+  nhw_UARTE_regw_sideeffects_CONFIG(i);
 }
 
 #if defined(DPPI_PRESENT)
