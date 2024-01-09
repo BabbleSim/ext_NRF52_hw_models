@@ -454,12 +454,23 @@ static void notify_backend_TxOnOff(uint inst, struct uarte_status *u_el, bool On
 
 /**
  * Process a byte incoming to the UART from a backend
+ * This call should be done in the last micros when the byte frame is finishing in the line
  */
 void nhw_UARTE_digest_Rx_byte(uint inst, uint8_t byte) {
   struct uarte_status *u_el = &nhw_uarte_st[inst];
+  bs_time_t frame_start, now;
 
   if (u_el->rx_status == Rx_Off) {
     bs_trace_warning_time_line("Byte received while UART%i is not enabled for Rx, ignoring it\n", inst);
+    return;
+  }
+
+  now = nsi_hws_get_time();
+  frame_start = now - nhw_uarte_one_byte_time(inst) + 1;
+
+  if (u_el->Last_Rx_off_time >= frame_start) {
+    bs_trace_warning_time_line("Byte partially received while UART%i was not enabled for Rx, "
+                               "this would have likely caused a framing error. Ignoring it in the model\n", inst);
     return;
   }
 
@@ -467,7 +478,7 @@ void nhw_UARTE_digest_Rx_byte(uint inst, uint8_t byte) {
     u_el->trx_callbacks[1](inst, &byte);
   }
   if (u_el->Rx_log_file) {
-    fprintf(u_el->Rx_log_file, "%"PRItime",0x%02X\n", nsi_hws_get_time(), byte);
+    fprintf(u_el->Rx_log_file, "%"PRItime",0x%02X\n", now, byte);
   }
 
   Rx_FIFO_push(inst, u_el, byte);
@@ -577,6 +588,9 @@ void nhw_UARTE_TASK_STARTRX(int inst)
     return;
   }
 
+  if (u_el->rx_status == Rx_Off) {
+    u_el->Last_Rx_off_time = nsi_hws_get_time();
+  }
   u_el->rx_status = Rx_On;
   notify_backend_RxOnOff(inst, u_el, true);
 

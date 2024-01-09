@@ -473,7 +473,6 @@ static void uf_Rx_handle_old_input(uint inst, struct ufifo_st_t *u_el) {
     }
   } while (true);
 
-  //TOLOW: Check for Tx byte *started* in the past and disregard too (by setting header as NOP)
   uf_rx_process_last_msg_pre(inst, u_el);
 }
 

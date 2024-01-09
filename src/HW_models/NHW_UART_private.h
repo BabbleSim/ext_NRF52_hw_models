@@ -42,6 +42,9 @@ struct uarte_status {
   enum uart_tx_status tx_status;
   enum uart_rx_status rx_status;
 
+  /* When was the last time the receiver was off (only valid if the receiver is currently On */
+  bs_time_t Last_Rx_off_time;
+
   uint8_t Rx_FIFO[RX_FIFO_SIZE];
   int Rx_FIFO_cnt;
 
