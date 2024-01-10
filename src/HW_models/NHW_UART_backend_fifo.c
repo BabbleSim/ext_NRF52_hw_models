@@ -172,7 +172,7 @@ static void write_to_tx_fifo(struct ufifo_st_t *u_el, void *ptr, size_t size) {
 
 static void tx_set_next_tx_timer(uint inst, struct ufifo_st_t *u_el, bs_time_t last_act) {
   u_el->Tx_timer = BS_MAX(last_act, u_el->Tx_timer);
-  nsi_hws_find_next_event();
+  nhw_ufifo_update_timer();
 }
 
 static void tx_sync_line_params(uint inst, struct ufifo_st_t *u_el) {
