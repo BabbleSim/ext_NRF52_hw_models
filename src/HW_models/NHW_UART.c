@@ -464,7 +464,14 @@ void nhw_UARTE_digest_Rx_byte(uint inst, uint8_t byte) {
   bs_time_t frame_start, now;
 
   if (u_el->rx_status == Rx_Off) {
-    bs_trace_warning_time_line("Byte received while UART%i is not enabled for Rx, ignoring it\n", inst);
+    static int Received_error_count;
+    Received_error_count++;
+    if ((Received_error_count & 0xFF) <= 4) {
+      bs_trace_warning_time_line("Byte received while UART%i is not enabled for Rx, ignoring it (warn count = %i)\n", inst, Received_error_count);
+      if ((Received_error_count & 0xFF) == 4) {
+        bs_trace_warning_time_line("Silencing this warning the next 252 times\n", inst);
+      }
+    }
     return;
   }
 
