@@ -33,8 +33,14 @@ bytes into the UART peripheral like if they arrived thru the Rx line.
 
 ### Backends:
 
-Today there is only 1 backend to choose from:
- * The FIFO backend.
+Today there are 2 backends to choose from:
+ * The loopback backend
+ * The FIFO backend
+
+#### The Loopback backend
+
+This backend just connects an instance Tx to its Rx, including the RTS and CTS signals.
+While having minimal overhead.
 
 #### The FIFO backend
 
@@ -73,10 +79,12 @@ It is possible to connect a UART instance Tx directly to its Rx (or to another i
 and have the RTR propagated to the CTS.
 To do this, just configure the same FIFO file name for both the Rx and Tx, for example like:
 `-uart0_fifob_rxfile=looped_back -uart0_fifob_txfile=looped_back`
+Note that you can also use the loopback backend when connecting a single instance in loopback,
+and have the same result with lower overhead, and no files created on disk.
 
 **IMPOTANT**:
-  Do not connect both devices which are connected thru the UART to the Physical layer
-  simulation. Connect only the one which has the BLE/15.4 controller.
+  Do not connect both devices which are connected thru the UART FIFO backend to the Physical layer
+  simulation simultaneously. Connect only the one which has the BLE/15.4 controller.
   Otherwise, with the current implementation the simulation will deadlock with very high
   likelihood, and if it does not deadlock it will slow down the simulation considerably.
   You can still provide the sim_id and an unused device number to the other device, but

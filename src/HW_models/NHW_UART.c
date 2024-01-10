@@ -185,6 +185,9 @@ uart_rtxb_cb_f nhw_uarte_register_rx_cb(int inst, uart_rtxb_cb_f cb, bool Rx_Not
 void nhw_UARTE_backend_register(uint inst, struct backend_if *backend) {
   struct uarte_status *u_el = &nhw_uarte_st[inst];
 
+  if (u_el->backend.tx_byte_f != NULL) {
+    bs_trace_warning_line("UART%i backend selection overwritten\n", inst);
+  }
   memcpy(&u_el->backend, backend, sizeof(struct backend_if));
 }
 
