@@ -46,11 +46,13 @@ static void nhw_fake_timer_update_main_timer(void)
 {
   Timer_fake_timer = ftimer_st[0].event_time;
 
+#if (NHW_FAKE_TIMER_TOTAL_INST > 1)
   for (int i = 1; i < NHW_FAKE_TIMER_TOTAL_INST ; i++ ) {
     if (ftimer_st[i].event_time < Timer_fake_timer){
       Timer_fake_timer = ftimer_st[i].event_time;
     }
   }
+#endif
 
   nsi_hws_find_next_event();
 }
