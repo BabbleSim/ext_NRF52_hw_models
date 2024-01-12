@@ -534,6 +534,7 @@ static void nhw_rtc_TASKS_CLEAR(uint rtc) {
 
   /* Pre-scaler value is latched to an internal register on tasks START, CLEAR, and TRIGOVRFLW */
   nhw_rtc_st[rtc].PRESC = NRF_RTC_regs[rtc].PRESCALER;
+  nhw_rtc_st[rtc].counter_at_stop = 0;
   nhw_rtc_set_counter(rtc, 0);
 }
 
