@@ -92,7 +92,9 @@ static struct uarte_status nhw_uarte_st[NHW_UARTE_TOTAL_INST];
 NRF_UARTE_Type NRF_UARTE_regs[NHW_UARTE_TOTAL_INST];
 NRF_UART_Type *NRF_UART_regs[NHW_UARTE_TOTAL_INST];
 
-static bs_time_t Timer_UART = TIME_NEVER;
+static bs_time_t Timer_UART_common = TIME_NEVER;
+static bs_time_t Timer_UART_peri = TIME_NEVER;
+extern bs_time_t nhw_Timer_ULoopback;
 
 static void nhw_UARTE_signal_EVENTS_ERROR(unsigned int inst);
 static void nhw_UARTE_signal_EVENTS_RXDRDY(unsigned int inst);
@@ -191,14 +193,19 @@ void nhw_UARTE_backend_register(uint inst, struct backend_if *backend) {
   memcpy(&u_el->backend, backend, sizeof(struct backend_if));
 }
 
+void nhw_uarte_update_common_timer(void) {
+  Timer_UART_common = BS_MIN(Timer_UART_peri, nhw_Timer_ULoopback);
+  nsi_hws_find_next_event();
+}
+
 static void nhw_uarte_update_timer(void) {
-  Timer_UART = TIME_NEVER;
+  Timer_UART_peri = TIME_NEVER;
   for (int i = 0; i < NHW_UARTE_TOTAL_INST; i++) {
     struct uarte_status * u_el = &nhw_uarte_st[i];
     bs_time_t smaller = BS_MIN(u_el->Rx_TO_timer, u_el->Tx_byte_done_timer);
-    Timer_UART = BS_MIN(Timer_UART, smaller);
+    Timer_UART_peri = BS_MIN(Timer_UART_peri, smaller);
   }
-  nsi_hws_find_next_event();
+  nhw_uarte_update_common_timer();
 }
 
 static bool uart_enabled(uint inst) {
@@ -816,7 +823,7 @@ static void nhw_uart_Tx_byte_done_timer_triggered(int inst, struct uarte_status 
 
 static void nhw_uart_timer_triggered(void)
 {
-  bs_time_t current_time = Timer_UART;
+  bs_time_t current_time = Timer_UART_peri;
 
   for (int inst = 0; inst < NHW_UARTE_TOTAL_INST; inst++) {
     struct uarte_status *u_el = &nhw_uarte_st[inst];
@@ -831,7 +838,19 @@ static void nhw_uart_timer_triggered(void)
   nhw_uarte_update_timer();
 }
 
-NSI_HW_EVENT(Timer_UART, nhw_uart_timer_triggered, 50);
+static void nhw_uart_timer_common_triggered(void)
+{
+  bs_time_t current_time = Timer_UART_common;
+  if (current_time == nhw_Timer_ULoopback) {
+    extern void nhw_ublb_timer_triggered(void);
+    nhw_ublb_timer_triggered();
+  }
+  if (current_time == Timer_UART_peri) {
+    nhw_uart_timer_triggered();
+  }
+}
+
+NSI_HW_EVENT(Timer_UART_common, nhw_uart_timer_common_triggered, 50);
 
 void nhw_UARTE_TASK_FLUSHRX(int inst) {
   if (!uarte_enabled(inst)) {

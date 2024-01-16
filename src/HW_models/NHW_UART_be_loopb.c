@@ -20,7 +20,7 @@
 #include "nsi_hw_scheduler.h"
 #include "nsi_hws_models_if.h"
 
-static bs_time_t Timer_ULoopback = TIME_NEVER;
+bs_time_t nhw_Timer_ULoopback = TIME_NEVER;
 
 struct ublb_st_t {
   bool enabled;
@@ -28,6 +28,8 @@ struct ublb_st_t {
 
   char rx_byte;
 } ublb_st[NHW_UARTE_TOTAL_INST];
+
+void nhw_uarte_update_common_timer(void);
 
 static void nhw_ublb_tx_byte(uint inst, uint8_t data);
 static void nhw_ublb_RTS_pin_toggle(uint inst, bool new_level);
@@ -76,14 +78,14 @@ static void nhw_ublb_register_cmdline(void) {
 NSI_TASK(nhw_ublb_register_cmdline, PRE_BOOT_1, 200);
 
 static void nhw_ublb_update_timer(void) {
-  Timer_ULoopback = TIME_NEVER;
+  nhw_Timer_ULoopback = TIME_NEVER;
   for (int i = 0; i < NHW_UARTE_TOTAL_INST; i++) {
     if (!ublb_st[i].enabled) {
       continue;
     }
-    Timer_ULoopback = BS_MIN(ublb_st[i].Timer, Timer_ULoopback);
+    nhw_Timer_ULoopback = BS_MIN(ublb_st[i].Timer, nhw_Timer_ULoopback);
   }
-  nsi_hws_find_next_event();
+  nhw_uarte_update_common_timer();
 }
 
 static void nhw_ublb_tx_byte(uint inst, uint8_t data) {
@@ -103,8 +105,8 @@ static void nhw_ublb_RTS_pin_toggle(uint inst, bool new_level) {
   }
 }
 
-static void nhw_ublb_timer_triggered(void) {
-  bs_time_t current_time = Timer_ULoopback;
+void nhw_ublb_timer_triggered(void) {
+  bs_time_t current_time = nhw_Timer_ULoopback;
   for (int i = 0; i < NHW_UARTE_TOTAL_INST; i++) {
     if (ublb_st[i].Timer == current_time) {
       nhw_UARTE_digest_Rx_byte(i, ublb_st[i].rx_byte);
@@ -113,5 +115,3 @@ static void nhw_ublb_timer_triggered(void) {
   }
   nhw_ublb_update_timer();
 }
-
-NSI_HW_EVENT(Timer_ULoopback, nhw_ublb_timer_triggered, 40); /* Before the UART itself */
