@@ -649,7 +649,11 @@ static void nhw_ufifo_create_fifos(uint inst, struct ufifo_st_t *u_el) {
   /* We clear NONBLOCK so the reads block until data is ready */
   int flags = fcntl(u_el->fifo_rx, F_GETFL);
   flags ^= O_NONBLOCK;
-  fcntl(u_el->fifo_rx, F_SETFL, flags);
+  int ret = fcntl(u_el->fifo_rx, F_SETFL, flags);
+
+  if (ret == -1) {
+    bs_trace_error_line("Unexpected error %i,%s\n",ret, strerror(errno));
+  }
 
   /* We block here until the other side is connected */
   u_el->fifo_tx = open(u_el->fifo_Tx_path, O_WRONLY);
@@ -666,15 +670,15 @@ static void nhw_ufifo_backend_cleanup(void) {
       if (!u_el->disconnected) {
         tx_disconnect(i, u_el);
       }
-      close(u_el->fifo_tx);
+      (void)close(u_el->fifo_tx);
       u_el->fifo_tx = -1;
-      remove(u_el->fifo_Tx_path); /* The last one closing manages to remove it (so we don't check for success) */
+      (void)remove(u_el->fifo_Tx_path); /* The last one closing manages to remove it (so we don't check for success) */
       u_el->fifo_Tx_path = NULL;
     }
     if ((u_el->fifo_Rx_path) && (u_el->fifo_rx != -1)) {
-      close(u_el->fifo_rx);
+      (void)close(u_el->fifo_rx);
       u_el->fifo_rx = -1;
-      remove(u_el->fifo_Rx_path); /* The last one closing manages to remove it (so we don't check for success) */
+      (void)remove(u_el->fifo_Rx_path); /* The last one closing manages to remove it (so we don't check for success) */
       u_el->fifo_Rx_path = NULL;
     }
   }
