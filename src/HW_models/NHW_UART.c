@@ -662,31 +662,41 @@ void nhw_UARTE_TASK_STARTTX(int inst)
 {
   struct uarte_status *u_el = &nhw_uarte_st[inst];
 
-  if (u_el->tx_status != Tx_Off) {
-    bs_trace_warning_time_line("Start Tx triggered for UART%i whose Tx is already started (%i). "
-                               "Ignoring it\n", inst, u_el->tx_status);
+  if (!uart_enabled(inst) && !uarte_enabled(inst)) {
+    bs_trace_warning_time_line("Start TX triggered while UART%i is not enabled (%u). "
+                               "Ignoring it.\n", inst, NRF_UARTE_regs[inst].ENABLE);
     return;
   }
 
-  u_el->tx_status = Tx_Idle;
-  notify_backend_TxOnOff(inst, u_el, true);
+  if (u_el->tx_dma_status != DMA_Off) {
+    bs_trace_warning_time_line("Start Tx triggered for UARTE%i whose Rx is already DMA'ing (%i). "
+                               "This seems like a SW error which the model does not handle. "
+                               "Ignoring it\n", inst);
+    return;
+  }
 
-  if (uart_enabled(inst)) {
-    /*Nothing extra */
-  } else if (uarte_enabled(inst)) {
+  if (u_el->tx_status == Tx_Off) {
+    u_el->tx_status = Tx_Idle;
+    notify_backend_TxOnOff(inst, u_el, true);
+  } else if (u_el->tx_status == Tx_Stopping) {
+    /* A frame was still in flight and it was trying to stop
+     * We abort the stop */
+    u_el->tx_status = Txing;
+  }
+
+  if (uarte_enabled(inst)) {
     u_el->TXD_PTR = NRF_UARTE_regs[inst].TXD.PTR;
     u_el->TXD_MAXCNT = NRF_UARTE_regs[inst].TXD.MAXCNT;
     u_el->TXD_AMOUNT = 0;
     u_el->tx_dma_status = DMAing;
     nhw_UARTE_signal_EVENTS_TXSTARTED(inst); /* Instantaneously ready */
     if (u_el->TXD_MAXCNT > 0) {
-      nHW_UARTE_Tx_DMA_byte(inst, u_el);
+      if (u_el->tx_status == Tx_Idle) {
+        nHW_UARTE_Tx_DMA_byte(inst, u_el);
+      }
     } else {
       nHW_UARTE_Tx_DMA_end(inst, u_el);
     }
-  } else {
-    bs_trace_warning_time_line("Start TX triggered while UART%i is not enabled (%u)\n",
-        inst, NRF_UARTE_regs[inst].ENABLE);
   }
 }
 
