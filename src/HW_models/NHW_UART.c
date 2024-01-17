@@ -737,7 +737,10 @@ void nhw_UARTE_TASK_STOPTX(int inst)
   if (uarte_enabled(inst)) {
     if (u_el->tx_status == Txing) {
       u_el->tx_status = Tx_Stopping;
-    } else {
+    } else if (u_el->tx_status == Tx_Stopping) {
+      bs_trace_info(3, "UART%i STOPTX received while already stopping, ignored\n", inst);
+      return;
+    } else { /* Pend or Idle */
       nhw_UARTE_tx_final_stop(inst, u_el);
     }
   }
