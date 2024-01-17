@@ -30,7 +30,9 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
     return POWER_CLOCK_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RADIO,,)) {
     return RADIO_IRQn;
-  /*2-5*/
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 0,)) {
+    return UARTE0_UART0_IRQn;
+  /*3-5*/
   } else if (IS_PERIPHERAL_REG(p_reg, GPIOTE,,)) {
     return GPIOTE_IRQn;
   /*7 SAADC_IRQn */
@@ -77,7 +79,10 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return 30;
   } else if (IS_PERIPHERAL_REG(p_reg, PPI,,)) {
       return 0x1F;
-  /*32-..*/
+  /*32-39*/
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 1,)) {
+    return UARTE1_IRQn;
+  /*40-47*/
   } else {
     bs_trace_error_time_line("Tried to get the peripheral number of an address unknown to these HW models\n");
     return 0; /* unreachable */
@@ -109,8 +114,10 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return TEMP_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 0, _NS)) {
       return RTC0_IRQn;
-  /* 18 IPC */
-  /* 19 SERIAL0 */
+  } else if (IS_PERIPHERAL_REG(p_reg, IPC,, _NS)) {
+      return IPC_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 0, _NS)) {
+      return SERIAL0_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, EGU, 0, _NS)) {
       return EGU0_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, RTC, 1, _NS)) {
@@ -140,9 +147,15 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
     return CLOCK_POWER_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, CLOCK,, _S)) {
     return CLOCK_POWER_IRQn;
-  /* 8,9 SERIAL0/1 */
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 0, _S)) {
+    return SERIAL0_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 1, _S)) {
+    return SERIAL1_IRQn;
   /* 10 SPIM4 */
-  /* 11,12 SERIAL2/3 */
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 2, _S)) {
+    return SERIAL2_IRQn;
+  } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 3, _S)) {
+    return SERIAL3_IRQn;
   } else if (IS_PERIPHERAL_REG(p_reg, GPIOTE, 0, _S)) {
     return GPIOTE0_IRQn;
   /* 14 SAADC */
@@ -173,7 +186,8 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
   /* 33-36 PWM0-3*/
   /* 38 PDM0 */
   /* 40 I2S */
-  /* 42 IPC */
+  } else if (IS_PERIPHERAL_REG(p_reg, IPC,, _S)) {
+    return IPC_IRQn;
   /* 43 QPSI */
   /* 45 NFCT */
   } else if (IS_PERIPHERAL_REG(p_reg, GPIOTE, 1, _NS)) {
