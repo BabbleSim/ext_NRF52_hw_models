@@ -1,5 +1,6 @@
 src/nrfx/drivers/nrfx_common.c
 src/nrfx/hal/nrf_ccm.c
+src/nrfx/hal/nrf_common.c
 src/nrfx/hal/nrf_rtc.c
 src/nrfx/hal/nrf_gpio.c
 src/nrfx/hal/nrf_temp.c
