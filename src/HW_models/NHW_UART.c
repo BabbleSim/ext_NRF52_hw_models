@@ -588,7 +588,7 @@ void nhw_UARTE_TASK_STARTRX(int inst)
     return;
   }
   if (u_el->rx_dma_status != DMA_Off) {
-    bs_trace_warning_time_line("Start Rx triggered for UARTE%i whose Rx is already DMA'ing (%i). "
+    bs_trace_warning_time_line("Start Rx triggered for UARTE%i whose Rx is already DMA'ing. "
                                "This seems like a SW error which the model does not handle. "
                                "Ignoring it\n", inst);
     return;
@@ -669,7 +669,7 @@ void nhw_UARTE_TASK_STARTTX(int inst)
   }
 
   if (u_el->tx_dma_status != DMA_Off) {
-    bs_trace_warning_time_line("Start Tx triggered for UARTE%i whose Rx is already DMA'ing (%i). "
+    bs_trace_warning_time_line("Start Tx triggered for UARTE%i whose Rx is already DMA'ing. "
                                "This seems like a SW error which the model does not handle. "
                                "Ignoring it\n", inst);
     return;
