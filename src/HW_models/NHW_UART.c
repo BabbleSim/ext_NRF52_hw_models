@@ -576,17 +576,18 @@ void nhw_UARTE_TASK_STARTRX(int inst)
 {
   struct uarte_status *u_el = &nhw_uarte_st[inst];
 
+  if (!uart_enabled(inst) && !uarte_enabled(inst)) {
+    bs_trace_warning_time_line("Start RX triggered while UART%i is not enabled (%u). "
+                               "Ignoring it.\n", inst, NRF_UARTE_regs[inst].ENABLE);
+    return;
+  }
+
   if (uart_enabled(inst) && (u_el->rx_status != Rx_Off)) {
     bs_trace_warning_time_line("Start Rx triggered for UART%i whose Rx is already started (%i). "
                                "Ignoring it\n", inst, u_el->rx_status);
     return;
   }
-  if (u_el->rx_status == Rx_turning_off) {
-    bs_trace_warning_time_line("Start Rx triggered for UARTE%i whose Rx is turning off. "
-                               "This seems like a SW error which the model does not handle. "
-                               "Ignoring it\n", inst);
-    return;
-  }
+
   if (u_el->rx_dma_status != DMA_Off) {
     bs_trace_warning_time_line("Start Rx triggered for UARTE%i whose Rx is already DMA'ing. "
                                "This seems like a SW error which the model does not handle. "
@@ -594,26 +595,27 @@ void nhw_UARTE_TASK_STARTRX(int inst)
     return;
   }
 
-  if (uart_enabled(inst)) {
-    /* Nothing specific to be done */
-  } else if (uarte_enabled(inst)) {
+  if (u_el->rx_status == Rx_turning_off) {
+    /* The HW seems to support a STARTRX while it is turning off the Rx
+     * In this case, it seems the Rx TO is just cancelled */
+    u_el->Rx_TO_timer = TIME_NEVER;
+    u_el->rx_status = Rx_On;
+  }
+
+  if (uarte_enabled(inst)) {
     u_el->RXD_PTR = NRF_UARTE_regs[inst].RXD.PTR;
     u_el->RXD_MAXCNT = NRF_UARTE_regs[inst].RXD.MAXCNT;
     u_el->RXD_AMOUNT = 0;
     u_el->rx_dma_status = DMAing;
     nhw_UARTE_signal_EVENTS_RXSTARTED(inst); /* Instantaneously ready */
     nhw_UARTE_Rx_DMA_attempt(inst, u_el);
-  } else {
-    bs_trace_warning_time_line("Start RX triggered while UART%i is not enabled (%u), ignoring it\n",
-                               inst, NRF_UARTE_regs[inst].ENABLE);
-    return;
   }
 
   if (u_el->rx_status == Rx_Off) {
     u_el->Last_Rx_off_time = nsi_hws_get_time();
+    u_el->rx_status = Rx_On;
+    notify_backend_RxOnOff(inst, u_el, true);
   }
-  u_el->rx_status = Rx_On;
-  notify_backend_RxOnOff(inst, u_el, true);
 
   if (u_el->Rx_FIFO_cnt == 0) {
     lower_RTS_R(inst, u_el);
@@ -805,15 +807,25 @@ static void nhw_UART_Tx_queue_byte(uint inst, struct uarte_status *u_el, uint8_t
 }
 
 
+/*
+ * The Rx TO timer has timed out
+ */
 static void nhw_uart_Rx_TO_timer_triggered(int inst, struct uarte_status *u_el)
 {
+  if (u_el->rx_status != Rx_turning_off) {
+    bs_trace_error_time_line("Programming error\n");
+  }
   u_el->Rx_TO_timer = TIME_NEVER;
   u_el->rx_status = Rx_Off;
   if (u_el->rx_dma_status == DMAing) {
     nhw_UARTE_Rx_DMA_end(inst, u_el);
   }
-  nhw_UARTE_signal_EVENTS_RXTO(inst);
-  notify_backend_RxOnOff(inst, u_el, false);
+  if (u_el->rx_status == Rx_Off) {
+    /* The DMA end may have triggered thru a short ENDRX->STARTRX, which restarts the RX and
+     * prevents the RXTO from being generated */
+    nhw_UARTE_signal_EVENTS_RXTO(inst);
+    notify_backend_RxOnOff(inst, u_el, false);
+  }
 }
 
 static void nhw_uart_Tx_byte_done_timer_triggered(int inst, struct uarte_status *u_el)
