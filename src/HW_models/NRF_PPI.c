@@ -732,7 +732,7 @@ void nrf_ppi_event(ppi_event_types_t event){
     for ( int ch_nbr = __builtin_ffs(ch_mask) - 1;
           ( ch_mask != 0 ) && ( ch_nbr < NUMBER_PPI_CHANNELS ) ;
           ch_nbr++ ) {
-      if ( ch_mask & ( 1 << ch_nbr ) ){
+      if ( ch_mask & ( (uint32_t) 1 << ch_nbr ) ){
         ch_mask &= ~( (uint64_t) 1 << ch_nbr );
         if ( ppi_ch_tasks[ch_nbr].tep_f != NULL ){
           nrf_ppi_enqueue_task(ppi_ch_tasks[ch_nbr].tep_f);
