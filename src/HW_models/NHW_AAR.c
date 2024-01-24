@@ -141,6 +141,10 @@ static void nhw_aar_timer_triggered(void) {
 
 NSI_HW_EVENT(Timer_AAR, nhw_aar_timer_triggered, 50);
 
+static inline uint32_t read_3_bytes_value(const uint8_t *ptr) {
+  uint32_t value = ptr[0] | (ptr[1] << 8) | (ptr[2] << 16);
+}
+
 /**
  * Try to resolve the address
  * Returns the number of IRKs it went thru before matching
@@ -168,7 +172,7 @@ static int nhw_aar_resolve(int *good_irk) {
       address_ptr[5], address_ptr[4], address_ptr[3],
       address_ptr[2], address_ptr[1], address_ptr[0]);
 
-  prand = *(uint32_t*)(address_ptr+3) & 0xFFFFFF;
+  prand = read_3_bytes_value(address_ptr+3);
   if (prand >> 22 != 0x01){
     /* Not a resolvable private address */
     bs_trace_raw_time(7,"HW AAR the address is not resolvable (0x%06X , %x)\n", prand, prand >> 22);
@@ -182,6 +186,8 @@ static int nhw_aar_resolve(int *good_irk) {
   prand_buf[14] = (prand >> 8) & 0xFF;
   prand_buf[13] = (prand >> 16) & 0xFF;
 
+  hash = read_3_bytes_value(address_ptr);
+
   for (i = 0 ; i < NRF_AAR_regs.NIRK; i++){
     /* The provided IRKs are assumed to be already big endian */
     irkptr = ((const uint8_t*)NRF_AAR_regs.IRKPTR) + 16*i;
@@ -194,8 +200,6 @@ static int nhw_aar_resolve(int *good_irk) {
 
     /* Endianess reversal to little endian */
     hash_check = hash_check_buf[15] | (uint32_t)hash_check_buf[14] << 8 | (uint32_t)hash_check_buf[13] << 16;
-
-    hash = *(uint32_t*)address_ptr & 0xFFFFFF;
 
     bs_trace_raw_time(9,"HW AAR (%i): checking prand = 0x%06X, hash = 0x%06X, hashcheck = 0x%06X\n",i, prand, hash, hash_check);
 
