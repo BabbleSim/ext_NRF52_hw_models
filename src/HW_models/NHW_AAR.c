@@ -143,6 +143,7 @@ NSI_HW_EVENT(Timer_AAR, nhw_aar_timer_triggered, 50);
 
 static inline uint32_t read_3_bytes_value(const uint8_t *ptr) {
   uint32_t value = ptr[0] | (ptr[1] << 8) | (ptr[2] << 16);
+  return value;
 }
 
 /**
