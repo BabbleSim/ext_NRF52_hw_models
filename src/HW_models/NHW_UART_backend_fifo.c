@@ -641,25 +641,32 @@ static void nhw_ufifo_create_fifos(uint inst, struct ufifo_st_t *u_el) {
     bs_trace_error_line("Couldn't create UART backend Rx FIFOs\n");
   }
 
-  u_el->fifo_rx = open(u_el->fifo_Rx_path, O_RDONLY | O_NONBLOCK);
-  if (u_el->fifo_rx == -1) {
-    bs_trace_error_line("Couldn't open UART backend Rx FIFOs\n");
+  /* 1) We first open our read side non-blocking to avoid a deadlock.
+   * (This open read side, even if provisional, allows the other side to safely start writing to the
+   * pipe even if it overtakes our step 3) )
+   */
+  int prov_descr = open(u_el->fifo_Rx_path, O_RDONLY | O_NONBLOCK);
+  if (prov_descr == -1) {
+    bs_trace_error_line("Couldn't open UART backend Rx FIFO (%i, %s)\n", errno, strerror(errno));
   }
 
-  /* We clear NONBLOCK so the reads block until data is ready */
-  int flags = fcntl(u_el->fifo_rx, F_GETFL);
-  flags ^= O_NONBLOCK;
-  int ret = fcntl(u_el->fifo_rx, F_SETFL, flags);
-
-  if (ret == -1) {
-    bs_trace_error_line("Unexpected error %i,%s\n",ret, strerror(errno));
-  }
-
-  /* We block here until the other side is connected */
+  /* 2) We block opening our Tx side until the other side has reached 1) */
   u_el->fifo_tx = open(u_el->fifo_Tx_path, O_WRONLY);
   if (u_el->fifo_tx == -1) {
-    bs_trace_error_line("Couldn't open UART backend Tx FIFOs\n");
+    bs_trace_error_line("Couldn't open UART backend Tx FIFO (%i, %s)\n", errno, strerror(errno));
   }
+
+  /* 3) And now that we know the other side reached 1), we can block until it reaches 2)
+   * while creating the descriptor we will actually use */
+  u_el->fifo_rx = open(u_el->fifo_Rx_path, O_RDONLY);
+  if (u_el->fifo_rx == -1) {
+    bs_trace_error_line("Couldn't open UART backend Rx FIFO (%i, %s)\n", errno, strerror(errno));
+  }
+
+  /* At this point we know both pipes are open in both sides.
+   * We can now close our previous Rx descriptor as we won't use it for anything anymore. */
+  (void)close(prov_descr);
+
 }
 
 static void nhw_ufifo_backend_cleanup(void) {
