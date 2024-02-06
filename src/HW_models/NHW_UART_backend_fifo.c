@@ -162,7 +162,7 @@ static void write_to_tx_fifo(struct ufifo_st_t *u_el, void *ptr, size_t size) {
     u_el->disconnected = true;
     if ((res == -1) && (errno == EPIPE)) {
       /* The other side disconnected unexpectedly, let's terminate */
-      bs_trace_error_time_line("UART: Other end disconnected unexpectedly, terminating\n");
+      bs_trace_exit_time_line("UART: Other end disconnected from its Rx FIFO, terminating\n");
     } else {
       bs_trace_error_time_line("UART: Unexpected error while writing (%i, %i) (or interrupted). "
                                "Terminating\n", res, errno);
