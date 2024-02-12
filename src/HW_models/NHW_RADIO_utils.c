@@ -202,6 +202,26 @@ int nhwra_is_HW_TIFS_enabled(void) {
   return 0;
 }
 
+static uint64_t nhwra_get_address(uint logical_addr) {
+  uint64_t address;
+
+  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
+  } else {
+    /*Note: By now we only support (in none 802154 mode):
+     * BALEN = 3 (== BLE 4 byte addresses)
+     * And address 0 being used */
+    address =  ((NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk) << 24)
+                 | (NRF_RADIO_regs.BASE0 >> 8);
+
+    if (logical_addr != 0) {
+      bs_trace_error_time_line("%s: Only logical address 0 is supported so far (%i)\n",
+                               __func__, logical_addr);
+    }
+  }
+  return address;
+}
+
 /**
  * Prepare a Phy Rxv2 request structure
  * based on the radio registers configuration.
@@ -214,22 +234,13 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
   uint8_t preamble_length = 0;
   uint8_t address_length = 0;
   uint8_t header_length = 0;
-  uint64_t address = 0;
   bs_time_t pre_trunc = 0;
   uint16_t sync_threshold = 0;
 
   uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
   double bits_per_us = 0;
 
-  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)
-      ) {
-    //Note: We only support address 0 being used
-    address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
-                | (NRF_RADIO_regs.BASE0 >> 8);
-  }
+  rx_addresses[0] = nhwra_get_address(0); /* We only support RXADDRESSES == 0x01 by now */
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     //Note that we only support BLE packet formats by now (so we ignore the configuration of the preamble and just assume it is what it needs to be)
@@ -253,7 +264,6 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
     preamble_length = 4;
     address_length  = 1;
     header_length   = 0;
-    address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
     rx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
     bits_per_us = 0.25;
     pre_trunc = 104; //The modem seems to be able to sync with just 3 sybmols of the preamble == lossing 13symbols|26bits|104us
@@ -274,7 +284,6 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
   rx_req->sync_threshold   = sync_threshold;
   rx_req->acceptable_pre_truncation = pre_trunc;
 
-  rx_addresses[0] = address;
   rx_req->n_addr = 1;
 
   rx_req->pream_and_addr_duration = (preamble_length + address_length)*8/bits_per_us;
@@ -304,18 +313,7 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
     tx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
   }
 
-  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)
-      ) {
-    //Note: we only support BALEN = 3 (== BLE 4 byte addresses)
-    //Note: We only support address 0 being used
-    tx_req->phy_address = ( ( NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk ) << 24 )
-                           | (NRF_RADIO_regs.BASE0 >> 8);
-  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-    tx_req->phy_address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
-  }
+  tx_req->phy_address = nhwra_get_address(NRF_RADIO_regs.TXADDRESS);
 
   {
     double TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
