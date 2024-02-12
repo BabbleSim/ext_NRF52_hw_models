@@ -29,7 +29,7 @@ void nhw_RADIO_signal_EVENTS_EDSTOPPED(unsigned int inst);
 void nhw_RADIO_signal_EVENTS_CCAIDLE(unsigned int inst);
 void nhw_RADIO_signal_EVENTS_CCABUSY(unsigned int inst);
 void nhw_RADIO_signal_EVENTS_CCASTOPPED(unsigned int inst);
-//void nhw_RADIO_signal_EVENTS_RATEBOOST(unsigned int inst);
+void nhw_RADIO_signal_EVENTS_RATEBOOST(unsigned int inst);
 void nhw_RADIO_signal_EVENTS_TXREADY(unsigned int inst);
 void nhw_RADIO_signal_EVENTS_RXREADY(unsigned int inst);
 //void nhw_RADIO_signal_EVENTS_MHRMATCH(unsigned int inst);

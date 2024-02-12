@@ -6,6 +6,12 @@
  *
  * RADIO Bitcounter functionality
  * We treat it as a sub-peripheral
+ *
+ * Notes:
+ *   * If the bitcounter is started in a CodedPhy packet during FEC1, FEC2 has a different
+ *     coding rate, and the BCC value gets it into the FEC2, the bitcounter model behavior
+ *     will not be correct (it will keep counting at the bit rate of the FEC1)
+ *     (It is unclear how the real RADIO HW handles this)
  */
 #include "bs_types.h"
 #include "bs_tracing.h"

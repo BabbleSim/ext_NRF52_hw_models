@@ -47,7 +47,7 @@ static void nrfra_check_pcnf1_ble(void) {
 
   if (checked != check) {
     bs_trace_error_line_time(
-        "%s w 1|2Mbps BLE modulation only the BLE packet format is supported so far (PCNF1=%u)\n",
+        "%s w LR|1|2Mbps BLE modulation only the BLE packet format is supported so far (PCNF1=%u)\n",
         __func__, NRF_RADIO_regs.PCNF1);
   }
 }
@@ -96,6 +96,34 @@ static void nrfra_check_ble2M_conf(void){
   nrfra_check_pcnf1_ble();
   nrfra_check_crc_conf_ble();
 }
+
+static void nrfra_check_bleLR_conf(void){
+
+  int checked =NRF_RADIO_regs.PCNF0 &
+          ( RADIO_PCNF0_TERMLEN_Msk
+          | RADIO_PCNF0_PLEN_Msk
+          | RADIO_PCNF0_CILEN_Msk
+          | RADIO_PCNF0_S1LEN_Msk
+          | RADIO_PCNF0_S0LEN_Msk
+          | RADIO_PCNF0_LFLEN_Msk);
+
+  int check = ( ( 8 << RADIO_PCNF0_LFLEN_Pos )
+      | ( 1 << RADIO_PCNF0_S0LEN_Pos )
+      | ( 0 << RADIO_PCNF0_S1LEN_Pos )
+      | ( 2 << RADIO_PCNF0_CILEN_Pos )
+      | ( RADIO_PCNF0_PLEN_LongRange << RADIO_PCNF0_PLEN_Pos )
+      | ( 3 << RADIO_PCNF0_TERMLEN_Pos) );
+
+  if (checked != check) {
+    bs_trace_error_line_time(
+        "NRF_RADIO: For LR BLE mode only BLE packet format is supported so far (PCNF0=%u)\n",
+        NRF_RADIO_regs.PCNF0);
+  }
+
+  nrfra_check_pcnf1_ble();
+  nrfra_check_crc_conf_ble();
+}
+
 
 static void nrfra_check_802154_conf(void){
   int checked, check;
@@ -163,6 +191,9 @@ void nhwra_check_packet_conf(void){
     nrfra_check_ble1M_conf();
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     nrfra_check_ble2M_conf();
+  } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)){
+    nrfra_check_bleLR_conf();
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     nrfra_check_802154_conf();
   } else {
@@ -238,9 +269,21 @@ static p2G4_modulation_t nhra_modulation_from_mode(uint32_t MODE) {
   return modulation;
 }
 
+bool nhwra_is_ble_mode(uint32_t MODE) {
+  if ((MODE == RADIO_MODE_MODE_Ble_1Mbit)
+      || (MODE == RADIO_MODE_MODE_Ble_2Mbit)
+      || (MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /**
  * Prepare a Phy Rxv2 request structure
- * based on the radio registers configuration.
+ * based on the radio registers configuration
+ * (For CodedPhy only for the FEC2 part, and only provisional content assuming S=8)
  *
  * Note: The abort substructure is NOT filled.
  */
@@ -276,6 +319,15 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
     bits_per_us = 2;
     pre_trunc = 0; //The modem can lose a lot of preamble and sync (~7us), we leave it as 0 by now to avoid a behavior change
     sync_threshold = 2;
+  } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
+    /* For the FEC2 part */
+    preamble_length = 0;
+    address_length  = 0;
+    header_length   = 2;
+    bits_per_us = 0.125; /* Provisional value assuming S=8 */
+    pre_trunc = 0;
+    sync_threshold = 0xFFFF;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     preamble_length = 4;
     address_length  = 1;
@@ -303,10 +355,49 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   rx_req->pream_and_addr_duration = (preamble_length + address_length)*8/bits_per_us;
 
-  rx_req->scan_duration = 0xFFFFFFFF; //the phy does not support infinite scans.. but this is 1 hour..
+  rx_req->scan_duration = UINT32_MAX;
   rx_req->forced_packet_duration = UINT32_MAX; //we follow the transmitted packet (assuming no length errors by now)
 
-  //attempt to receive
+  rx_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time());
+
+  rx_req->resp_type = 0;
+}
+
+/**
+ * Prepare a Phy Rxv2 request structure for CodedPhy's FEC1 part
+ * based on the radio registers configuration.
+ *
+ * Note: The abort substructure is NOT filled.
+ */
+void nhwra_prep_rx_request_FEC1(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
+
+  uint32_t freq_off = NRF_RADIO_regs.FREQUENCY & RADIO_FREQUENCY_FREQUENCY_Msk;
+  p2G4_freq_t center_freq;
+
+  p2G4_freq_from_d(freq_off, 1, &center_freq);
+  rx_req->radio_params.center_freq = center_freq;
+
+  rx_addresses[0] = nhwra_get_address(0); /* We only support RXADDRESSES == 0x01 by now */
+  rx_req->n_addr = 1;
+
+  rx_req->radio_params.modulation = nhra_modulation_from_mode(NRF_RADIO_regs.MODE);
+
+  rx_req->antenna_gain = 0;
+
+  rx_req->coding_rate = 8;
+
+  rx_req->error_calc_rate = 125000;
+
+  rx_req->header_duration  = 16; /* CI duration */
+  rx_req->header_threshold = 0xFFFF; /* We don't want "header"/CI errors in the FEC1 part in any case for design simplicity, we just check the "packet error" result */
+  rx_req->sync_threshold   = 2;
+  rx_req->acceptable_pre_truncation = 70; /* A quick guess, real modem behavior TBD */ //TODO
+
+  rx_req->pream_and_addr_duration = 80 + 256;
+
+  rx_req->scan_duration = UINT32_MAX;
+  rx_req->forced_packet_duration = UINT32_MAX; //we follow the transmitted packet (assuming no length errors by now)
+
   rx_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time());
 
   rx_req->resp_type = 0;
@@ -318,7 +409,8 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
  *
  * Note: The abort substructure is NOT filled.
  */
-void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration) {
+void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration,
+                           bs_time_t start_time, uint16_t coding_rate) {
 
   tx_req->radio_params.modulation = nhra_modulation_from_mode(NRF_RADIO_regs.MODE);
 
@@ -338,13 +430,12 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->packet_size  = packet_size; //Not including preamble or address
 
   {
-    bs_time_t tx_start_time = nsi_hws_get_time();
-    tx_req->start_tx_time = hwll_phy_time_from_dev(tx_start_time);
+    tx_req->start_tx_time = hwll_phy_time_from_dev(start_time);
     tx_req->start_packet_time = tx_req->start_tx_time ;
     tx_req->end_tx_time = tx_req->start_tx_time + packet_duration - 1;
     tx_req->end_packet_time = tx_req->end_tx_time;
   }
-  tx_req->coding_rate = 0;
+  tx_req->coding_rate = coding_rate;
 }
 
 /**
@@ -472,8 +563,7 @@ uint32_t nhwra_get_rx_crc_value(uint8_t *rx_buf, size_t rx_packet_size) {
   uint payload_len = nrfra_get_capped_payload_length(rx_buf);
 
   //Eventually this should be generalized with the packet configuration
-  if (((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit))
+  if (nhwra_is_ble_mode(NRF_RADIO_regs.MODE)
       && ( rx_packet_size >= 5 ) ){
     memcpy((void*)&crc, &rx_buf[2 + payload_len], crc_len);
   } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit)

@@ -33,6 +33,9 @@
  * Note10: Regarding MAXLEN:
  *           if CRCINC==1, the CRC LEN is deducted from the length field, before MAXLEN is checked.
  *           This seems to be also the real HW behavior
+ *         Bit errors in the length field reception, or even bit errors in the CI field reception (for Coded phy)
+ *         are not accounted for when handling the length field in this model. The model will always
+ *         act on the transmitted length field.
  *
  * Note11: Only the BLE & 15.4 CRC polynomials are supported
  *         During reception we assume that CRCPOLY and CRCINIT are correct on both sides, and just rely on the phy bit error reporting to save processing time
@@ -47,9 +50,7 @@
  * Note13: Nothing related to AoA/AoD features (CTE, DFE) is implemented
  *
  * Note14: Several 52833 radio state change events are not yet implemented
- *         (EVENTS_RATEBOOST, EVENTS_MHRMATCH & EVENTS_CTEPRESENT)
- *
- * Note15: PDUSTAT not yet implemented
+ *         (EVENTS_MHRMATCH & EVENTS_CTEPRESENT)
  *
  * Note16: No antenna switching
  *
@@ -80,6 +81,12 @@
  *          * Many timings are simplified, and some events which take slightly different amounts of time to occur
  *            are produced at the same time as others, or so. Check NRF_RADIO_timings.c for some more notes.
  *
+ * Note21.b: CodedPhy timings:
+ *          * For CodedPhy the spec lacks radio timings, so the values used are mostly rounded versions of the ones the Zephyr controller used
+ *          * It is quite unclear if the CRCOK/ERROR and PAYLOAD events are delayed by the equivalent of the conv. decoder taking 2 extra input bits or not,
+ *            and if the ADDRESS event has an equivalent delay or not.
+ *            At this point the model does not add that delay, so this events timings should be considered a rough guess.
+ *
  * Note22: EVENTS_FRAMESTART
  *          * It is generated for all modulation types, this seems to be how the HW behaves even if the spec
  *            seems to mildly imply it is only for 15.4
@@ -89,6 +96,13 @@
  *            The spec seems to contradict itself here. But seems in real HW it is generated at the end of the PHR.
  *
  * Note23: Powering off/on is not properly modeled (it is mostly ignored)
+ *
+ * Note24: Only PCNF1.ENDIAN == Little is supported (What BT and 802.15.4 use)
+ *
+ * Note25: The RATEBOOST event in real HW seems to be generated: only for Rx, only if the FEC2 block has S=2,
+ *         and roughly at the end of TERM1. The models generates it at that point and only in that case.
+ *         (It's timing is probably a bit off compared to real HW)
+ *
  *
  * Implementation Specification:
  *   A diagram of the main state machine can be found in docs/RADIO_states.svg
@@ -147,6 +161,7 @@
 #include "bs_utils.h"
 #include "bs_pc_2G4.h"
 #include "bs_pc_2G4_utils.h"
+#include "bs_rand.h"
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
@@ -201,7 +216,9 @@ static bool radio_on = false;
 static bool rssi_sampling_on = false;
 
 static void start_Tx(void);
+static void start_Tx_FEC2(void);
 static void start_Rx(void);
+static void start_Rx_FEC2(void);
 static void start_CCA_ED(bool CCA_not_ED);
 static void Rx_Addr_received(void);
 static void Tx_abort_eval_respond(void);
@@ -515,6 +532,12 @@ void maybe_prepare_TIFS(bool Tx_Not_Rx){
   TIFS_state = TIFS_WAITING_FOR_DISABLE; /* In Timer_TIFS we will trigger a TxEN or RxEN */
 }
 
+static void maybe_signal_event_RATEBOOST(void) {
+  if (rx_status.CI == 1) {
+    nhw_RADIO_signal_EVENTS_RATEBOOST(0);
+  }
+}
+
 /**
  * The main radio timer (Timer_RADIO) has just triggered,
  * continue whatever activity we are on
@@ -539,10 +562,19 @@ static void nhw_radio_timer_triggered(void) {
     start_Tx();
   } else if ( radio_state == RAD_TX ){
     if ( radio_sub_state == TX_WAIT_FOR_ADDRESS_END ){
-      radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
-      nhwra_set_Timer_RADIO(tx_status.PAYLOAD_end_time);
+      if (tx_status.codedphy) {
+        radio_sub_state = TX_WAIT_FOR_FEC1_END;
+        nhwra_set_Timer_RADIO(tx_status.FEC1_end_time);
+      } else {
+        radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
+        nhwra_set_Timer_RADIO(tx_status.PAYLOAD_end_time);
+      }
       nhw_RADIO_signal_EVENTS_ADDRESS(0);
       nhw_RADIO_signal_EVENTS_FRAMESTART(0); //See note on FRAMESTART
+    } else if ( radio_sub_state == TX_WAIT_FOR_FEC1_END ) {
+      start_Tx_FEC2();
+      radio_sub_state = TX_WAIT_FOR_PAYLOAD_END;
+      nhwra_set_Timer_RADIO(tx_status.PAYLOAD_end_time);
     } else if ( radio_sub_state == TX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = TX_WAIT_FOR_CRC_END;
       nhwra_set_Timer_RADIO(tx_status.CRC_end_time);
@@ -561,14 +593,23 @@ static void nhw_radio_timer_triggered(void) {
     }
   } else if ( radio_state == RAD_RX ){
     if ( radio_sub_state == RX_WAIT_FOR_ADDRESS_END ) {
-      nhwra_set_Timer_RADIO(TIME_NEVER);
-      nsi_hws_find_next_event();
       nhw_RADIO_signal_EVENTS_SYNC(0); //See note on EVENTS_SYNC
       nhw_RADIO_signal_EVENTS_ADDRESS(0);
       nhw_RADIO_signal_EVENTS_FRAMESTART(0); //See note on FRAMESTART
-      Rx_Addr_received();
-      radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
-      nhwra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);
+      if (rx_status.codedphy) {
+        radio_sub_state = RX_WAIT_FOR_FEC1_END;
+        nhwra_set_Timer_RADIO(rx_status.FEC1_end_time);
+      } else {
+        nhwra_set_Timer_RADIO(TIME_NEVER); //Provisionally clear the RADIO timer for the Rx cont.
+        Rx_Addr_received();
+        radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
+        nhwra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);
+      }
+    } else if ( radio_sub_state == RX_WAIT_FOR_FEC1_END ) {
+      maybe_signal_event_RATEBOOST();
+      /* The next state transition will be programmed when we get the Phy response for the FEC2 */
+      nhwra_set_Timer_RADIO(TIME_NEVER);
+      start_Rx_FEC2();
     } else if ( radio_sub_state == RX_WAIT_FOR_PAYLOAD_END ) {
       radio_sub_state = RX_WAIT_FOR_CRC_END;
       nhwra_set_Timer_RADIO(rx_status.CRC_End_Time);
@@ -717,6 +758,7 @@ static void Tx_abort_eval_respond(void) {
 
 /*
  * Actually start the Tx in this microsecond (+ the Tx chain delay in the Phy)
+ * (For coded phy, starts the FEC1 Tx itself, and prepares the FEC2 to be started later by start_Tx_FEC2() )
  */
 static void start_Tx(void) {
 
@@ -731,6 +773,10 @@ static void start_Tx(void) {
   uint8_t header_len = 0;
   uint payload_len = 0;
   uint8_t crc_len = nhwra_get_crc_length();
+  uint8_t CI = 0;
+  uint8_t main_packet_coding_rate = 0;
+
+  tx_status.codedphy = false;
 
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     preamble_len = 1; //1 byte
@@ -742,6 +788,20 @@ static void start_Tx(void) {
     address_len = 4;
     header_len  = 2;
     bits_per_us = 2;
+  } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+            || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
+    tx_status.codedphy = true;
+    address_len = 4;
+    header_len  = 2;
+    if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit) {
+      bits_per_us = 0.125;
+      CI = 0; //0b00
+      main_packet_coding_rate = 8;
+    } else { /* RADIO_MODE_MODE_Ble_LR500Kbit */
+      bits_per_us = 0.5;
+      CI = 1; //0b01
+      main_packet_coding_rate = 2;
+    }
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     preamble_len = 4;
     address_len = 1;
@@ -755,59 +815,141 @@ static void start_Tx(void) {
    * When doing so, we should still calculate the ble and 154 crc's with their optimized table implementations
    * Here we just assume the CRC is configured as it should given the modulation */
   uint32_t crc_init = NRF_RADIO_regs.CRCINIT & RADIO_CRCINIT_CRCINIT_Msk;
-  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-     || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) ) {
+  if (nhwra_is_ble_mode(NRF_RADIO_regs.MODE)) {
     append_crc_ble(tx_buf, header_len + payload_len, crc_init);
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     //15.4 does not CRC the length (header) field
     append_crc_154(&tx_buf[header_len], payload_len, crc_init);
   }
 
-  bs_time_t packet_duration; //From preamble to CRC
-  packet_duration  = preamble_len*8 + address_len*8;
+  uint main_packet_size; //Main "packet" size (the payload sent thru the phy)
+  bs_time_t packet_duration = 0; //Main packet duration (from preamble to CRC except for codedPhy which is just the FEC2)
+
+  if (!tx_status.codedphy) {
+    packet_duration = preamble_len*8 + address_len*8;
+  } else {
+    packet_duration = 3; //TERM2
+  }
   packet_duration += header_len*8 + payload_len*8 + crc_len*8;
   packet_duration /= bits_per_us;
-  uint packet_size = header_len + payload_len + crc_len;
+  main_packet_size = header_len + payload_len + crc_len;
 
-  nhwra_prep_tx_request(&tx_status.tx_req, packet_size, packet_duration);
+  bs_time_t payload_start_time;
+  bs_time_t main_packet_start_time;
 
+  if (tx_status.codedphy) {
+    tx_status.ADDRESS_end_time = nsi_hws_get_time() + (bs_time_t)(80 + 256 - nhwra_timings_get_TX_chain_delay());
+    tx_status.FEC1_end_time = tx_status.ADDRESS_end_time + 16 + 24; /* CI = 16us; TERM1= 24us */
+    payload_start_time = tx_status.FEC1_end_time;
+    main_packet_start_time = payload_start_time;
+
+    bs_time_t fec1_duration = 80 + 256 + 16 + 24;
+
+    nhwra_prep_tx_request(&tx_status.tx_req_fec1, 1, fec1_duration, nsi_hws_get_time(), 8);
+    update_abort_struct(&tx_status.tx_req_fec1.abort, &next_recheck_time);
+  } else {
+    tx_status.ADDRESS_end_time = nsi_hws_get_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us) - nhwra_timings_get_TX_chain_delay();
+    payload_start_time = tx_status.ADDRESS_end_time;
+    main_packet_start_time = nsi_hws_get_time();
+  }
+  tx_status.PAYLOAD_end_time = payload_start_time + (bs_time_t)(8*(header_len + payload_len)/bits_per_us);
+  tx_status.CRC_end_time = tx_status.PAYLOAD_end_time + (bs_time_t)(crc_len*8/bits_per_us);
+
+  nhwra_prep_tx_request(&tx_status.tx_req, main_packet_size, packet_duration,
+                        main_packet_start_time, main_packet_coding_rate);
   update_abort_struct(&tx_status.tx_req.abort, &next_recheck_time);
 
-  //Request the Tx from the Phy:
-  int ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf,  &tx_status.tx_resp);
+  int ret;
+  if (tx_status.codedphy) {
+    //Request the FEC1 Tx from the Phy:
+    ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req_fec1, &CI, &tx_status.tx_resp);
+  } else { /* not codedphy */
+    //Request the Tx from the Phy:
+    ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf, &tx_status.tx_resp);
+  }
   handle_Tx_response(ret);
-
-  tx_status.ADDRESS_end_time = nsi_hws_get_time() + (bs_time_t)((preamble_len*8 + address_len*8)/bits_per_us) - nhwra_timings_get_TX_chain_delay();
-  tx_status.PAYLOAD_end_time = tx_status.ADDRESS_end_time + (bs_time_t)(8*(header_len + payload_len)/bits_per_us);
-  tx_status.CRC_end_time = tx_status.PAYLOAD_end_time + (bs_time_t)(crc_len*8/bits_per_us);
 
   radio_sub_state = TX_WAIT_FOR_ADDRESS_END;
   nhwra_set_Timer_RADIO(tx_status.ADDRESS_end_time);
 }
 
+static void start_Tx_FEC2(void) {
+  int ret;
+  update_abort_struct(&tx_status.tx_req.abort, &next_recheck_time);
+  ret = p2G4_dev_req_txv2_nc_b(&tx_status.tx_req, tx_buf, &tx_status.tx_resp);
+  handle_Tx_response(ret);
+}
+
+static void Rx_handle_CI_reception(void) {
+  rx_status.CI = rx_buf[0] & 0x3;
+
+  if ((rx_status.rx_resp.packet_size < 1) || (rx_status.CI > 1)) {
+    bs_trace_warning_time_line("%s: Received supposed BLE CodedPhy FEC1 without CI or corrupted CI (%i, %i)\n",
+        __func__, rx_status.rx_resp.packet_size, rx_status.CI);
+  }
+
+  NRF_RADIO_regs.PDUSTAT |= (rx_status.CI << RADIO_PDUSTAT_CISTAT_Pos) & RADIO_PDUSTAT_CISTAT_Msk;
+
+  if (rx_status.rx_resp.status != P2G4_RXSTATUS_OK) {
+    /* Error during CI decoding, we don't know how many bits, and if it would have recovered.
+     * So, we just do a 50% drop of having each CI bit corrupted or not */
+    int error;
+    error = bs_random_Bern(RAND_PROB_1/2);
+    NRF_RADIO_regs.PDUSTAT ^= error << (RADIO_PDUSTAT_CISTAT_Pos + 1); /* The don't-care bit in CI */
+
+    error = bs_random_Bern(RAND_PROB_1/2);
+    if (error) {
+      NRF_RADIO_regs.PDUSTAT ^= 1 << (RADIO_PDUSTAT_CISTAT_Pos);
+      rx_status.CI ^= 1;
+      rx_status.CI_error = true;
+    }
+  }
+}
 
 static void Rx_handle_end_response(bs_time_t end_time) {
 
-  if (rx_status.rx_resp.status != P2G4_RXSTATUS_HEADER_ERROR) {
-      rx_status.CRC_End_Time = end_time + nhwra_timings_get_Rx_chain_delay();
-  } //Otherwise we do not really now how the Nordic RADIO behaves depending on
-  //where the biterrors are and so forth. So let's always behave like if the
-  //packet lenght was received correctly, and just report a CRC error at the
-  //end of the CRC
-
-  if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
-    NRF_RADIO_regs.RXCRC = nhwra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
-    rx_status.CRC_OK = 1;
-    NRF_RADIO_regs.CRCSTATUS = 1;
+  if (rx_status.rx_resp.status == P2G4_RXSTATUS_NOSYNC) {
+    nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
+    return;
   }
 
-  nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
+  if (rx_status.inFEC1 == true) { /* End of CodedPhy packet FEC1 */
+    Rx_handle_CI_reception();
+
+  } else { //Normal packet or end of FEC2
+    if (rx_status.rx_resp.status != P2G4_RXSTATUS_HEADER_ERROR) {
+        rx_status.CRC_End_Time = end_time + nhwra_timings_get_Rx_chain_delay();
+    } //Otherwise we do not really now how the Nordic RADIO behaves depending on
+    //where the biterrors are and so forth. So let's always behave like if the
+    //packet lenght was received correctly, and just report a CRC error at the
+    //end of the CRC
+
+    if ( rx_status.rx_resp.status == P2G4_RXSTATUS_OK ){
+      NRF_RADIO_regs.RXCRC = nhwra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
+      rx_status.CRC_OK = 1;
+      NRF_RADIO_regs.CRCSTATUS = 1;
+    }
+
+    //TODO: Try to move this to RX_WAIT_FOR_PAYLOAD_END handling in main state machine (and remove the call above also)
+    nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
+  }
 }
 
 
 static void Rx_handle_address_end_response(bs_time_t address_time) {
 
   rx_status.ADDRESS_End_Time = address_time + nhwra_timings_get_Rx_chain_delay();
+
+  if ((rx_status.codedphy == true) && (rx_status.inFEC1)) {
+    rx_status.FEC1_end_time = address_time + 16 + 24;
+    rx_status.packet_rejected = false; //We always accept the FEC1 part
+
+    //Let's set a very provisional packet end time, in case the Tx aborts between FEC1 and FEC2:
+    rx_status.PAYLOAD_End_Time = rx_status.FEC1_end_time + 2*8/bits_per_us; /* An empty packet */
+    rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration;
+    return;
+  }
+  //Otherwise, FEC2 or not Coded Phy
 
   uint length = nhwra_get_payload_length(rx_buf);
   uint max_length = nhwra_get_MAXLEN();
@@ -816,19 +958,21 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
     // We reject the packet right away, setting the CRC error, and timers as expected
     bs_trace_warning_time_line("NRF_RADIO: received a packet longer than the configured MAXLEN (%i>%i). Truncating it\n", length, max_length);
     length  = max_length;
-    NRF_RADIO_regs.PDUSTAT = RADIO_PDUSTAT_PDUSTAT_Msk;
+    NRF_RADIO_regs.PDUSTAT |= RADIO_PDUSTAT_PDUSTAT_Msk;
     rx_status.packet_rejected = true;
   } else {
-    NRF_RADIO_regs.PDUSTAT = 0;
     rx_status.packet_rejected = false;
+  }
+  if (rx_status.CI_error) {
+    /* Let's just stop the Phy reception here, as continuing does not give us anything anymore */
+    rx_status.packet_rejected = true;
   }
 
   //TODO: Discard Ieee802154_250Kbit frames with length == 0
 
   bs_time_t payload_end = 0;
 
-  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
+  if (nhwra_is_ble_mode(NRF_RADIO_regs.MODE)) {
     payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((2+length)*8/bits_per_us);
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     payload_end = rx_status.rx_resp.rx_time_stamp + (bs_time_t)((1+length)*8/bits_per_us);
@@ -840,8 +984,7 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
   rx_status.CRC_End_Time = rx_status.PAYLOAD_End_Time + rx_status.CRC_duration; //Provisional value (if we are accepting the packet)
 
   //Copy the whole packet (S0, lenght, S1 & payload) excluding the CRC.
-  if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit)
-      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit)) {
+  if (nhwra_is_ble_mode(NRF_RADIO_regs.MODE)) {
     if (rx_status.rx_resp.packet_size >= 5) { /*At least the header and CRC, otherwise better to not try to copy it*/
       ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[0] = rx_buf[0];
       ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1] = rx_buf[1];
@@ -872,29 +1015,50 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
  * Handle all possible responses from the phy to a Rx request
  */
 static void handle_Rx_response(int ret){
-  if ( ret == -1 ){
+  if (ret == -1) {
     bs_trace_raw_manual_time(3,nsi_hws_get_time(),"Communication with the phy closed during Rx\n");
     hwll_disconnect_phy_and_exit();
 
-  } else if ( ret == P2G4_MSG_ABORTREEVAL ) {
+  } else if (ret == P2G4_MSG_ABORTREEVAL) {
 
     phy_sync_ctrl_set_last_phy_sync_time( next_recheck_time );
     abort_fsm_state = Rx_Abort_reeval;
     nhwra_set_Timer_abort_reeval( BS_MAX(next_recheck_time,nsi_hws_get_time()) );
 
-  } else if ( ( ret == P2G4_MSG_RXV2_ADDRESSFOUND ) && ( radio_state == RAD_RX /*if we havent aborted*/ ) ) {
+  } else  if ((ret == P2G4_MSG_RXV2_ADDRESSFOUND) && (radio_state == RAD_RX /*if we havent aborted*/)) {
 
-    bs_time_t address_time = hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp); //this is the end of the sync word in air time
-    phy_sync_ctrl_set_last_phy_sync_time(address_time);
-    Rx_handle_address_end_response(address_time);
-    radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
-    nhwra_set_Timer_RADIO(rx_status.ADDRESS_End_Time);
+    bs_time_t addres_time = hwll_dev_time_from_phy(rx_status.rx_resp.rx_time_stamp); //this is the end of the sync word in air time
+    phy_sync_ctrl_set_last_phy_sync_time(addres_time);
+    Rx_handle_address_end_response(addres_time);
 
-  } else if ( ( ret == P2G4_MSG_RXV2_END ) && ( radio_state == RAD_RX /*if we havent aborted*/ ) ) {
+    if ((rx_status.codedphy == false) || (rx_status.inFEC1)) {
+      radio_sub_state = RX_WAIT_FOR_ADDRESS_END;
+      nhwra_set_Timer_RADIO(rx_status.ADDRESS_End_Time);
+    } else { //FEC2
+      radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
+      nhwra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);
+      Rx_Addr_received();
+    }
+  } else if ((ret == P2G4_MSG_RXV2_END) && (radio_state == RAD_RX /*if we havent aborted*/)) {
 
     bs_time_t end_time = hwll_dev_time_from_phy(rx_status.rx_resp.end_time);
     phy_sync_ctrl_set_last_phy_sync_time(end_time);
     Rx_handle_end_response(end_time);
+
+    /* P2G4_RXSTATUS_NOSYNC during a simple packet or CodedPhy FEC1 cannot really happen
+     * As that would mean we have run out of the "infinite" scan time.
+     * It can happen though at the start of the CodedPhy FEC2, if the transmitter aborted
+     * before starting the FEC2 */
+    if (rx_status.rx_resp.status == P2G4_RXSTATUS_NOSYNC) {
+      if ((rx_status.codedphy == false) || (rx_status.inFEC1 == true)) {
+        bs_trace_error_time_line("Unexpected not-handled path\n");
+      }
+      /* Otherwise we just wait for the RX_WAIT_FOR_PAYLOAD_END handling in the main RADIO FSM
+       * A provisional PAYLOAD_End_Time was set earlier */
+      radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
+      nhwra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);
+      return;
+    }
   }
 }
 
@@ -924,6 +1088,7 @@ static void start_Rx(void) {
   radio_state = RAD_RX;
   NRF_RADIO_regs.STATE = RAD_RX;
   NRF_RADIO_regs.CRCSTATUS = 0;
+  NRF_RADIO_regs.PDUSTAT = 0;
 
   if ( NRF_RADIO_regs.PCNF0 & ( RADIO_PCNF0_S1INCL_Include << RADIO_PCNF0_S1INCL_Pos ) ){
     rx_status.S1Offset = 1; /*1 byte offset in RAM (S1 length > 8 not supported)*/
@@ -931,28 +1096,45 @@ static void start_Rx(void) {
     rx_status.S1Offset = 0;
   }
 
+  rx_status.codedphy = false;
+  rx_status.inFEC1 = false;
+  rx_status.CI_error = false;
+  rx_status.CI = 0;
+
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     bits_per_us = 1;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
     bits_per_us = 2;
+  } else if ((NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+      || (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
+    bits_per_us = 0.125; /* For FEC1 part */
+    rx_status.codedphy = true;
+    rx_status.inFEC1 = true;
   } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     bits_per_us = 0.25;
   }
   rx_status.CRC_duration = nhwra_get_crc_length()*8/bits_per_us;
-
   rx_status.CRC_OK = false;
   rx_status.rx_resp.status = P2G4_RXSTATUS_NOSYNC;
 
+  if (rx_status.codedphy) {
+    nhwra_prep_rx_request_FEC1(&rx_status.rx_req_fec1, rx_addresses);
+    update_abort_struct(&rx_status.rx_req_fec1.abort, &next_recheck_time);
+  }
   nhwra_prep_rx_request(&rx_status.rx_req, rx_addresses);
-
   update_abort_struct(&rx_status.rx_req.abort, &next_recheck_time);
 
   //attempt to receive
-  int ret = p2G4_dev_req_rxv2_nc_b(&rx_status.rx_req,
-      rx_addresses,
-      &rx_status.rx_resp,
-      &rx_pkt_buffer_ptr,
-      _NRF_MAX_PACKET_SIZE);
+  int ret;
+  if (rx_status.codedphy) {
+    ret = p2G4_dev_req_rxv2_nc_b(&rx_status.rx_req_fec1, rx_addresses,
+                                 &rx_status.rx_resp, &rx_pkt_buffer_ptr,
+                                 _NRF_MAX_PACKET_SIZE);
+  } else {
+    ret = p2G4_dev_req_rxv2_nc_b(&rx_status.rx_req, rx_addresses,
+                                 &rx_status.rx_resp,&rx_pkt_buffer_ptr,
+                                 _NRF_MAX_PACKET_SIZE);
+  }
 
   radio_sub_state = SUB_STATE_INVALID;
   nhwra_set_Timer_RADIO(TIME_NEVER);
@@ -960,10 +1142,45 @@ static void start_Rx(void) {
   handle_Rx_response(ret);
 }
 
+/*
+ * Start the Rx for a CodedPhy FEC2 packet part in this microsecond
+ */
+static void start_Rx_FEC2(void) {
+
+  rx_status.inFEC1 = false;
+
+  if (rx_status.CI == 0) {
+    rx_status.rx_req.coding_rate = 8;
+    //error_calc_rate & header_duration preset in nhwra_prep_rx_request() are already correct
+  } else { //0b01
+    bits_per_us = 0.5;
+    rx_status.rx_req.coding_rate = 2;
+    rx_status.rx_req.error_calc_rate = 500000;
+    rx_status.rx_req.header_duration = 2*8*2 /* 2 bytes at 500kbps */;
+  }
+  rx_status.rx_req.start_time = hwll_phy_time_from_dev(nsi_hws_get_time());
+  rx_status.rx_req.pream_and_addr_duration = 0;
+  rx_status.rx_req.n_addr = 0;
+  rx_status.rx_req.scan_duration = 1;
+
+  rx_status.CRC_duration = nhwra_get_crc_length()*8/bits_per_us;
+
+  update_abort_struct(&rx_status.rx_req.abort, &next_recheck_time);
+
+  int ret;
+
+  ret = p2G4_dev_req_rxv2_nc_b(&rx_status.rx_req, NULL,
+                               &rx_status.rx_resp, &rx_pkt_buffer_ptr,
+                               _NRF_MAX_PACKET_SIZE);
+
+  handle_Rx_response(ret);
+}
+
 /**
- * This function is called at the time when the Packet address would have been
- * completely received
- * (at the time of the end of the last bit of the packet address)
+ * This function is called at the time when the Packet address* would have been
+ * completely received for simple packets, or at the beginning of the FEC2
+ * for CodedPhy packets.
+ * (* at the time of the end of the last bit of the packet address)
  * To continue processing the reception (the Phy was left waiting for a response)
  *
  * Note that libPhyCom has already copied the whole packet into the input buffer

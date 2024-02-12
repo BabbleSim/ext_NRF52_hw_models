@@ -34,28 +34,37 @@ typedef enum { //Note: This should match the real RADIO state values in the STAT
 } nrfra_state_t;
 
 typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX state with this substate*/
-  TX_WAIT_FOR_ADDRESS_END, TX_WAIT_FOR_PAYLOAD_END, TX_WAIT_FOR_CRC_END,
-  RX_WAIT_FOR_ADDRESS_END, RX_WAIT_FOR_PAYLOAD_END, RX_WAIT_FOR_CRC_END
+  TX_WAIT_FOR_ADDRESS_END, TX_WAIT_FOR_FEC1_END, TX_WAIT_FOR_PAYLOAD_END, TX_WAIT_FOR_CRC_END,
+  RX_WAIT_FOR_ADDRESS_END, RX_WAIT_FOR_FEC1_END, RX_WAIT_FOR_PAYLOAD_END, RX_WAIT_FOR_CRC_END
 } nrfra_sub_state_t;
 
 typedef struct {
   bs_time_t ADDRESS_End_Time;
+  bs_time_t FEC1_end_time; /* In air */
   bs_time_t PAYLOAD_End_Time;
   bs_time_t CRC_End_Time;
   bs_time_t CRC_duration;
+  p2G4_rxv2_t rx_req_fec1;
   p2G4_rxv2_t rx_req;
   p2G4_rxv2_done_t rx_resp;
   bool CRC_OK;
   bool packet_rejected;
   bool S1Offset;
+  bool codedphy;
+  uint8_t CI;
+  bool inFEC1;
+  bool CI_error;
 } RADIO_Rx_status_t;
 
 typedef struct {
   bs_time_t ADDRESS_end_time;
+  bs_time_t FEC1_end_time;
   bs_time_t PAYLOAD_end_time;
   bs_time_t CRC_end_time;
+  p2G4_txv2_t tx_req_fec1;
   p2G4_txv2_t tx_req;
   p2G4_tx_done_t tx_resp;
+  bool codedphy;
 } RADIO_Tx_status_t;
 
 typedef struct {
