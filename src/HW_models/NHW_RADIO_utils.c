@@ -7,6 +7,7 @@
  * This file includes miscellaneous utility functions used by the RADIO model
  * but no significant logic *
  */
+#include <stdint.h>
 #include <string.h>
 #include "bs_tracing.h"
 #include "bs_utils.h"
@@ -222,6 +223,21 @@ static uint64_t nhwra_get_address(uint logical_addr) {
   return address;
 }
 
+static p2G4_modulation_t nhra_modulation_from_mode(uint32_t MODE) {
+  p2G4_modulation_t modulation;
+  if (MODE == RADIO_MODE_MODE_Ble_1Mbit) {
+    modulation = P2G4_MOD_BLE;
+  } else if (MODE == RADIO_MODE_MODE_Ble_2Mbit) {
+    modulation = P2G4_MOD_BLE2M;
+  } else if (MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
+    modulation = P2G4_MOD_154_250K_DSS;
+  } else if ((MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
+             || (MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
+    modulation = P2G4_MOD_BLE_CODED;
+  }
+  return modulation;
+}
+
 /**
  * Prepare a Phy Rxv2 request structure
  * based on the radio registers configuration.
@@ -242,13 +258,14 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
 
   rx_addresses[0] = nhwra_get_address(0); /* We only support RXADDRESSES == 0x01 by now */
 
+  rx_req->radio_params.modulation = nhra_modulation_from_mode(NRF_RADIO_regs.MODE);
+
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
     //Note that we only support BLE packet formats by now (so we ignore the configuration of the preamble and just assume it is what it needs to be)
     //we rely on the Tx side error/warning being enough to warn users that we do not support other formats
     preamble_length = 1; //1 byte
     address_length  = 4;
     header_length   = 2;
-    rx_req->radio_params.modulation = P2G4_MOD_BLE;
     bits_per_us = 1;
     pre_trunc = 0; //The modem can lose a lot of preamble and sync (~7us), we leave it as 0 by now to avoid a behavior change
     sync_threshold = 2; //(<) we tolerate less than 2 errors in the preamble and sync word together (old number, probably does not reflect the actual RADIO performance)
@@ -256,7 +273,6 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
     preamble_length = 2; //2 bytes
     address_length  = 4;
     header_length   = 2;
-    rx_req->radio_params.modulation = P2G4_MOD_BLE2M;
     bits_per_us = 2;
     pre_trunc = 0; //The modem can lose a lot of preamble and sync (~7us), we leave it as 0 by now to avoid a behavior change
     sync_threshold = 2;
@@ -264,7 +280,6 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
     preamble_length = 4;
     address_length  = 1;
     header_length   = 0;
-    rx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
     bits_per_us = 0.25;
     pre_trunc = 104; //The modem seems to be able to sync with just 3 sybmols of the preamble == lossing 13symbols|26bits|104us
     sync_threshold = 0;
@@ -305,13 +320,7 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
  */
 void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t packet_duration) {
 
-  if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_1Mbit) {
-    tx_req->radio_params.modulation = P2G4_MOD_BLE;
-  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ble_2Mbit) {
-    tx_req->radio_params.modulation = P2G4_MOD_BLE2M;
-  } else if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
-    tx_req->radio_params.modulation = P2G4_MOD_154_250K_DSS;
-  }
+  tx_req->radio_params.modulation = nhra_modulation_from_mode(NRF_RADIO_regs.MODE);
 
   tx_req->phy_address = nhwra_get_address(NRF_RADIO_regs.TXADDRESS);
 
