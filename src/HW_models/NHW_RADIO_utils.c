@@ -332,7 +332,7 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
     bs_time_t tx_start_time = nsi_hws_get_time();
     tx_req->start_tx_time = hwll_phy_time_from_dev(tx_start_time);
     tx_req->start_packet_time = tx_req->start_tx_time ;
-    tx_req->end_tx_time = tx_req->start_tx_time + packet_duration;
+    tx_req->end_tx_time = tx_req->start_tx_time + packet_duration - 1;
     tx_req->end_packet_time = tx_req->end_tx_time;
   }
   tx_req->coding_rate = 0;
