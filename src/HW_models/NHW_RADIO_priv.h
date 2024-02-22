@@ -40,7 +40,7 @@ typedef enum {SUB_STATE_INVALID, /*The timer should not trigger in TX or RX stat
 
 typedef struct {
   bs_time_t ADDRESS_End_Time;
-  bs_time_t FEC1_end_time; /* In air */
+  bs_time_t FEC2_start_time; /* In air */
   bs_time_t PAYLOAD_End_Time;
   bs_time_t CRC_End_Time;
   bs_time_t CRC_duration;
@@ -58,7 +58,7 @@ typedef struct {
 
 typedef struct {
   bs_time_t ADDRESS_end_time;
-  bs_time_t FEC1_end_time;
+  bs_time_t FEC2_start_time; /* In air */
   bs_time_t PAYLOAD_end_time;
   bs_time_t CRC_end_time;
   p2G4_txv2_t tx_req_fec1;

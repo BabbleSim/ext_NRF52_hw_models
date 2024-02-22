@@ -361,6 +361,7 @@ void nhwra_prep_rx_request(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresses) {
   rx_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time());
 
   rx_req->resp_type = 0;
+  rx_req->prelocked_tx = false;
 }
 
 /**
@@ -391,7 +392,7 @@ void nhwra_prep_rx_request_FEC1(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresse
   rx_req->header_duration  = 16; /* CI duration */
   rx_req->header_threshold = 0xFFFF; /* We don't want "header"/CI errors in the FEC1 part in any case for design simplicity, we just check the "packet error" result */
   rx_req->sync_threshold   = 2;
-  rx_req->acceptable_pre_truncation = 70; /* A quick guess, real modem behavior TBD */ //TODO
+  rx_req->acceptable_pre_truncation = 65; /* It seems the radio manages with ~15us of coded phy preamble in good signal conditions */
 
   rx_req->pream_and_addr_duration = 80 + 256;
 
@@ -430,8 +431,8 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->packet_size  = packet_size; //Not including preamble or address
 
   {
-    tx_req->start_tx_time = hwll_phy_time_from_dev(start_time);
-    tx_req->start_packet_time = tx_req->start_tx_time ;
+    tx_req->start_tx_time = start_time;
+    tx_req->start_packet_time = tx_req->start_tx_time;
     tx_req->end_tx_time = tx_req->start_tx_time + packet_duration - 1;
     tx_req->end_packet_time = tx_req->end_tx_time;
   }
