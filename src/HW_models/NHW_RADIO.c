@@ -615,6 +615,7 @@ static void nhw_radio_timer_triggered(void) {
       nhwra_set_Timer_RADIO(rx_status.CRC_End_Time);
       nhw_RADIO_signal_EVENTS_PAYLOAD(0);
     } else if ( radio_sub_state == RX_WAIT_FOR_CRC_END ) {
+      nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
       radio_sub_state = SUB_STATE_INVALID;
       radio_state = RAD_RXIDLE;
       NRF_RADIO_regs.STATE = RAD_RXIDLE;
@@ -908,11 +909,6 @@ static void Rx_handle_CI_reception(void) {
 
 static void Rx_handle_end_response(bs_time_t end_time) {
 
-  if (rx_status.rx_resp.status == P2G4_RXSTATUS_NOSYNC) {
-    nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
-    return;
-  }
-
   if (rx_status.inFEC1 == true) { /* End of CodedPhy packet FEC1 */
     Rx_handle_CI_reception();
 
@@ -929,9 +925,6 @@ static void Rx_handle_end_response(bs_time_t end_time) {
       rx_status.CRC_OK = 1;
       NRF_RADIO_regs.CRCSTATUS = 1;
     }
-
-    //TODO: Try to move this to RX_WAIT_FOR_PAYLOAD_END handling in main state machine (and remove the call above also)
-    nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
   }
 }
 
@@ -1043,7 +1036,6 @@ static void handle_Rx_response(int ret){
 
     bs_time_t end_time = hwll_dev_time_from_phy(rx_status.rx_resp.end_time);
     phy_sync_ctrl_set_last_phy_sync_time(end_time);
-    Rx_handle_end_response(end_time);
 
     /* P2G4_RXSTATUS_NOSYNC during a simple packet or CodedPhy FEC1 cannot really happen
      * As that would mean we have run out of the "infinite" scan time.
@@ -1058,6 +1050,8 @@ static void handle_Rx_response(int ret){
       radio_sub_state = RX_WAIT_FOR_PAYLOAD_END;
       nhwra_set_Timer_RADIO(rx_status.PAYLOAD_End_Time);
       return;
+    } else {
+      Rx_handle_end_response(end_time);
     }
   }
 }
