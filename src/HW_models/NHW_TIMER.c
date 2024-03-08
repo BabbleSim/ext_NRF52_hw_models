@@ -318,14 +318,9 @@ void nhw_timer_TASK_CAPTURE(int t, int cc_n) {
                              "TIMER%i.TASK_CAPTURE[%i] (>= %i)\n",
                               t, cc_n, this->n_CCs);
   }
-  if ( NRF_TIMER_regs[t].MODE != 0 ){ //Count mode
+  if ((NRF_TIMER_regs[t].MODE != 0 /* Count mode */) || (this->is_running == false)) {
     NRF_TIMER_regs[t].CC[cc_n] = this->Counter & mask_from_bitmode(t);
-  } else { //Timer mode:
-    if ( this->start_t == TIME_NEVER ){
-      bs_trace_warning_line_time("NRF HW TIMER%i TASK_CAPTURE[%i] "
-                                     "triggered on a timer which was never "
-                                     "started => you get garbage\n", t, cc_n);
-    }
+  } else { //Timer mode (and running):
     bs_time_t Elapsed = nsi_hws_get_time() - this->start_t;
     NRF_TIMER_regs[t].CC[cc_n] = time_to_counter(Elapsed,t) & mask_from_bitmode(t);
 
