@@ -32,6 +32,21 @@ void nhw_rtc_regw_sideeffects_SUBSCRIBE_TRIGOVRFLW(uint inst);
 void nhw_rtc_regw_sideeffects_SUBSCRIBE_CAPTURE(uint inst, uint cc);
 void nhw_rtc_notify_first_lf_tick(void);
 
+#if (NHW_HAS_PPI)
+void nhw_rtc0_TASKS_START(void);
+void nhw_rtc0_TASKS_STOP(void);
+void nhw_rtc0_TASKS_CLEAR(void);
+void nhw_rtc0_TASKS_TRIGOVRFLW(void);
+void nhw_rtc1_TASKS_START(void);
+void nhw_rtc1_TASKS_STOP(void);
+void nhw_rtc1_TASKS_CLEAR(void);
+void nhw_rtc1_TASKS_TRIGOVRFLW(void);
+void nhw_rtc2_TASKS_START(void);
+void nhw_rtc2_TASKS_STOP(void);
+void nhw_rtc2_TASKS_CLEAR(void);
+void nhw_rtc2_TASKS_TRIGOVRFLW(void);
+#endif /* NHW_HAS_PPI */
+
 #ifdef __cplusplus
 }
 #endif
