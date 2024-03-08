@@ -7,8 +7,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "bs_tracing.h"
-#include "nrf.h"
 #include "NHW_config.h"
+#include "NHW_peri_types.h"
+#include "nrf_bsim_redef.h"
 
 /*
  * Get the name of a core/domain
@@ -35,6 +36,25 @@ const char *nhw_get_core_name(unsigned int core_n)
  * exists to cover the cases in which this is not possible.
  */
 void *nhw_convert_periph_base_addr(void *hw_addr) {
+
+#if defined(NRF5340)
+  /* The nrf_bsim_redef.h header which is meant to hack the
+   * nrf definitions only provides declarations for the
+   * registers structures for a given core. So we need to declare
+   * the ones that are exclusive for either core here.
+   *
+   * If at some point we have more uses for a bulk peripheral definitions
+   * of all peripherals in a SOC consider moving it to a separate header
+   */
+  extern NRF_AAR_Type NRF_AAR_regs;
+  extern NRF_CCM_Type NRF_CCM_regs;
+  extern NRF_ECB_Type NRF_ECB_regs;
+  extern NRF_RADIO_Type NRF_RADIO_regs;
+  extern NRF_RNG_Type NRF_RNG_regs;
+  extern int NRF_SWI_regs[];
+  extern NRF_TEMP_Type NRF_TEMP_regs;
+  extern NRF_VREQCTRL_Type NRF_VREQCTRL_regs;
+#endif
 
   struct {
     void* simu_addr;
