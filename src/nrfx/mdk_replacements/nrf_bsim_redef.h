@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+void *nhw_convert_periph_base_addr(void *hw_addr);
+
 #if defined(NRF52833_XXAA)
 /*
  * Redefine the base addresses.
