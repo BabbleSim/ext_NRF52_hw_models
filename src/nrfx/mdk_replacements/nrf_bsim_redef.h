@@ -38,6 +38,8 @@ extern NRF_RTC_Type NRF_RTC_regs[];
 #define NRF_RTC0_BASE                     (&NRF_RTC_regs[0])
 #undef NRF_RTC1_BASE
 #define NRF_RTC1_BASE                     (&NRF_RTC_regs[1])
+#undef NRF_RTC2_BASE
+#define NRF_RTC2_BASE                     (&NRF_RTC_regs[2])
 extern NRF_ECB_Type NRF_ECB_regs;
 #undef NRF_ECB_BASE
 #define NRF_ECB_BASE                      (&NRF_ECB_regs)

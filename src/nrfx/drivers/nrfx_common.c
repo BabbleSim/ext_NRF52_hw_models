@@ -79,7 +79,10 @@ IRQn_Type nrfx_get_irq_number(void const * p_reg){
       return 30;
   } else if (IS_PERIPHERAL_REG(p_reg, PPI,,)) {
       return 0x1F;
-  /*32-39*/
+  /*32-35*/
+  } else if (IS_PERIPHERAL_REG(p_reg, RTC, 2,)) {
+    return RTC2_IRQn;
+  /*37-39*/
   } else if (IS_PERIPHERAL_REG(p_reg, UARTE, 1,)) {
     return UARTE1_IRQn;
   /*40-47*/

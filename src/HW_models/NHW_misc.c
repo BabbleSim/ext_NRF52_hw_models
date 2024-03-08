@@ -125,7 +125,7 @@ void *nhw_convert_periph_base_addr(void *hw_addr) {
 //    {(void *)NRF_SPI2_BASE       ,  0x40023000UL},
 //    {(void *)NRF_SPIM2_BASE      ,  0x40023000UL},
 //    {(void *)NRF_SPIS2_BASE      ,  0x40023000UL},
-//    {(void *)NRF_RTC2_BASE       ,  0x40024000UL},
+    {(void *)NRF_RTC2_BASE       ,  0x40024000UL},
 //    {(void *)NRF_I2S_BASE        ,  0x40025000UL},
 //    {(void *)NRF_FPU_BASE        ,  0x40026000UL},
 //    {(void *)NRF_USBD_BASE       ,  0x40027000UL},
