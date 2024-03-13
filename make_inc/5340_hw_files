@@ -5,7 +5,6 @@ src/HW_models/fake_timer.c
 src/HW_models/crc.c
 src/HW_models/irq_ctrl.c
 src/HW_models/bstest_ticker.c
-src/HW_models/bs_compat.c
 src/HW_models/NHW_53_FICR.c
 src/HW_models/NHW_AAR.c
 src/HW_models/NHW_AES_CCM.c

@@ -41,7 +41,6 @@
 #include "bs_types.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
-#include "bs_compat.h"
 #include "bs_utils.h"
 #include "bs_cmd_line.h"
 #include "bs_dynargs.h"
@@ -631,8 +630,8 @@ NSI_TASK(nhw_ufifo_backend_post_cmdline, PRE_BOOT_2, 200);
 static void nhw_ufifo_create_fifos(uint inst, struct ufifo_st_t *u_el) {
   bs_trace_raw_time(9, "Creating UART%i backend FIFOs, and connecting Tx end\n", inst);
 
-  _bs_create_folders_in_path(u_el->fifo_Tx_path);
-  _bs_create_folders_in_path(u_el->fifo_Rx_path);
+  bs_create_folders_in_path(u_el->fifo_Tx_path);
+  bs_create_folders_in_path(u_el->fifo_Rx_path);
 
   if (pb_create_fifo_if_not_there(u_el->fifo_Tx_path) != 0) {
     bs_trace_error_line("Couldn't create UART backend Tx FIFOs\n");

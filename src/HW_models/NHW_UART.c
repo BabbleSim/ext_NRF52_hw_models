@@ -81,7 +81,6 @@
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
 #include "bs_utils.h"
-#include "bs_compat.h"
 #include "bs_cmd_line.h"
 #include "bs_dynargs.h"
 #include "nsi_hw_scheduler.h"
@@ -144,12 +143,12 @@ static void nhw_uarte_init(void) {
     raise_RTS_R(i, u_el);
 
     if (u_el->Tx_log_file_name) {
-      _bs_create_folders_in_path(u_el->Tx_log_file_name);
+      bs_create_folders_in_path(u_el->Tx_log_file_name);
       u_el->Tx_log_file = bs_fopen(u_el->Tx_log_file_name, "w");
       fprintf(u_el->Tx_log_file, "time(microsecond),byte\n");
     }
     if (u_el->Rx_log_file_name) {
-      _bs_create_folders_in_path(u_el->Rx_log_file_name);
+      bs_create_folders_in_path(u_el->Rx_log_file_name);
       u_el->Rx_log_file = bs_fopen(u_el->Rx_log_file_name, "w");
       fprintf(u_el->Rx_log_file, "time(microsecond),byte\n");
     }

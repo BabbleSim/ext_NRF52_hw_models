@@ -21,7 +21,6 @@
 #include <sys/mman.h>
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
-#include "bs_compat.h"
 #include "NHW_NVM_backend.h"
 
 /**
@@ -40,7 +39,7 @@ void nhw_nvm_initialize_data_storage(nvm_storage_state_t *st){
 
   } else {
 
-    _bs_create_folders_in_path(st->file_path);
+    bs_create_folders_in_path(st->file_path);
     st->fd = open(st->file_path, O_RDWR | O_CREAT, (mode_t)0600);
     if (st->fd == -1) {
       bs_trace_error_line("%s: Failed to open %s device file %s: %s\n",

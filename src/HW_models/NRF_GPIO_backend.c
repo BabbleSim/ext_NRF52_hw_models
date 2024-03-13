@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 #include "NHW_common_types.h"
 #include "NHW_config.h"
 #include "NRF_GPIO.h"
@@ -23,7 +24,6 @@
 #include "nsi_hw_scheduler.h"
 #include "bs_tracing.h"
 #include "bs_oswrap.h"
-#include "bs_compat.h"
 #include "bs_cmd_line.h"
 #include "bs_dynargs.h"
 #include "nsi_hws_models_if.h"
@@ -146,7 +146,7 @@ static void nrf_gpio_init_output_file(void)
 		return;
 	}
 
-	_bs_create_folders_in_path(gpio_out_file_path);
+	bs_create_folders_in_path(gpio_out_file_path);
 	output_file_ptr = bs_fopen(gpio_out_file_path, "w");
 	fprintf(output_file_ptr, "time(microsecond),port,pin,level\n");
 }

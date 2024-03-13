@@ -26,7 +26,6 @@ src/HW_models/NHW_TIMER.c
 src/HW_models/NHW_UART.c
 src/HW_models/NHW_UART_backend_fifo.c
 src/HW_models/NHW_UART_be_loopb.c
-src/HW_models/bs_compat.c
 src/HW_models/NHW_52_FICR.c
 src/HW_models/NRF_GPIOTE.c
 src/HW_models/NHW_RNG.c
