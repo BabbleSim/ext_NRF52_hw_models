@@ -19,8 +19,8 @@ extern "C"{
 #define NRF_GPIO_PORTS_PINS {32, 10} /* Number of IOs per port */
 
 /*
- * Callback another peripheral or tests can register if it wants to be called when an input
- * is toggled.
+ * Callback another peripheral or tests can register if it wants to be called when an
+ * input/output is toggled.
  *
  * The callback will get as inputs:
  *  * port: the GPIO port which toggled,
@@ -33,6 +33,7 @@ typedef void (*nrf_gpio_input_callback_t)(unsigned int port, unsigned int n, boo
 unsigned int nrf_gpio_get_number_pins_in_port(int port);
 
 void nrf_gpio_test_register_in_callback(nrf_gpio_input_callback_t fptr);
+void nrf_gpio_test_register_out_callback(nrf_gpio_input_callback_t fptr);
 void nrf_gpio_test_change_pin_level(unsigned int port, unsigned int n, bool value);
 bool nrf_gpio_get_pin_level(unsigned int port, unsigned int n);
 

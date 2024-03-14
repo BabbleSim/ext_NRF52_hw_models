@@ -32,6 +32,15 @@ For this just call the excutable with `-gpio_out_file=<path>`.
 Any toggle in any pin configured as an output will be dumped to that file, following the
 stimuli file format described below.
 
+### Monitor inputs/outputs from test code:
+
+Embedded test code specific for simulation can monitor the inputs and outputs changes
+by registering a callback with `nrf_gpio_test_register_in_callback()` and
+`nrf_gpio_test_register_out_callback()`.
+With the first one, the callback will be called each time an *input gpio pin register* is modified.
+With the second one, each time the output pin itself changes. That is, both will be called only
+if the pin is connected/driven in that direction.
+
 ### Stimuli file format
 
 This is a comma separated file (.csv), with 4 columns: time,port,pin,level. Where:

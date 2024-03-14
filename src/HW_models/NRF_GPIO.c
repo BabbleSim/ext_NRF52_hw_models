@@ -81,7 +81,9 @@ static uint32_t dir_override_set[NRF_GPIOS];
 
 /* Callbacks for peripherals to be informed of input changes */
 static nrf_gpio_input_callback_t per_intoggle_callbacks[NRF_GPIOS][NRF_GPIO_MAX_PINS_PER_PORT];
+/* Callbacks for test code to be informed of input/output changes: */
 static nrf_gpio_input_callback_t test_intoggle_callback;
+static nrf_gpio_input_callback_t test_outtoggle_callback;
 
 /*
  * Initialize the GPIOs model
@@ -114,6 +116,13 @@ void nrf_gpio_eval_input(unsigned int port, unsigned int n, bool value);
  */
 void nrf_gpio_test_register_in_callback(nrf_gpio_input_callback_t fptr) {
 	test_intoggle_callback = fptr;
+}
+
+/*
+ * Register a test callback to be called whenever an *output* pin changes
+ */
+void nrf_gpio_test_register_out_callback(nrf_gpio_input_callback_t fptr) {
+	test_outtoggle_callback = fptr;
 }
 
 /*
@@ -388,6 +397,9 @@ void nrf_gpio_eval_input(unsigned int port, unsigned int n, bool value)
 static void nrf_gpio_output_change_sideeffects(unsigned int port,unsigned  int n, bool value)
 {
 	nrf_gpio_backend_write_output_change(port, n, value);
+	if (test_outtoggle_callback != NULL) {
+		test_outtoggle_callback(port, n, value);
+	}
 	nrf_gpio_backend_short_propagate(port, n, value);
 }
 
