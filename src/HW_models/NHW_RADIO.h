@@ -58,6 +58,13 @@ void nhw_RADIO_regw_sideeffects_SUBSCRIBE_CCASTART(unsigned int);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_CCASTOP(unsigned int);
 
 /*
+ * Note
+ * hw_radio_testcheat_set_tx_power_gain() &
+ * hw_radio_testcheat_set_rx_power_gain()
+ * are defined in hw_testcheat_if.h
+ */
+
+/*
  * Internal interface to bitcounter
  */
 double nhw_radio_get_bpus(void);

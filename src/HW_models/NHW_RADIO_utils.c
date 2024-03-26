@@ -22,6 +22,7 @@
 #include "nsi_hw_scheduler.h"
 
 extern NRF_RADIO_Type NRF_RADIO_regs;
+static double cheat_tx_power_offset;
 
 static void nrfra_check_crc_conf_ble(void) {
   if ( (NRF_RADIO_regs.CRCCNF & RADIO_CRCCNF_LEN_Msk)
@@ -419,7 +420,7 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
 
   {
     double TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
-    tx_req->power_level = p2G4_power_from_d(TxPower); //Note that any possible Tx antenna or PA gain would need to be included here
+    tx_req->power_level = p2G4_power_from_d(TxPower + cheat_tx_power_offset); //Note that any possible Tx antenna or PA gain would need to be included here
   }
 
   { //Note only default freq. map supported
@@ -445,7 +446,7 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
  *
  * Note: The abort substructure is NOT filled.
  */
-void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
+void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED, double rx_pow_offset) {
 
   cca_req->start_time  = hwll_phy_time_from_dev(nsi_hws_get_time()); //We start right now
   cca_req->antenna_gain = 0;
@@ -466,13 +467,14 @@ void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
   if (CCA_not_ED) { //CCA request
     uint edthreshold = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAEDTHRES_Msk) >> RADIO_CCACTRL_CCAEDTHRES_Pos;
     uint CCAMode = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAMODE_Msk) >> RADIO_CCACTRL_CCAMODE_Pos;
-    double carrier_detect_level = -110; //dBm : Any detectable signal by the modem
+    double carrier_detect_level = -110 - rx_pow_offset; //dBm : Any detectable signal by the modem
+    double edthreshold_dBm = nrfra_LQIformat_to_dBm(edthreshold) - rx_pow_offset;
 
     cca_req->scan_duration  = 8*symbol_time;
     cca_req->scan_period    = 2*symbol_time; //let's measure 4 times (model design choice)
 
     if (CCAMode == RADIO_CCACTRL_CCAMODE_EdMode) {
-      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(edthreshold_dBm);
       cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
       cca_req->stop_when_found = 0;
     } else if (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierMode) {
@@ -484,10 +486,10 @@ void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED) {
     } else if ((CCAMode == RADIO_CCACTRL_CCAMODE_CarrierAndEdMode)
         || (CCAMode == RADIO_CCACTRL_CCAMODE_CarrierOrEdMode) ) {
       cca_req->stop_when_found = 1;
-      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(edthreshold_dBm);
       cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(carrier_detect_level);
     } else if (CCAMode == RADIO_CCACTRL_CCAMODE_EdModeTest1) {
-      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(nrfra_LQIformat_to_dBm(edthreshold));
+      cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(edthreshold_dBm);
       cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
       cca_req->stop_when_found = 2;
     } else {
@@ -644,4 +646,8 @@ uint nhwra_tx_copy_payload(uint8_t *tx_buf){
   int copy_len = payload_len + S1LenB;
   memcpy(&tx_buf[i], &((uint8_t*)NRF_RADIO_regs.PACKETPTR)[i + S1Off], copy_len);
   return payload_len;
+}
+
+void hw_radio_testcheat_set_tx_power_gain(double power_offset_i) {
+  cheat_tx_power_offset = power_offset_i;
 }

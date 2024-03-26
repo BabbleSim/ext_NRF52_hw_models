@@ -235,6 +235,8 @@ static bool radio_on = false;
 
 static bool rssi_sampling_on = false;
 
+static double cheat_rx_power_offset;
+
 static void start_Tx(void);
 static void start_Tx_FEC2(void);
 static void start_Rx(void);
@@ -1027,7 +1029,7 @@ static void Rx_handle_address_end_response(bs_time_t address_time) {
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     //The real HW only copies the LQI value after the payload in this mode
     //Note that doing it this early is a cheat
-    double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI);
+    double RSSI = p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI) + cheat_rx_power_offset;
     uint8_t LQI = nhwra_dBm_to_modem_LQIformat(RSSI);
     //Eventually this should be generalized with the packet configuration:
     ((uint8_t*)NRF_RADIO_regs.PACKETPTR)[1 + rx_status.S1Offset + length] = LQI;
@@ -1225,7 +1227,10 @@ static void Rx_Addr_received(void) {
 
   if (rx_status.codedphy == false || rx_status.inFEC1 == true) {
     if ( rssi_sampling_on ){
-      NRF_RADIO_regs.RSSISAMPLE = nhwra_RSSI_value_to_modem_format(p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI));
+      NRF_RADIO_regs.RSSISAMPLE = nhwra_RSSI_value_to_modem_format(
+                                    p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI)
+                                    + cheat_rx_power_offset
+                                  );
       nhw_RADIO_signal_EVENTS_RSSIEND(0);
     }
   }
@@ -1329,7 +1334,7 @@ static void CCA_handle_end_response(void) {
           __func__, CCAMode);
     }
   } else { // Ending an ED procedure
-    double RSSI = p2G4_RSSI_value_to_dBm(cca_status.cca_resp.RSSI_max);
+    double RSSI = p2G4_RSSI_value_to_dBm(cca_status.cca_resp.RSSI_max) + cheat_rx_power_offset;
     NRF_RADIO_regs.EDSAMPLE = nhwra_dBm_to_modem_LQIformat(RSSI);
   }
 }
@@ -1382,7 +1387,7 @@ static void start_CCA_ED(bool CCA_not_ED){
   cca_status.CCA_notED = CCA_not_ED;
   cca_status.is_busy = false;
 
-  nhwra_prep_cca_request(&cca_status.cca_req, CCA_not_ED);
+  nhwra_prep_cca_request(&cca_status.cca_req, CCA_not_ED, cheat_rx_power_offset);
 
   update_abort_struct(&cca_status.cca_req.abort, &next_recheck_time);
 
@@ -1393,4 +1398,8 @@ static void start_CCA_ED(bool CCA_not_ED){
   //Request the CCA from the Phy:
   int ret = p2G4_dev_req_cca_nc_b(&cca_status.cca_req, &cca_status.cca_resp);
   handle_CCA_response(ret);
+}
+
+void hw_radio_testcheat_set_rx_power_gain(double power_offset){
+  cheat_rx_power_offset = power_offset;
 }
