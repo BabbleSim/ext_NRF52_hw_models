@@ -241,16 +241,23 @@ static uint64_t nhwra_get_address(uint logical_addr) {
   if (NRF_RADIO_regs.MODE == RADIO_MODE_MODE_Ieee802154_250Kbit) {
     address = NRF_RADIO_regs.SFD & RADIO_SFD_SFD_Msk;
   } else {
-    /*Note: By now we only support (in none 802154 mode):
-     * BALEN = 3 (== BLE 4 byte addresses)
-     * And address 0 being used */
-    address =  ((NRF_RADIO_regs.PREFIX0 & RADIO_PREFIX0_AP0_Msk) << 24)
-                 | (NRF_RADIO_regs.BASE0 >> 8);
-
-    if (logical_addr != 0) {
-      bs_trace_error_time_line("%s: Only logical address 0 is supported so far (%i)\n",
-                               __func__, logical_addr);
+    if (logical_addr > 7) {
+      bs_trace_error_time_line("programming error: Logical address out of range (%u > 7)\n", logical_addr);
     }
+    int BALEN_bits = 8*((NRF_RADIO_regs.PCNF1 & RADIO_PCNF1_BALEN_Msk) >> RADIO_PCNF1_BALEN_Pos);
+    uint32_t base;
+
+    if (logical_addr == 0) {
+      base = NRF_RADIO_regs.BASE0;
+    } else {
+      base = NRF_RADIO_regs.BASE1;
+    }
+
+    uint32_t *prefix_ptr = &NRF_RADIO_regs.PREFIX0;
+    uint64_t prefix = prefix_ptr[logical_addr >> 2] >> (8*(logical_addr & 0x3));
+
+    address = ((prefix & RADIO_PREFIX0_AP0_Msk) << BALEN_bits)
+               | (base >> (32 - BALEN_bits));
   }
   return address;
 }
