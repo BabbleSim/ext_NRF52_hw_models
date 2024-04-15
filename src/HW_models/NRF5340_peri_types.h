@@ -117,7 +117,7 @@ typedef struct {
 typedef struct {
   __OM  uint32_t  EN;                           /*!< (@ 0x00000000) Description cluster: Enable channel group n                */
   __OM  uint32_t  DIS;                          /*!< (@ 0x00000004) Description cluster: Disable channel group n               */
-} DPPIC_TASKS_CHG_Type;                         /*!< Size = 8 (0x8)                                                            */
+} NRF_DPPIC_TASKS_CHG_Type;                         /*!< Size = 8 (0x8)                                                            */
 
 
 /**
@@ -1857,7 +1857,7 @@ typedef struct {                                /*!< (@ 0x4001B000) EGU0_NS Stru
   */
 
 typedef struct {                                /*!< (@ 0x4100F000) DPPIC_NS Structure                                         */
-  __OM  DPPIC_TASKS_CHG_Type TASKS_CHG[6];      /*!< (@ 0x00000000) Channel group tasks                                        */
+  __OM  NRF_DPPIC_TASKS_CHG_Type TASKS_CHG[6];      /*!< (@ 0x00000000) Channel group tasks                                        */
   __IM  uint32_t  RESERVED[20];
   __IOM DPPIC_SUBSCRIBE_CHG_Type SUBSCRIBE_CHG[6];/*!< (@ 0x00000080) Subscribe configuration for tasks                        */
   __IM  uint32_t  RESERVED1[276];

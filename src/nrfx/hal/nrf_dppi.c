@@ -6,6 +6,8 @@
  * Note that the function prototypes are taken from the NRFx HAL
  */
 
+#define DPPIC_TASKS_CHG_Type NRF_DPPIC_TASKS_CHG_Type /* This type changed name between the 53 and 54 */
+
 #include "hal/nrf_dppi.h"
 #include "bs_tracing.h"
 #include "NHW_DPPI.h"
@@ -23,9 +25,9 @@ void nrf_dppi_task_trigger(NRF_DPPIC_Type * p_reg, nrf_dppi_task_t dppi_task)
 
     uint dppi_inst = get_dppi_inst_from_ptr(p_reg);
     uint task_off = dppi_task - NRF_DPPI_TASK_CHG0_EN;
-    uint group = task_off / sizeof(DPPIC_TASKS_CHG_Type);
+    uint group = task_off / sizeof(NRF_DPPIC_TASKS_CHG_Type);
 
-    if (task_off % sizeof(DPPIC_TASKS_CHG_Type) == 0) {
+    if (task_off % sizeof(NRF_DPPIC_TASKS_CHG_Type) == 0) {
         nhw_dppi_regw_sideeffects_TASK_CHGn_EN(dppi_inst, group);
     } else {
         nhw_dppi_regw_sideeffects_TASK_CHGn_DIS(dppi_inst, group);
@@ -61,9 +63,9 @@ static void nrf_dppi_subscribe_common(NRF_DPPIC_Type * p_reg,
 {
     uint dppi_inst = get_dppi_inst_from_ptr(p_reg);
     uint task_off = task - NRF_DPPI_TASK_CHG0_EN;
-    uint group = task_off / sizeof(DPPIC_TASKS_CHG_Type);
+    uint group = task_off / sizeof(NRF_DPPIC_TASKS_CHG_Type);
 
-    if (task_off % sizeof(DPPIC_TASKS_CHG_Type) == 0) {
+    if (task_off % sizeof(NRF_DPPIC_TASKS_CHG_Type) == 0) {
         nhw_dppi_regw_sideeffects_SUBSCRIBE_CHG_EN(dppi_inst, group);
     } else {
         nhw_dppi_regw_sideeffects_SUBSCRIBE_CHG_DIS(dppi_inst, group);
