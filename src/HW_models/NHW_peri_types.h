@@ -14,6 +14,8 @@
 #include "NHW_config.h"
 
 #if NHW_USE_MDK_TYPES
+  #define __I /* They cannot be const from the HW models POV */
+  #define __IM
   #include "nrf.h"
 #else
 
