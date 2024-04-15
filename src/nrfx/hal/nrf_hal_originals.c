@@ -13,6 +13,12 @@
 
 #include "nrfx.h"
 
+#if defined(NRF54L15_XXAA)
+/* These are not yet supported by the HAL (fail to build), even though the MDK claims are present */
+#undef AAR_PRESENT
+#undef PDM_PRESENT
+#endif
+
 #ifdef AAR_PRESENT
 #include "hal/nrf_aar.h"
 #endif
