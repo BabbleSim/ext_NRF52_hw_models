@@ -10,11 +10,11 @@
 #include "hal/nrf_aar.h"
 #include "hal/nrf_ccm.h"
 #include "hal/nrf_ecb.h"
+#include "hal/nrf_ipc.h"
 #include "hal/nrf_radio.h"
 #include "hal/nrf_rng.h"
 #include "hal/nrf_temp.h"
-#elif defined(NRF5340_XXAA_APPLICATION)
-#endif
+
 #include "hal/nrf_clock.h"
 #include "hal/nrf_dppi.h"
 #include "hal/nrf_egu.h"
@@ -22,6 +22,16 @@
 #include "hal/nrf_ipc.h"
 #include "hal/nrf_rtc.h"
 #include "hal/nrf_timer.h"
+#elif defined(NRF5340_XXAA_APPLICATION)
+#include "hal/nrf_clock.h"
+#include "hal/nrf_dppi.h"
+#include "hal/nrf_egu.h"
+#include "hal/nrf_gpiote.h"
+#include "hal/nrf_ipc.h"
+#include "hal/nrf_rtc.h"
+#include "hal/nrf_timer.h"
+#endif
+
 #include "bs_tracing.h"
 
 #define PERIPHERAL_REG_BASE(per, nbr, post) \
