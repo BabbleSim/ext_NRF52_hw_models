@@ -18,7 +18,7 @@ void nhw_RADIO_TASK_CCASTART(void);
 void nhw_RADIO_TASK_CCASTOP(void);
 void nhw_RADIO_TASK_EDSTART(void);
 void nhw_RADIO_TASK_EDSTOP(void);
-void nhw_RADIO_TASK_STOP() ;
+void nhw_RADIO_TASK_STOP(void) ;
 void nhw_RADIO_TASK_DISABLE(void);
 void nhw_RADIO_TASK_RSSISTART(void);
 void nhw_RADIO_TASK_RSSISTOP(void);
