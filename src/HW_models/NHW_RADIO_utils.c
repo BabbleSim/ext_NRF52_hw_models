@@ -273,6 +273,8 @@ static p2G4_modulation_t nhra_modulation_from_mode(uint32_t MODE) {
   } else if ((MODE == RADIO_MODE_MODE_Ble_LR125Kbit)
              || (MODE == RADIO_MODE_MODE_Ble_LR500Kbit)) {
     modulation = P2G4_MOD_BLE_CODED;
+  } else {
+    bs_trace_error_time_line("programming error: Unsupported MODE %u\n", MODE);
   }
   return modulation;
 }
