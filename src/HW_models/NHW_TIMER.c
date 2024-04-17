@@ -141,21 +141,21 @@ NSI_TASK(nhw_timer_free, ON_EXIT_PRE, 100);
 
 /**
  * Convert a time delta in us to the equivalent count accounting for the PRESCALER
- * The timer base clock is 16MHz
+ * and the timer clock frequency
  */
 static uint32_t time_to_counter(bs_time_t delta, int t){
   uint64_t ticks;
-  ticks = ( delta << 4 ) >> NRF_TIMER_regs[t].PRESCALER;
+  ticks = (delta * nhw_timer_st[t].base_freq) >> NRF_TIMER_regs[t].PRESCALER;
   return ticks;
 }
 
 /**
  * Convert a counter delta to us accounting for the PRESCALER
- * The timer base clock is 16MHz
+ * and the timer clock frequency
  */
 static bs_time_t counter_to_time(uint64_t counter, int t){
   bs_time_t Elapsed;
-  Elapsed = ( counter << NRF_TIMER_regs[t].PRESCALER ) >> 4;
+  Elapsed = (counter << NRF_TIMER_regs[t].PRESCALER) / nhw_timer_st[t].base_freq;
   return Elapsed;
 }
 
