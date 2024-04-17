@@ -48,12 +48,12 @@
 #include "nsi_tasks.h"
 #include "nsi_hws_models_if.h"
 
-#define ICTR_64s ((NHW_INTCTRL_MAX_INTLINES+63)/64)
+#define IRQ_64s ((NHW_INTCTRL_MAX_INTLINES+63)/64)
 
 struct intctrl_status {
-  uint64_t irq_lines; /*Level of interrupt lines from peripherals*/
-  uint64_t irq_status;  /*pended and not masked interrupts*/
-  uint64_t irq_premask; /*pended interrupts before the mask*/
+  uint64_t irq_lines[IRQ_64s]; /*Level of interrupt lines from peripherals*/
+  uint64_t irq_status[IRQ_64s];  /*pended and not masked interrupts*/
+  uint64_t irq_premask[IRQ_64s]; /*pended interrupts before the mask*/
   /*
    * Mask of which interrupts will actually cause the cpu to vector into its
    * irq handler
@@ -62,7 +62,7 @@ struct intctrl_status {
    * If the irq_mask enables and interrupt pending in irq_premask, it will cause
    * the controller to raise the interrupt immediately
    */
-  uint64_t irq_mask;
+  uint64_t irq_mask[IRQ_64s];
 
   uint8_t irq_prio[NHW_INTCTRL_MAX_INTLINES]; /*Priority of each interrupt*/
   /*note that prio = 0 == highest, prio=255 == lowest*/
@@ -116,6 +116,15 @@ uint8_t hw_irq_ctrl_get_prio(unsigned int inst, unsigned int irq)
   return nhw_intctrl_st[inst].irq_prio[irq];
 }
 
+static inline bool irq_status_not_zero(unsigned int inst) {
+  for (int i = 0; i < IRQ_64s; i++) {
+    if (nhw_intctrl_st[inst].irq_status[i] != 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Get the currently pending highest priority interrupt which has a priority
  * higher than a possibly currently running interrupt
@@ -130,18 +139,21 @@ int hw_irq_ctrl_get_highest_prio_irq(unsigned int inst)
     return -1;
   }
 
-  uint64_t irq_status = this->irq_status;
   int winner = -1;
   int winner_prio = 256;
 
-  while (irq_status != 0U) {
-    int irq_nbr = nsi_find_lsb_set64(irq_status) - 1;
+  for (int i = 0; i < IRQ_64s; i++) {
+    uint64_t irq_status = this->irq_status[i];
+    while (irq_status != 0U) {
+      int irq_bit = nsi_find_lsb_set64(irq_status) - 1;
+      int irq_nbr = irq_bit + i*64;
 
-    irq_status &= ~((uint64_t) 1 << irq_nbr);
-    if ((winner_prio > (int)this->irq_prio[irq_nbr])
-        && (this->currently_running_prio > (int)this->irq_prio[irq_nbr])) {
-      winner = irq_nbr;
-      winner_prio = this->irq_prio[irq_nbr];
+      irq_status &= ~((uint64_t) 1 << irq_bit);
+      if ((winner_prio > (int)this->irq_prio[irq_nbr])
+          && (this->currently_running_prio > (int)this->irq_prio[irq_nbr])) {
+        winner = irq_nbr;
+        winner_prio = this->irq_prio[irq_nbr];
+      }
     }
   }
   return winner;
@@ -165,7 +177,7 @@ uint32_t hw_irq_ctrl_change_lock(unsigned int inst, uint32_t new_lock)
   this->irqs_locked = new_lock;
 
   if ((previous_lock == true) && (new_lock == false)) {
-    if (this->irq_status != 0U) {
+    if (irq_status_not_zero(inst)) {
       nsif_cpun_irq_raised_from_sw(inst);
     }
   }
@@ -176,8 +188,10 @@ void hw_irq_ctrl_clear_all_enabled_irqs(unsigned int inst)
 {
   struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-  this->irq_status  = 0U;
-  this->irq_premask &= ~this->irq_mask;
+  for (int i=0; i < IRQ_64s; i++) {
+    this->irq_status[i]  = 0U;
+    this->irq_premask[i] &= ~this->irq_mask[i];
+  }
 }
 
 /*
@@ -191,8 +205,10 @@ void hw_irq_ctrl_clear_all_irqs(unsigned int inst)
 {
   struct intctrl_status *this = &nhw_intctrl_st[inst];
 
-  this->irq_status  = 0U;
-  this->irq_premask = 0U;
+  for (int i=0; i < IRQ_64s; i++) {
+    this->irq_status[i]  = 0U;
+    this->irq_premask[i] = 0U;
+  }
 }
 
 /*
@@ -203,7 +219,7 @@ void hw_irq_ctrl_clear_all_irqs(unsigned int inst)
  */
 void hw_irq_ctrl_disable_irq(unsigned int inst, unsigned int irq)
 {
-  nhw_intctrl_st[inst].irq_mask &= ~((uint64_t)1<<irq);
+  nhw_intctrl_st[inst].irq_mask[irq/64] &= ~((uint64_t)1<<(irq%64));
 }
 
 /*
@@ -215,18 +231,7 @@ void hw_irq_ctrl_disable_irq(unsigned int inst, unsigned int irq)
  */
 int hw_irq_ctrl_is_irq_enabled(unsigned int inst, unsigned int irq)
 {
-  return (nhw_intctrl_st[inst].irq_mask & ((uint64_t)1 << irq))?1:0;
-}
-
-/**
- * Get the current interrupt enable mask
- *
- * This is an API between the MCU model/IRQ handling side and the IRQ controller
- * model (NVIC)
- */
-uint64_t hw_irq_ctrl_get_irq_mask(unsigned int inst)
-{
-  return nhw_intctrl_st[inst].irq_mask;
+  return (nhw_intctrl_st[inst].irq_mask[irq/64] & ((uint64_t)1 << (irq%64)))?1:0;
 }
 
 /*
@@ -239,9 +244,11 @@ uint64_t hw_irq_ctrl_get_irq_mask(unsigned int inst)
 void hw_irq_ctrl_clear_irq(unsigned int inst, unsigned int irq)
 {
   struct intctrl_status *this = &nhw_intctrl_st[inst];
+  uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+  uint irq_idx = irq/64;
 
-  this->irq_status  &= ~((uint64_t)1<<irq);
-  this->irq_premask &= ~((uint64_t)1<<irq);
+  this->irq_status[irq_idx]  &= ~irq_bit;
+  this->irq_premask[irq_idx] &= ~irq_bit;
 }
 
 /*
@@ -256,13 +263,14 @@ void hw_irq_ctrl_clear_irq(unsigned int inst, unsigned int irq)
 void hw_irq_ctrl_reeval_level_irq(unsigned int inst, unsigned int irq)
 {
   struct intctrl_status *this = &nhw_intctrl_st[inst];
-  uint64_t irq_bit = ((uint64_t)1<<irq);
+  uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+  uint irq_idx = irq/64;
 
-  if ((this->irq_lines & irq_bit) != 0) {
-    this->irq_premask |= irq_bit;
+  if ((this->irq_lines[irq_idx] & irq_bit) != 0) {
+    this->irq_premask[irq_idx] |= irq_bit;
 
-    if (this->irq_mask & irq_bit) {
-      this->irq_status |= irq_bit;
+    if (this->irq_mask[irq_idx] & irq_bit) {
+      this->irq_status[irq_idx] |= irq_bit;
     }
   }
 }
@@ -281,9 +289,11 @@ void hw_irq_ctrl_reeval_level_irq(unsigned int inst, unsigned int irq)
 void hw_irq_ctrl_enable_irq(unsigned int inst, unsigned int irq)
 {
   struct intctrl_status *this = &nhw_intctrl_st[inst];
+  uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+  uint irq_idx = irq/64;
 
-  this->irq_mask |= ((uint64_t)1<<irq);
-  if (this->irq_premask & ((uint64_t)1<<irq)) { /*if the interrupt is pending*/
+  this->irq_mask[irq_idx] |= irq_bit;
+  if (this->irq_premask[irq_idx] & irq_bit) { /*if the interrupt is pending*/
     hw_irq_ctrl_raise_im_from_sw(inst, irq);
   }
 }
@@ -293,10 +303,13 @@ static inline void hw_irq_ctrl_irq_raise_prefix(unsigned int inst, unsigned int 
   struct intctrl_status *this = &nhw_intctrl_st[inst];
 
   if ( irq < NHW_INTCTRL_MAX_INTLINES ) {
-    this->irq_premask |= ((uint64_t)1<<irq);
+    uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+    uint irq_idx = irq/64;
 
-    if (this->irq_mask & ((uint64_t)1 << irq)) {
-      this->irq_status |= ((uint64_t)1<<irq);
+    this->irq_premask[irq_idx] |= irq_bit;
+
+    if (this->irq_mask[irq_idx] & irq_bit) {
+      this->irq_status[irq_idx] |= irq_bit;
     }
   } else if (irq == PHONY_HARD_IRQ) {
     this->lock_ignore = true;
@@ -355,8 +368,11 @@ void hw_irq_ctrl_raise_level_irq_line(unsigned int inst, unsigned int irq)
     bs_trace_error_line_time("Phony interrupts cannot use this API\n");
   }
 
-  if ((this->irq_lines & ((uint64_t)1<<irq)) == 0) {
-    this->irq_lines |= ((uint64_t)1<<irq);
+  uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+  uint irq_idx = irq/64;
+
+  if ((this->irq_lines[irq_idx] & irq_bit) == 0) {
+    this->irq_lines[irq_idx] |= irq_bit;
     hw_irq_ctrl_set_irq(inst, irq);
   }
 }
@@ -374,8 +390,10 @@ void hw_irq_ctrl_lower_level_irq_line(unsigned int inst, unsigned int irq)
   if ( irq >= NHW_INTCTRL_MAX_INTLINES ) {
     bs_trace_error_line_time("Phony interrupts cannot use this API\n");
   }
+  uint64_t irq_bit = ((uint64_t)1<<(irq%64));
+  uint irq_idx = irq/64;
 
-  nhw_intctrl_st[inst].irq_lines &= ~((uint64_t)1<<irq);
+  nhw_intctrl_st[inst].irq_lines[irq_idx] &= ~irq_bit;
 }
 
 

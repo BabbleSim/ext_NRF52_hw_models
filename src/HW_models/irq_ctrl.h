@@ -19,7 +19,6 @@ void hw_irq_ctrl_clear_all_irqs(unsigned int inst);
 void hw_irq_ctrl_clear_irq(unsigned int inst, unsigned int irq);
 void hw_irq_ctrl_reeval_level_irq(unsigned int inst, unsigned int irq);
 void nhw_irq_controller_set_irq_mask(unsigned int inst, uint64_t mask);
-uint64_t hw_irq_ctrl_get_irq_mask(unsigned int inst);
 void hw_irq_ctrl_enable_irq(unsigned int inst, unsigned int irq);
 void hw_irq_ctrl_disable_irq(unsigned int inst, unsigned int irq);
 int hw_irq_ctrl_is_irq_enabled(unsigned int inst, unsigned int irq);
