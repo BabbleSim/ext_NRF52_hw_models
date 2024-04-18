@@ -53,6 +53,10 @@
 #include "hal/nrf_comp.h"
 #endif
 
+#ifdef CRACEN_PRESENT
+#include "hal/nrf_cracen.h"
+#endif
+
 #ifdef NRF_DCNF_NS
 #include "hal/nrf_dcnf.h"
 #endif
@@ -71,12 +75,20 @@
 
 #include "hal/nrf_ficr.h"
 
+#ifdef GLITCHDET_PRESENT
+#include "hal/nrf_glitchdet.h"
+#endif
+
 #ifdef GPIO_PRESENT
 #include "hal/nrf_gpio.h"
 #endif
 
 #ifdef GPIOTE_PRESENT
 #include "hal/nrf_gpiote.h"
+#endif
+
+#ifdef GRTC_PRESENT
+#include "hal/nrf_grtc.h"
 #endif
 
 #ifdef I2S_PRESENT
@@ -93,6 +105,14 @@
 
 #ifdef LPCOMP_PRESENT
 #include "hal/nrf_lpcomp.h"
+#endif
+
+#ifdef MEMCONF_PRESENT
+#include "hal/nrf_memconf.h"
+#endif
+
+#ifdef MPC_PRESENT
+#include "hal/nrf_mpc.h"
 #endif
 
 #ifdef MUTEX_PRESENT
@@ -127,6 +147,10 @@
 #include "hal/nrf_ppi.h"
 #endif
 
+#ifdef PPIB_PRESENT
+#include "hal/nrf_ppib.h"
+#endif
+
 #ifdef PWM_PRESENT
 #include "hal/nrf_pwm.h"
 #endif
@@ -155,6 +179,10 @@
 #include "hal/nrf_rng.h"
 #endif
 
+#ifdef RRAMC_PRESENT
+#include "hal/nrf_rramc.h"
+#endif
+
 #ifdef RTC_PRESENT
 #include "hal/nrf_rtc.h"
 #endif
@@ -177,6 +205,10 @@
 
 #ifdef SPU_PRESENT
 #include "hal/nrf_spu.h"
+#endif
+
+#ifdef TAMPC_PRESENT
+#include "hal/nrf_tampc.h"
 #endif
 
 #ifdef TEMP_PRESENT
