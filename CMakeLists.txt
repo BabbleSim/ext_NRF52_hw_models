@@ -54,6 +54,14 @@ if(CONFIG_SOC_SERIES_BSIM_NRFXX)
         -DNRF5340
       )
     endif()
+  elseif(CONFIG_SOC_SERIES_BSIM_NRF54LX)
+    file(STRINGS make_inc/54L15_hw_files HW_MODEL_SRCS)
+    file(STRINGS make_inc/54L15_app_hal_files HAL_SRCS)
+    set(VARIANT_FLAGS
+        -DNRF54L15_XXAA
+        -DNRF_APPLICATION
+        -DNRF54L15
+    )
   endif()
 
   # The nrfx HAL is built in the context of the embedded software
