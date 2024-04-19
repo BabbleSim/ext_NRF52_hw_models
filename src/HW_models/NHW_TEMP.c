@@ -91,6 +91,27 @@ static void nhw_temp_init(void) {
   NRF_TEMP_regs.T2 = 0x00000010;
   NRF_TEMP_regs.T3 = 0x00000026;
   NRF_TEMP_regs.T4 = 0x0000003F;
+#elif defined(NRF54L15)
+  NRF_TEMP_regs.A0 = 0x000002D6;
+  NRF_TEMP_regs.A1 = 0x0000032D;
+  NRF_TEMP_regs.A2 = 0x00000384;
+  NRF_TEMP_regs.A3 = 0x000003E9;
+  NRF_TEMP_regs.A4 = 0x0000046F;
+  NRF_TEMP_regs.A5 = 0x00000522;
+  NRF_TEMP_regs.A6 = 0x000005B7;
+  NRF_TEMP_regs.B0 = 0x00000FD6;
+  NRF_TEMP_regs.B1 = 0x00000F76;
+  NRF_TEMP_regs.B2 = 0x00000F8A;
+  NRF_TEMP_regs.B3 = 0x00000FF8;
+  NRF_TEMP_regs.B4 = 0x000000CC;
+  NRF_TEMP_regs.B5 = 0x00000207;
+  NRF_TEMP_regs.B6 = 0x00000558;
+  NRF_TEMP_regs.T0 = 0x000000E2;
+  NRF_TEMP_regs.T1 = 0x00000002;
+  NRF_TEMP_regs.T2 = 0x0000001F;
+  NRF_TEMP_regs.T3 = 0x00000038;
+  NRF_TEMP_regs.T4 = 0x0000004F;
+  NRF_TEMP_regs.T5 = 0x00000066;
 #endif
 
   TEMP_hw_started = false;
