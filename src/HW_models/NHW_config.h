@@ -651,6 +651,28 @@
 [270]="CLOCK_POWER",\
 }}
 
+#define NHW_PPIB_TOTAL_INST 8
+#define NHW_PPIB_00 0
+#define NHW_PPIB_01 1
+#define NHW_PPIB_10 2
+#define NHW_PPIB_11 3
+#define NHW_PPIB_20 4
+#define NHW_PPIB_21 5
+#define NHW_PPIB_22 6
+#define NHW_PPIB_30 7
+#define NHW_PPIB_DPPI_MAP {0, 0, 1, 1, 2, 2, 2, 3}
+#define NHW_PPIB_N_CH {8, 8, 8, 16, 8, 16, 4, 4}
+#define NHW_PPIB_MATE {2,/*00->10*/ \
+                       4,/*01->20*/ \
+                       0,/*10->00*/ \
+                       5,/*11->21*/ \
+                       1,/*20->01*/ \
+                       3,/*21->11*/ \
+                       7,/*22->30*/ \
+                       6,/*30->22*/ \
+                       }
+#define HWH_PPIB_HARDWIRESCHANNELS 0
+
 #define NHW_RTC_TOTAL_INST 2
 #define NHW_RTC_10 0
 #define NHW_RTC_30 1
