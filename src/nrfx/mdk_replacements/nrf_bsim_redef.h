@@ -793,10 +793,11 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_QDEC21_NS_BASE NULL
 #undef NRF_QDEC21_S_BASE
 #define NRF_QDEC21_S_BASE NULL
+extern NRF_GRTC_Type NRF_GRTC_regs;
 #undef NRF_GRTC_NS_BASE
-#define NRF_GRTC_NS_BASE NULL
+#define NRF_GRTC_NS_BASE (&NRF_GRTC_regs)
 #undef NRF_GRTC_S_BASE
-#define NRF_GRTC_S_BASE NULL
+#define NRF_GRTC_S_BASE (&NRF_GRTC_regs)
 #undef NRF_SPU30_S_BASE
 #define NRF_SPU30_S_BASE NULL
 #undef NRF_DPPIC30_NS_BASE

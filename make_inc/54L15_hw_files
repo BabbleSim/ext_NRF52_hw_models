@@ -7,6 +7,7 @@ src/HW_models/NRF_HWLowL.c
 src/HW_models/NHW_misc.c
 src/HW_models/NHW_DPPI.c
 src/HW_models/NHW_EGU.c
+src/HW_models/NHW_GRTC.c
 src/HW_models/NHW_PPIB.c
 src/HW_models/NHW_RTC.c
 src/HW_models/NHW_SWI.c

@@ -500,6 +500,23 @@
 #define NHW_EGU_DPPI_MAP {1, 2}
 #define NHW_EGU_N_EVENTS {16, 6}
 
+#define NHW_GRTC_TOTAL_INST 1
+#define NHW_GRTC_N_INT 4
+#define NHW_GRTC_INT_MAP { \
+                           {0 , 226}, \
+                           {0 , 227}, \
+                           {0 , 228}, \
+                           {0 , 229}, \
+                         }
+                        /* {App, GRTC_0..3_IRQn} */
+#define NHW_GRTC_DPPI_MAP {2 /* Peripheral domain */}
+#define NHW_GRTC_N_CC 12
+#define NHW_GRTC_N_DOMAINS 4
+#define NHW_GRTC_SYSCOUNTER_BW 52
+#define NHW_GRTC_HAS_CLKOUT 0
+#define NHW_GRTC_HAS_PWM 1
+
+
 #define NHW_INTCTRL_TOTAL_INST 2
 #define NHW_INTCTRL_MAX_INTLINES 271
 
