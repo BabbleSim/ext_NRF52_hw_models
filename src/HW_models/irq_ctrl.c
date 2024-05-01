@@ -476,7 +476,7 @@ const char *hw_irq_ctrl_get_name(unsigned int inst, unsigned int irq)
 
 /*
  * NOTE: This is not a Interrupt controller function per se, but a common function
- * for all peripherals to handle evaluate if they want to raise or not
+ * for all peripherals to evaluate if they want to raise or not
  * their interrupt line
  *
  * int_line      Previous/Current interrutp line level
