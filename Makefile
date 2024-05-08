@@ -9,7 +9,7 @@ ifndef NATIVE_SIM_PATH
 $(error NATIVE_SIM_PATH must be set to the native_simulator checkout folder)
 endif
 
-default: NRF52833 NRF5340
+default: NRF52833 NRF5340 NRF54L15
 compile: NRF52833
 
 NRF52833:
