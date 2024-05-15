@@ -522,8 +522,9 @@ extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 /********************************************************************/
 #elif defined(NRF54L15_XXAA)
 
+extern NRF_FICR_Type NRF_FICR_regs;
 #undef NRF_FICR_NS_BASE
-#define NRF_FICR_NS_BASE NULL
+#define NRF_FICR_NS_BASE (&NRF_FICR_regs)
 #undef NRF_UICR_S_BASE
 #define NRF_UICR_S_BASE NULL
 #undef NRF_SICR_S_BASE
