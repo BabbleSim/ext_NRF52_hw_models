@@ -5,6 +5,7 @@ src/nrfx/hal/nrf_egu.c
 src/nrfx/hal/nrf_grtc.c
 src/nrfx/hal/nrf_hack.c
 src/nrfx/hal/nrf_ppib.c
+src/nrfx/hal/nrf_rramc.c
 src/nrfx/hal/nrf_rtc.c
 src/nrfx/hal/nrf_timer.c
 src/nrfx/hal/nrf_hal_originals.c

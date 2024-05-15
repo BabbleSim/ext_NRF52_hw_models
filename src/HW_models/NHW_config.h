@@ -690,6 +690,12 @@
                        }
 #define HWH_PPIB_HARDWIRESCHANNELS 0
 
+#define NHW_RRAMC_UICR_TOTAL_INST 1
+#define NHW_RRAM_START_ADDR {0x00000000}
+#define NHW_RRAM_SIZE       {(1524*1024)}
+#define NHW_UICR_SIZE {2560 /*bytes*/}
+
+
 #define NHW_RTC_TOTAL_INST 2
 #define NHW_RTC_10 0
 #define NHW_RTC_30 1

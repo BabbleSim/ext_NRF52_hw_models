@@ -525,8 +525,9 @@ extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 extern NRF_FICR_Type NRF_FICR_regs;
 #undef NRF_FICR_NS_BASE
 #define NRF_FICR_NS_BASE (&NRF_FICR_regs)
+extern NRF_UICR_Type *NRF_UICR_regs_p[];
 #undef NRF_UICR_S_BASE
-#define NRF_UICR_S_BASE NULL
+#define NRF_UICR_S_BASE (NRF_UICR_regs_p[0])
 #undef NRF_SICR_S_BASE
 #define NRF_SICR_S_BASE NULL
 #undef NRF_CRACENCORE_S_BASE
@@ -579,8 +580,11 @@ extern NRF_PPIB_Type NRF_PPIB_regs[];
 #define NRF_UARTE00_S_BASE NULL
 #undef NRF_GLITCHDET_S_BASE
 #define NRF_GLITCHDET_S_BASE NULL
+extern void* nhw_RRAMC_get_RRAM_base_address(unsigned int inst);
+#define NRF_RRAM_BASE_ADDR ((uintptr_t)nhw_RRAMC_get_RRAM_base_address(0))
+extern NRF_RRAMC_Type *NRF_RRAMC_regs_p[];
 #undef NRF_RRAMC_S_BASE
-#define NRF_RRAMC_S_BASE NULL
+#define NRF_RRAMC_S_BASE (NRF_RRAMC_regs_p[0])
 #undef NRF_VPR00_NS_BASE
 #define NRF_VPR00_NS_BASE NULL
 #undef NRF_VPR00_S_BASE
