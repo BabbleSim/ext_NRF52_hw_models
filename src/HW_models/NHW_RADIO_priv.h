@@ -75,6 +75,12 @@ typedef struct {
   bool CCA_notED; //Is it a CCA procedure (1), or ED procedure (0)
 } RADIO_CCA_status_t;
 
+#ifndef RADIO_EDCTRL_EDPERIOD_Msk
+  /* Workaround for missing mask in some MDK versions */
+  /* To be removed once it is added to the MDK */
+#define RADIO_EDCTRL_EDPERIOD_Pos 24
+#define RADIO_EDCTRL_EDPERIOD_Msk (0x3FUL << RADIO_EDCTRL_EDPERIOD_Pos)
+#endif
 
 #define _NRF_MAX_PACKET_SIZE (256+2+4)
 

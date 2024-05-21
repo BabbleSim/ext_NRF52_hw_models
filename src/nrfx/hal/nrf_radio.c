@@ -26,13 +26,19 @@ void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
     CASE_CALL_SIDEEFFECT(STOP);
     CASE_CALL_SIDEEFFECT(DISABLE);
     CASE_CALL_SIDEEFFECT(RSSISTART);
+#if defined(RADIO_TASKS_RSSISTOP_TASKS_RSSISTOP_Msk)
     CASE_CALL_SIDEEFFECT(RSSISTOP);
+#endif
     CASE_CALL_SIDEEFFECT(BCSTART);
     CASE_CALL_SIDEEFFECT(BCSTOP);
     CASE_CALL_SIDEEFFECT(EDSTART);
     CASE_CALL_SIDEEFFECT(EDSTOP);
     CASE_CALL_SIDEEFFECT(CCASTART);
     CASE_CALL_SIDEEFFECT(CCASTOP);
+#if 0 /* defined(RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Msk) */
+    //To be enabled once NRF_RADIO_TASK_SOFTRESET is added to the HAL
+    CASE_CALL_SIDEEFFECT(SOFTRESET);
+#endif
     default:
       bs_trace_error_line_time("%s: Not supported task %i started\n", __func__, task);
       break;
@@ -42,14 +48,22 @@ void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
 
 void nrf_radio_int_enable(NRF_RADIO_Type * p_reg, uint32_t mask)
 {
-  p_reg->INTENSET = mask;
-  nhw_RADIO_regw_sideeffects_INTENSET();
+#if defined(RADIO_INTENSET_READY_Msk)
+    p_reg->INTENSET = mask;
+#elif defined(RADIO_INTENSET00_READY_Msk)
+    p_reg->INTENSET00 = mask;
+#endif
+    nhw_RADIO_regw_sideeffects_INTENSET(0);
 }
 
 void nrf_radio_int_disable(NRF_RADIO_Type * p_reg, uint32_t mask)
 {
-  p_reg->INTENCLR = mask;
-  nhw_RADIO_regw_sideeffects_INTENCLR();
+#if defined(RADIO_INTENCLR_READY_Msk)
+    p_reg->INTENCLR = mask;
+#elif defined(RADIO_INTENCLR00_READY_Msk)
+    p_reg->INTENCLR00 = mask;
+#endif
+    nhw_RADIO_regw_sideeffects_INTENCLR(0);
 }
 
 void nrf_radio_bcc_set(NRF_RADIO_Type * p_reg, uint32_t radio_bcc)
@@ -58,12 +72,13 @@ void nrf_radio_bcc_set(NRF_RADIO_Type * p_reg, uint32_t radio_bcc)
   nhw_RADIO_regw_sideeffects_BCC();
 }
 
+#if defined(RADIO_POWER_POWER_Msk)
 void nrf_radio_power_set(NRF_RADIO_Type * p_reg, bool radio_power)
 {
   p_reg->POWER = (uint32_t) radio_power;
   nhw_RADIO_regw_sideeffects_POWER();
 }
-
+#endif
 
 void nrf_radio_event_clear(NRF_RADIO_Type * p_reg, nrf_radio_event_t event)
 {
@@ -89,13 +104,18 @@ static void nrf_radio_subscribe_common(NRF_RADIO_Type * p_reg,
     CASE_CALL_SIDEEFFECT(STOP);
     CASE_CALL_SIDEEFFECT(DISABLE);
     CASE_CALL_SIDEEFFECT(RSSISTART);
+#if defined(RADIO_TASKS_RSSISTOP_TASKS_RSSISTOP_Msk)
     CASE_CALL_SIDEEFFECT(RSSISTOP);
+#endif
     CASE_CALL_SIDEEFFECT(BCSTART);
     CASE_CALL_SIDEEFFECT(BCSTOP);
     CASE_CALL_SIDEEFFECT(EDSTART);
     CASE_CALL_SIDEEFFECT(EDSTOP);
     CASE_CALL_SIDEEFFECT(CCASTART);
     CASE_CALL_SIDEEFFECT(CCASTOP);
+#if 0 /* defined(RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Msk) */
+    CASE_CALL_SIDEEFFECT(SOFTRESET); //TODO missing in HAL
+#endif
     default:
       bs_trace_error_line_time("%s: Attempted to subscribe to a not-supported task in the nrf_radio (%i)\n",
                                __func__, task);

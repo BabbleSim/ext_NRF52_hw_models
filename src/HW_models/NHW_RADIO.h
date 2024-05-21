@@ -24,6 +24,7 @@ void nhw_RADIO_TASK_RSSISTART(void);
 void nhw_RADIO_TASK_RSSISTOP(void);
 void nhw_RADIO_TASK_BCSTART(void);
 void nhw_RADIO_TASK_BCSTOP(void);
+void nhw_RADIO_TASK_SOFTRESET(void);
 
 void nhw_RADIO_regw_sideeffects_BCC(void);
 void nhw_RADIO_regw_sideeffects_POWER(void);
@@ -40,8 +41,9 @@ void nhw_RADIO_regw_sideeffects_TASKS_EDSTART(void);
 void nhw_RADIO_regw_sideeffects_TASKS_EDSTOP(void);
 void nhw_RADIO_regw_sideeffects_TASKS_CCASTART(void);
 void nhw_RADIO_regw_sideeffects_TASKS_CCASTOP(void);
-void nhw_RADIO_regw_sideeffects_INTENSET(void);
-void nhw_RADIO_regw_sideeffects_INTENCLR(void);
+void nhw_RADIO_regw_sideeffects_TASKS_SOFTRESET(void);
+void nhw_RADIO_regw_sideeffects_INTENSET(unsigned int int_l);
+void nhw_RADIO_regw_sideeffects_INTENCLR(unsigned int int_l);
 void nhw_RADIO_regw_sideeffects_EVENTS_all(unsigned int inst);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_TXEN(unsigned int);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_RXEN(unsigned int);
@@ -56,6 +58,7 @@ void nhw_RADIO_regw_sideeffects_SUBSCRIBE_EDSTART(unsigned int);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_EDSTOP(unsigned int);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_CCASTART(unsigned int);
 void nhw_RADIO_regw_sideeffects_SUBSCRIBE_CCASTOP(unsigned int);
+void nhw_RADIO_regw_sideeffects_SUBSCRIBE_SOFTRESET(unsigned int);
 
 /*
  * Note

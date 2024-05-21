@@ -100,13 +100,16 @@
  *          * In Rx: In the model it is generated at the SHR/SFD end (not PHR), meaning, at the same time as the ADDRESS EVENT
  *            The spec seems to contradict itself here. But seems in real HW it is generated at the end of the PHR.
  *
- * Note23: Powering off/on is not properly modeled (it is mostly ignored)
+ * Note23: For nRF52/53: Powering off/on is not properly modeled (it is mostly ignored)
+ *         (In the real setting POWER to 0, resets most registers. That is not the case in the models)
  *
  * Note24: Only PCNF1.ENDIAN == Little is supported (What BT and 802.15.4 use)
  *
  * Note25: The RATEBOOST event in real HW seems to be generated: only for Rx, only if the FEC2 block has S=2,
  *         and roughly at the end of TERM1. The models generates it at that point and only in that case.
  *         (It's timing is probably a bit off compared to real HW)
+ *
+ * Note26: TASK_SOFTRESET (for nRF54 targets) is not yet implemented
  *
  *
  * Implementation Specification:
@@ -231,7 +234,9 @@ static uint8_t tx_buf[_NRF_MAX_PACKET_SIZE]; //starting from the header, and inc
 static uint8_t rx_buf[_NRF_MAX_PACKET_SIZE]; // "
 static uint8_t *rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
 
-static bool radio_on = false;
+#if !NHW_RADIO_IS_54
+static bool radio_POWER = false;
+#endif
 
 static bool rssi_sampling_on = false;
 
@@ -261,8 +266,6 @@ static void radio_reset(void) {
 
   //Registers' reset values:
   NRF_RADIO_regs.FREQUENCY = 0x00000002;
-  NRF_RADIO_regs.DATAWHITEIV = 0x00000040;
-  NRF_RADIO_regs.MODECNF0 = 0x00000200;
   NRF_RADIO_regs.SFD = 0xA7;
   NRF_RADIO_regs.CCACTRL = 0x052D0000;
   NRF_RADIO_regs.CTEINLINECONF = 0x00002800;
@@ -270,7 +273,20 @@ static void radio_reset(void) {
   for (int i = 0; i < 8; i++)
     NRF_RADIO_regs.PSEL.DFEGPIO[i] = 0xFFFFFFFF;
   NRF_RADIO_regs.DFEPACKET.MAXCNT = 0x00001000;
+
+#if defined(NRF54L15) && !defined(RADIO_DATAWHITEIV_DATAWHITEIV_Msk)
+  NRF_RADIO_regs.DATAWHITE = 0x00890040;
+#else
+  NRF_RADIO_regs.DATAWHITEIV = 0x00000040;
+#endif
+
+#if !NHW_RADIO_IS_54
+  NRF_RADIO_regs.MODECNF0 = 0x00000200;
   NRF_RADIO_regs.POWER = 1;
+#else
+  NRF_RADIO_regs.EDCTRL = 0x20000000;
+  NRF_RADIO_regs.TXPOWER = 0x00000013;
+#endif
 
   nhwra_signalif_reset();
 }
@@ -278,7 +294,9 @@ static void radio_reset(void) {
 static void nhw_radio_init(void) {
   nrfra_timings_init();
   radio_reset();
-  radio_on = false;
+#if !NHW_RADIO_IS_54
+  radio_POWER = false;
+#endif
   bits_per_us = 1;
 }
 
@@ -360,6 +378,16 @@ void nhw_RADIO_TASK_START(void) {
         "NRF_RADIO: TASK_START received while the radio was not in either TXIDLE or RXIDLE but in state %i. It will be ignored => expect problems\n",
         radio_state);
   }
+}
+
+void nhw_RADIO_TASK_SOFTRESET(void) {
+  if (radio_state != RAD_DISABLED) {
+    bs_trace_warning_line_time(
+        "NRF_RADIO: TASK_SOFTRESET should only be used in disabled state."
+        "Current state %i\n", radio_state);
+  }
+  bs_trace_warning_line_time(
+      "NRF_RADIO: SOFTRESET not yet supported. It will be ignored.\n");
 }
 
 void nhw_RADIO_TASK_CCASTART(void) {
@@ -500,18 +528,20 @@ void nhw_RADIO_TASK_RSSISTOP(void) {
   rssi_sampling_on = false;
 }
 
+#if !NHW_RADIO_IS_54
 void nhw_RADIO_regw_sideeffects_POWER(void) {
   if ( NRF_RADIO_regs.POWER == 0 ){
-    radio_on = false;
+    radio_POWER = false;
   } else {
-    if ( radio_on == false ){
-      radio_on = true;
+    if ( radio_POWER == false ){
+      radio_POWER = true;
       abort_if_needed();
       radio_reset();
       nsi_hws_find_next_event();
     }
   }
 }
+#endif
 
 /**
  * This is a fake task meant to start a HW timer for the TX->RX or RX->TX TIFS
@@ -637,7 +667,10 @@ static void nhw_radio_timer_triggered(void) {
       nhwra_set_Timer_RADIO(rx_status.CRC_End_Time);
       nhw_RADIO_signal_EVENTS_PAYLOAD(0);
     } else if ( radio_sub_state == RX_WAIT_FOR_CRC_END ) {
+#if !NHW_RADIO_IS_54
+      //TODO Reconnect as soon as the CCM model is in
       nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
+#endif
       radio_sub_state = SUB_STATE_INVALID;
       radio_state = RAD_RXIDLE;
       NRF_RADIO_regs.STATE = RAD_RXIDLE;
@@ -1231,7 +1264,9 @@ static void Rx_Addr_received(void) {
                                     p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI)
                                     + cheat_rx_power_offset
                                   );
+#if !NHW_RADIO_IS_54
       nhw_RADIO_signal_EVENTS_RSSIEND(0);
+#endif
     }
   }
 
@@ -1260,7 +1295,10 @@ static void Rx_Addr_received(void) {
 
     //We do what would correspond to Rx_handle_end_response() as it won't get called
     NRF_RADIO_regs.RXCRC = nhwra_get_rx_crc_value(rx_buf, rx_status.rx_resp.packet_size);
+#if !NHW_RADIO_IS_54
+      //TODO Reconnect as soon as the CCM model is in
     nhw_ccm_radio_received_packet(!rx_status.CRC_OK);
+#endif
   }
 }
 

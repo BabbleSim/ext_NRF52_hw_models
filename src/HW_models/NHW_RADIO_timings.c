@@ -143,7 +143,11 @@ bs_time_t nhwra_timings_get_rampup_time(bool TxNotRx, bool from_hw_TIFS) {
   int mod_idx = get_modidx();
   int HWTIFS= 0;
 
+#if NHW_RADIO_IS_54
+  if ( NRF_RADIO_regs.TIMING & 1 ){ /* TIMMING.RU */
+#else
   if ( NRF_RADIO_regs.MODECNF0 & 1 ){ /* MODECNF0.RU */
+#endif
     fast = 1;
   } else {
     HWTIFS = from_hw_TIFS | nhwra_is_HW_TIFS_enabled();

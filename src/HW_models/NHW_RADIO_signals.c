@@ -16,67 +16,122 @@
  *
  */
 
+#include <string.h>
 #include "NHW_common_types.h"
 #include "NHW_templates.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_RADIO.h"
 #include "NHW_RADIO_utils.h"
+#include "NHW_RADIO_priv.h"
 #include "NHW_xPPI.h"
 #include "irq_ctrl.h"
 #include "bs_tracing.h"
+
+#if NHW_RADIO_IS_54
+static const ptrdiff_t radio_int_pdiff =
+    offsetof(NRF_RADIO_Type, INTENSET10) - offsetof(NRF_RADIO_Type, INTENSET00);
+#endif
 
 #if (NHW_HAS_DPPI)
 /* Mapping of peripheral instance to DPPI instance */
 static uint nhw_RADIO_dppi_map[NHW_RADIO_TOTAL_INST] = NHW_RADIO_DPPI_MAP;
 #endif
-static uint32_t RADIO_INTEN; //interrupt enable
+static uint32_t RADIO_INTEN[NHW_RADIO_N_INT]; //interrupt enable
 extern NRF_RADIO_Type NRF_RADIO_regs;
 
 extern void nhw_RADIO_fake_task_TRXEN_TIFS(void);
 
 void nhwra_signalif_reset(void){
-  RADIO_INTEN = 0;
+  memset(RADIO_INTEN, 0, sizeof(RADIO_INTEN));
 }
 
 static void nhw_RADIO_eval_interrupt(uint inst) {
-  static bool radio_int_line[NHW_RADIO_TOTAL_INST]; /* Is the RADIO currently driving its interrupt line high */
-  /* Mapping of peripheral instance to {int controller instance, int number} */
-  static struct nhw_irq_mapping nhw_radio_irq_map[NHW_RADIO_TOTAL_INST] = NHW_RADIO_INT_MAP;
-  bool new_int_line = false;
+  static bool radio_int_line[NHW_RADIO_N_INT]; /* Is the RADIO currently driving this interrupt line high */
+  /* Mapping of interrupt line to {int controller instance, int number} */
+  static struct nhw_irq_mapping nhw_radio_irq_map[NHW_RADIO_N_INT] = NHW_RADIO_INT_MAP;
 
-  NHW_CHECK_INTERRUPT_si(RADIO, READY, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, ADDRESS, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, PAYLOAD, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, END, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, DISABLED, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, DEVMATCH, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, DEVMISS, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, RSSIEND, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, BCMATCH, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CRCOK, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CRCERROR, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, FRAMESTART, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, EDEND, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, EDSTOPPED, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CCAIDLE, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CCABUSY, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CCASTOPPED, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, RATEBOOST, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, TXREADY, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, RXREADY, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, MHRMATCH, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, SYNC, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, PHYEND, RADIO_INTEN)
-  NHW_CHECK_INTERRUPT_si(RADIO, CTEPRESENT, RADIO_INTEN)
+  (void)inst;
 
-  hw_irq_ctrl_toggle_level_irq_line_if(&radio_int_line[inst],
-                                       new_int_line,
-                                       &nhw_radio_irq_map[inst]);
+#define _RADIO_CHECK_INTERRUPT(event, inten, intenset) \
+  if (NRF_RADIO_regs.EVENTS_##event && (inten &  RADIO_ ## intenset ## event ##_Msk)){ \
+    new_int_line = true; \
+  }
+
+#if NHW_RADIO_IS_54
+  #define RADIO_CHECK_INTERRUPT(event, inten) \
+    _RADIO_CHECK_INTERRUPT(event, inten, INTENSET00_ )
+#else
+  #define RADIO_CHECK_INTERRUPT(event, inten) \
+		_RADIO_CHECK_INTERRUPT(event, inten, INTENSET_)
+#endif
+
+  for (int i = 0; i < NHW_RADIO_N_INT; i ++) {
+    bool new_int_line = false;
+
+    RADIO_CHECK_INTERRUPT(READY, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(ADDRESS, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(PAYLOAD, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(END, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(DISABLED, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(DEVMATCH, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(DEVMISS, RADIO_INTEN[i])
+#if !NHW_RADIO_IS_54
+    RADIO_CHECK_INTERRUPT(RSSIEND, RADIO_INTEN[i])
+#endif
+    RADIO_CHECK_INTERRUPT(BCMATCH, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CRCOK, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CRCERROR, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(FRAMESTART, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(EDEND, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(EDSTOPPED, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CCAIDLE, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CCABUSY, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CCASTOPPED, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(RATEBOOST, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(TXREADY, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(RXREADY, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(MHRMATCH, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(SYNC, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(PHYEND, RADIO_INTEN[i])
+    RADIO_CHECK_INTERRUPT(CTEPRESENT, RADIO_INTEN[i])
+
+    hw_irq_ctrl_toggle_level_irq_line_if(&radio_int_line[i],
+                                          new_int_line,
+                                          &nhw_radio_irq_map[i]);
+  }
 }
 
-NHW_SIDEEFFECTS_INTSET_si(RADIO, NRF_RADIO_regs., RADIO_INTEN)
-NHW_SIDEEFFECTS_INTCLR_si(RADIO, NRF_RADIO_regs., RADIO_INTEN)
+void nhw_RADIO_regw_sideeffects_INTENSET(unsigned int int_l) {
+#if NHW_RADIO_IS_54
+  uint32_t *INTENSET = (uint32_t *)((uintptr_t)&NRF_RADIO_regs.INTENSET00 + int_l*radio_int_pdiff);
+#else
+  uint32_t *INTENSET = (uint32_t *)(uintptr_t)&NRF_RADIO_regs.INTENSET;
+#endif
+
+  if (*INTENSET){ /* LCOV_EXCL_BR_LINE */
+    RADIO_INTEN[int_l] |= *INTENSET;
+    *INTENSET = RADIO_INTEN[int_l];
+    nhw_RADIO_eval_interrupt(0);
+  }
+}
+
+void nhw_RADIO_regw_sideeffects_INTENCLR(unsigned int int_l) {
+#if NHW_RADIO_IS_54
+  uint32_t *INTENSET = (uint32_t *)((uintptr_t)&NRF_RADIO_regs.INTENSET00 + int_l*radio_int_pdiff);
+  uint32_t *INTENCLR = (uint32_t *)((uintptr_t)&NRF_RADIO_regs.INTENCLR00 + int_l*radio_int_pdiff);
+#else
+  uint32_t *INTENSET = (uint32_t *)(uintptr_t)&NRF_RADIO_regs.INTENSET;
+  uint32_t *INTENCLR = (uint32_t *)(uintptr_t)&NRF_RADIO_regs.INTENCLR;
+#endif
+
+  if (*INTENCLR){/* LCOV_EXCL_BR_LINE */
+    RADIO_INTEN[int_l] &= ~*INTENCLR;
+    *INTENSET = RADIO_INTEN[int_l];
+    *INTENCLR = 0;
+    nhw_RADIO_eval_interrupt(0);
+  }
+}
 
 NHW_SIDEEFFECTS_EVENTS(RADIO)
 
@@ -87,7 +142,9 @@ static NHW_SIGNAL_EVENT_ns_si(RADIO, END)
 static NHW_SIGNAL_EVENT_ns_si(RADIO, DISABLED)
 NHW_SIGNAL_EVENT_si(RADIO, DEVMATCH)
 NHW_SIGNAL_EVENT_si(RADIO, DEVMISS)
+#if !NHW_RADIO_IS_54
 NHW_SIGNAL_EVENT_si(RADIO, RSSIEND)
+#endif
 NHW_SIGNAL_EVENT_si(RADIO, BCMATCH)
 NHW_SIGNAL_EVENT_si(RADIO, CRCOK)
 NHW_SIGNAL_EVENT_si(RADIO, CRCERROR)
@@ -122,7 +179,9 @@ void nhw_RADIO_signal_EVENTS_ADDRESS(unsigned int inst) {
 void nhw_RADIO_signal_EVENTS_END(unsigned int inst) {
   nhw_RADIO_signal_EVENTS_END_noshort(inst);
 
+#if !NHW_RADIO_IS_54
   NHW_SHORT_si(RADIO, END, DISABLE)
+#endif
   NHW_SHORT_si(RADIO, END, START)
 }
 
@@ -147,7 +206,9 @@ void nhw_RADIO_signal_EVENTS_DISABLED(unsigned int inst) {
     NHW_SHORT_si(RADIO, DISABLED, RXEN)
   }
 
+#if !NHW_RADIO_IS_54
   NHW_SHORT_si(RADIO, DISABLED, RSSISTOP)
+#endif
 }
 
 void nhw_RADIO_signal_EVENTS_FRAMESTART(unsigned int inst) {
@@ -213,6 +274,7 @@ void nhw_RADIO_regw_sideeffects_TASKS_RSSISTART(void) {
   }
 }
 
+#if !NHW_RADIO_IS_54
 void nhw_RADIO_regw_sideeffects_TASKS_RSSISTOP(void) {
   //We don't need to model this yet
   if ( NRF_RADIO_regs.TASKS_RSSISTOP ){
@@ -220,6 +282,7 @@ void nhw_RADIO_regw_sideeffects_TASKS_RSSISTOP(void) {
     bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTOP register is not supported by the model yet\n");
   }
 }
+#endif
 
 NHW_SIDEEFFECTS_TASKS_si(RADIO, BCSTART)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, BCSTOP)
@@ -227,6 +290,9 @@ NHW_SIDEEFFECTS_TASKS_si(RADIO, EDSTART)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, EDSTOP)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, CCASTART)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, CCASTOP)
+#if NHW_RADIO_IS_54
+NHW_SIDEEFFECTS_TASKS_si(RADIO, SOFTRESET)
+#endif
 
 #if (NHW_HAS_DPPI)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, TXEN)
@@ -235,11 +301,16 @@ NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, START)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, STOP)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, DISABLE)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, RSSISTART)
+#if !NHW_RADIO_IS_54
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, RSSISTOP)
+#endif
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, BCSTART)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, BCSTOP)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, EDSTART)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, EDSTOP)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, CCASTART)
 NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, CCASTOP)
+#if NHW_RADIO_IS_54
+NHW_SIDEEFFECTS_SUBSCRIBE_si(RADIO, SOFTRESET)
+#endif
 #endif /* NHW_HAS_DPPI */

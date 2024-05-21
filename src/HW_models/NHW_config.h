@@ -131,8 +131,10 @@
 
 #define NHW_RADIO_TOTAL_INST 1
 #define NHW_RADIO_0 0
+#define NHW_RADIO_N_INT 1
 #define NHW_RADIO_INT_MAP {{0 , 1}} /*Only core,RADIO_IRQn*/
 #define NHW_RADIO_ED_RSSIOFFS (-93)
+#define NHW_RADIO_IS_54 0
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_0 0
@@ -376,9 +378,11 @@
 
 #define NHW_RADIO_TOTAL_INST 1
 #define NHW_RADIO_NET0 0
+#define NHW_RADIO_N_INT 1
 #define NHW_RADIO_INT_MAP {{1 , 8}} /*Net core,RADIO_IRQn*/
 #define NHW_RADIO_DPPI_MAP {1} /*Network core*/
 #define NHW_RADIO_ED_RSSIOFFS (-93)
+#define NHW_RADIO_IS_54 0
 
 #define NHW_RNG_TOTAL_INST 1
 #define NHW_RNG_NET_0 0
@@ -479,10 +483,10 @@
 
 
 #define NHW_DPPI_TOTAL_INST 4
-#define NHW_DPPI_00 0
-#define NHW_DPPI_10 1
-#define NHW_DPPI_20 2
-#define NHW_DPPI_30 3
+#define NHW_DPPI_00 0 /* Global */
+#define NHW_DPPI_10 1 /* Radio */
+#define NHW_DPPI_20 2 /* Peri */
+#define NHW_DPPI_30 3 /* LP */
 /* The DPPI does not generate interrupts */
 #define NHW_DPPI_DPPI_MAP {0, 1, 2, 3} /* DPPI connect to themselves */
 #define NHW_DPPI_N_CH {8, 24, 16, 4} /* Number of channels in each DPPI */
@@ -690,11 +694,21 @@
                        }
 #define HWH_PPIB_HARDWIRESCHANNELS 0
 
+#define NHW_RADIO_TOTAL_INST 1
+#define NHW_RADIO_0 0
+#define NHW_RADIO_N_INT 2
+#define NHW_RADIO_INT_MAP {{0 , 138}, \
+                           {0 , 139}}
+                          /*{App, RADIO_0_IRQn},
+                           *{App, RADIO_1_IRQn} */
+#define NHW_RADIO_DPPI_MAP {1} /* Radio domain */
+#define NHW_RADIO_ED_RSSIOFFS (-92)
+#define NHW_RADIO_IS_54 1
+
 #define NHW_RRAMC_UICR_TOTAL_INST 1
 #define NHW_RRAM_START_ADDR {0x00000000}
 #define NHW_RRAM_SIZE       {(1524*1024)}
 #define NHW_UICR_SIZE {2560 /*bytes*/}
-
 
 #define NHW_RTC_TOTAL_INST 2
 #define NHW_RTC_10 0

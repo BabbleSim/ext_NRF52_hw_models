@@ -17,6 +17,7 @@
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
 #include "NHW_RADIO.h"
+#include "NHW_RADIO_priv.h"
 #include "NHW_RADIO_timings.h"
 #include "NRF_HWLowL.h"
 #include "nsi_hw_scheduler.h"
@@ -225,10 +226,22 @@ double nrfra_LQIformat_to_dBm(uint value){
 }
 
 int nhwra_is_HW_TIFS_enabled(void) {
+
+  bool Fast_RU =
+#if NHW_RADIO_IS_54
+      NRF_RADIO_regs.TIMING & RADIO_TIMING_RU_Msk;
+#else
+      NRF_RADIO_regs.MODECNF0 & RADIO_MODECNF0_RU_Msk;
+#endif
+
+#if NHW_RADIO_IS_54
+  if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_PHYEND_DISABLE_Msk )
+#else
   if ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_END_DISABLE_Msk )
+#endif
       && ( ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_RXEN_Msk )
           || ( NRF_RADIO_regs.SHORTS & RADIO_SHORTS_DISABLED_TXEN_Msk ) )
-      && ( (NRF_RADIO_regs.MODECNF0 & RADIO_MODECNF0_RU_Msk) == 0) )
+      && (Fast_RU == 0) )
   {
     return 1;
   }
@@ -253,7 +266,7 @@ static uint64_t nhwra_get_address(uint logical_addr) {
       base = NRF_RADIO_regs.BASE1;
     }
 
-    uint32_t *prefix_ptr = &NRF_RADIO_regs.PREFIX0;
+    uint32_t *prefix_ptr = (uint32_t *)&NRF_RADIO_regs.PREFIX0;
     uint64_t prefix = prefix_ptr[logical_addr >> 2] >> (8*(logical_addr & 0x3));
 
     address = ((prefix & RADIO_PREFIX0_AP0_Msk) << BALEN_bits)
@@ -414,6 +427,79 @@ void nhwra_prep_rx_request_FEC1(p2G4_rxv2_t *rx_req, p2G4_address_t *rx_addresse
   rx_req->resp_type = 0;
 }
 
+static double nhwra_tx_power_from_reg(void) {
+  double TxPower;
+#if !NHW_RADIO_IS_54
+  TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
+  //Note: For 5340, VREQCTRL effect not yet accounted for
+#else
+#if defined(NRF54L15)
+  switch (NRF_RADIO_regs.TXPOWER) {
+    case 0x3F : return 10;
+    case 0x39 : return 9 ;
+    case 0x33 : return 8 ;
+    case 0x2D : return 7 ;
+    case 0x28 : return 6 ;
+    case 0x23 : return 5 ;
+    case 0x1F : return 4 ;
+    case 0x1B : return 3 ;
+    case 0x18 : return 2 ;
+    case 0x15 : return 1 ;
+    case 0x13 : return 0 ;
+    case 0x11 : return -1 ;
+    case 0xF  : return -2 ;
+    case 0xD  : return -3 ;
+    case 0xB  : return -4 ;
+    case 0xA  : return -5 ;
+    case 0x9  : return -6 ;
+    case 0x8  : return -7 ;
+    case 0x7  : return -8 ;
+    case 0x6  : return -9 ;
+    case 0x5  : return -10;
+    case 0x4  : return -12;
+    case 0x3  : return -14;
+    case 0x2  : return -16;
+    case 0x1  : return -20;
+    case 0x0  : return -26;
+    case 0x130: return -40;
+    case 0x110: return -46;
+    default:
+      bs_trace_warning_time_line("Unknown TXPOWER setting for this radio\n");
+      return 0;
+  }
+#elif defined(NRF54H20)
+  switch (NRF_RADIO_regs.TXPOWER) {
+    case 0x1F: return 10;
+    case 0x1D: return 9 ;
+    case 0x1C: return 8 ;
+    case 0x1B: return 7 ;
+    case 0x1A: return 6 ;
+    case 0x19: return 5 ;
+    case 0x18: return 4 ;
+    case 0x17: return 3 ;
+    case 0x16: return 2 ;
+    case 0xF : return 1 ;
+    case 0xE : return 0 ;
+    case 0xD : return -1;
+    case 0xC : return -2;
+    case 0xB : return -4;
+    case 0xA : return -8;
+    case 0x9 : return -1;
+    case 0x8 : return -1;
+    case 0x3 : return -2;
+    case 0x2 : return -3;
+    case 0x1 : return -4;
+    case 0x0 : return -7;
+    default:
+      bs_trace_warning_time_line("Unknown TXPOWER setting for this radio\n");
+      return 0;
+  }
+#error "Tx power mapping missing for this device"
+#endif
+#endif /* !NHW_RADIO_IS_54 */
+  return TxPower;
+}
+
 /**
  * Prepare a Phy Tx request structure
  * based on the radio registers configuration.
@@ -428,7 +514,7 @@ void nhwra_prep_tx_request(p2G4_txv2_t *tx_req, uint packet_size, bs_time_t pack
   tx_req->phy_address = nhwra_get_address(NRF_RADIO_regs.TXADDRESS);
 
   {
-    double TxPower = (int8_t)( NRF_RADIO_regs.TXPOWER & RADIO_TXPOWER_TXPOWER_Msk); //the cast is to sign extend it
+    double TxPower = nhwra_tx_power_from_reg();
     tx_req->power_level = p2G4_power_from_d(TxPower + cheat_tx_power_offset); //Note that any possible Tx antenna or PA gain would need to be included here
   }
 
@@ -472,6 +558,14 @@ void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED, double rx_pow_
   }
 
   int symbol_time = 16; //micros
+#if NHW_RADIO_IS_54
+  uint EDPERIOD = (NRF_RADIO_regs.EDCTRL & RADIO_EDCTRL_EDPERIOD_Msk) >> RADIO_EDCTRL_EDPERIOD_Pos;
+  uint EDCNT = (NRF_RADIO_regs.EDCTRL & RADIO_EDCTRL_EDCNT_Msk) >> RADIO_EDCTRL_EDCNT_Pos;
+  uint one_scan_duration = 4*EDPERIOD;
+#else
+  uint EDCNT = (NRF_RADIO_regs.EDCNT & RADIO_EDCNT_EDCNT_Msk) >> RADIO_EDCNT_EDCNT_Pos;
+  uint one_scan_duration = 8*symbol_time;
+#endif
 
   if (CCA_not_ED) { //CCA request
     uint edthreshold = (NRF_RADIO_regs.CCACTRL & RADIO_CCACTRL_CCAEDTHRES_Msk) >> RADIO_CCACTRL_CCAEDTHRES_Pos;
@@ -479,8 +573,8 @@ void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED, double rx_pow_
     double carrier_detect_level = -110 - rx_pow_offset; //dBm : Any detectable signal by the modem
     double edthreshold_dBm = nrfra_LQIformat_to_dBm(edthreshold) - rx_pow_offset;
 
-    cca_req->scan_duration  = 8*symbol_time;
-    cca_req->scan_period    = 2*symbol_time; //let's measure 4 times (model design choice)
+    cca_req->scan_duration  = one_scan_duration;
+    cca_req->scan_period    = cca_req->scan_duration/4; //let's measure 4 times (model design choice)
 
     if (CCAMode == RADIO_CCACTRL_CCAMODE_EdMode) {
       cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(edthreshold_dBm);
@@ -506,7 +600,7 @@ void nhwra_prep_cca_request(p2G4_cca_t *cca_req, bool CCA_not_ED, double rx_pow_
           __func__, CCAMode);
     }
   } else { //ED request
-    cca_req->scan_duration = 8 * symbol_time * ((NRF_RADIO_regs.EDCNT & RADIO_EDCNT_EDCNT_Msk) + 1);
+    cca_req->scan_duration = one_scan_duration * (EDCNT + 1);
     cca_req->scan_period   = 2 * symbol_time; //let's measure 4 times per EDCNT (model design choice)
     cca_req->rssi_threshold = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
     cca_req->mod_threshold  = p2G4_RSSI_value_from_dBm(100/*dBm*/); //not used
