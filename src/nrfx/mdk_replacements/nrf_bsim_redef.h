@@ -634,10 +634,11 @@ extern NRF_EGU_Type NRF_EGU_regs[];
 #define NRF_EGU10_NS_BASE (&NRF_EGU_regs[NHW_EGU_10])
 #undef NRF_EGU10_S_BASE
 #define NRF_EGU10_S_BASE (&NRF_EGU_regs[NHW_EGU_10])
+extern NRF_RADIO_Type NRF_RADIO_regs;
 #undef NRF_RADIO_NS_BASE
-#define NRF_RADIO_NS_BASE NULL
+#define NRF_RADIO_NS_BASE (&NRF_RADIO_regs)
 #undef NRF_RADIO_S_BASE
-#define NRF_RADIO_S_BASE NULL
+#define NRF_RADIO_S_BASE (&NRF_RADIO_regs)
 #undef NRF_SPU20_S_BASE
 #define NRF_SPU20_S_BASE NULL
 #undef NRF_DPPIC20_NS_BASE
