@@ -8,7 +8,11 @@
  */
 #include "hal/nrf_clock.h"
 #include "bs_tracing.h"
+#if defined(NRF54L15) || defined(NRF54L15_XXAA)
+#include "NHW_54L_CLOCK.h"
+#else
 #include "NHW_CLOCK.h"
+#endif
 
 static int clock_number_from_ptr(NRF_CLOCK_Type * p_reg)
 {
@@ -23,7 +27,7 @@ void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask)
   p_reg->INTENSET = mask;
 
   int i = clock_number_from_ptr(p_reg);
-  nhw_clock_regw_sideeffects_INTENSET(i);
+  nhw_CLOCK_regw_sideeffects_INTENSET(i);
 }
 
 void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
@@ -31,7 +35,7 @@ void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
   p_reg->INTENCLR = mask;
 
   int i = clock_number_from_ptr(p_reg);
-  nhw_clock_regw_sideeffects_INTENCLR(i);
+  nhw_CLOCK_regw_sideeffects_INTENCLR(i);
 }
 
 void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
@@ -41,14 +45,25 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
   int i = clock_number_from_ptr(p_reg);
 
 #define CASE_TASK(TASKN) \
-  case NRF_CLOCK_TASK_##TASKN: nhw_clock_regw_sideeffects_TASKS_##TASKN(i); break;
+  case NRF_CLOCK_TASK_##TASKN: nhw_CLOCK_regw_sideeffects_TASKS_##TASKN(i); break;
 
   switch (task) {
+#if NRF_CLOCK_HAS_XO
+    case NRF_CLOCK_TASK_HFCLKSTART: nhw_CLOCK_regw_sideeffects_TASKS_XOSTART(i); break;
+    case NRF_CLOCK_TASK_HFCLKSTOP : nhw_CLOCK_regw_sideeffects_TASKS_XOSTOP(i);  break;
+#else
     CASE_TASK(HFCLKSTART)
     CASE_TASK(HFCLKSTOP)
+#endif
+#if NRF_CLOCK_HAS_PLL
+    CASE_TASK(PLLSTART)
+    CASE_TASK(PLLSTOP)
+#endif
     CASE_TASK(LFCLKSTART)
     CASE_TASK(LFCLKSTOP)
+#if NRF_CLOCK_HAS_CALIBRATION
     CASE_TASK(CAL)
+#endif
 #if NRF_CLOCK_HAS_CALIBRATION_TIMER
     CASE_TASK(CTSTART)
     CASE_TASK(CTSTOP)
@@ -61,6 +76,7 @@ void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
     CASE_TASK(HFCLK192MSTART)
     CASE_TASK(HFCLK192MSTOP)
 #endif
+    //Note: XOTUNE and XOTUNEABORT missing from the HAL at this point
     default:
       bs_trace_error_line_time("Not supported task started in nrf_clock, %d\n", task);
       break;
@@ -84,14 +100,25 @@ static void nrf_clock_subscribe_common(NRF_CLOCK_Type * p_reg,
   int i = clock_number_from_ptr(p_reg);
 
 #define CASE_TASK(TASKN) \
-  case NRF_CLOCK_TASK_##TASKN: nhw_clock_regw_sideeffects_SUBSCRIBE_##TASKN(i); break;
+  case NRF_CLOCK_TASK_##TASKN: nhw_CLOCK_regw_sideeffects_SUBSCRIBE_##TASKN(i); break;
 
   switch (task) {
+#if NRF_CLOCK_HAS_XO
+    case NRF_CLOCK_TASK_HFCLKSTART: nhw_CLOCK_regw_sideeffects_SUBSCRIBE_XOSTART(i); break;
+    case NRF_CLOCK_TASK_HFCLKSTOP:  nhw_CLOCK_regw_sideeffects_SUBSCRIBE_XOSTOP(i);  break;
+#else
     CASE_TASK(HFCLKSTART)
     CASE_TASK(HFCLKSTOP)
+#endif
+#if NRF_CLOCK_HAS_PLL
+    CASE_TASK(PLLSTART)
+    CASE_TASK(PLLSTOP)
+#endif
     CASE_TASK(LFCLKSTART)
     CASE_TASK(LFCLKSTOP)
+#if NRF_CLOCK_HAS_CALIBRATION
     CASE_TASK(CAL)
+#endif
 #if NRF_CLOCK_HAS_HFCLKAUDIO
     CASE_TASK(HFCLKAUDIOSTART)
     CASE_TASK(HFCLKAUDIOSTOP)
@@ -100,6 +127,7 @@ static void nrf_clock_subscribe_common(NRF_CLOCK_Type * p_reg,
     CASE_TASK(HFCLK192MSTART)
     CASE_TASK(HFCLK192MSTOP)
 #endif
+    //Note: XOTUNE and XOTUNEABORT missing from the HAL at this point
     default:
       bs_trace_error_line_time("Attempted to subscribe to a not-supported task in the nrf_clock (%i)\n",
                                 task);

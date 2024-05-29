@@ -481,6 +481,10 @@
 #define NHW_USE_MDK_TYPES 1 /* The HW registers layout types are taken from the MDK */
 #define NHW_CORE_NAMES {"Application", "Flipper"}
 
+#define NHW_CLKPWR_TOTAL_INST 1
+#define NHW_CLKPWR_0 0
+#define NHW_CLKPWR_DPPI_MAP {0} /* Global */
+#define NHW_CLKPWR_INT_MAP {{0, 270}} /* {App, CLOCK_POWER_IRQn} */
 
 #define NHW_DPPI_TOTAL_INST 4
 #define NHW_DPPI_00 0 /* Global */
@@ -501,7 +505,7 @@
                         /* {App, EGU10}
                          * {App, EGU20}
                          * */
-#define NHW_EGU_DPPI_MAP {1, 2}
+#define NHW_EGU_DPPI_MAP {1, 2} /* Radio, Peri */
 #define NHW_EGU_N_EVENTS {16, 6}
 
 #define NHW_GRTC_TOTAL_INST 1

@@ -379,7 +379,7 @@ void nhw_clock_TASKS_CTSTOP(uint inst) {
 }
 #endif /* NHW_CLKPWR_HAS_CALTIMER */
 
-void nhw_clock_regw_sideeffects_INTENSET(uint i) {
+void nhw_CLOCK_regw_sideeffects_INTENSET(uint i) {
   if (NRF_CLOCK_regs[i]->INTENSET) { /* LCOV_EXCL_BR_LINE */
     struct clkpwr_status *this = &nhw_clkpwr_st[i];
 
@@ -389,7 +389,7 @@ void nhw_clock_regw_sideeffects_INTENSET(uint i) {
   }
 }
 
-void nhw_clock_regw_sideeffects_INTENCLR(uint i) {
+void nhw_CLOCK_regw_sideeffects_INTENCLR(uint i) {
   if (NRF_CLOCK_regs[i]->INTENCLR) { /* LCOV_EXCL_BR_LINE */
     struct clkpwr_status *this = &nhw_clkpwr_st[i];
 
@@ -401,7 +401,7 @@ void nhw_clock_regw_sideeffects_INTENCLR(uint i) {
 }
 
 #define nhw_clock_regw_sideeffects_TASKS_(x)                   \
-  void nhw_clock_regw_sideeffects_TASKS_##x(uint i) {          \
+  void nhw_CLOCK_regw_sideeffects_TASKS_##x(uint i) {          \
     if (NRF_CLOCK_regs[i]->TASKS_##x) { /* LCOV_EXCL_BR_LINE */\
       NRF_CLOCK_regs[i]->TASKS_##x = 0;                        \
       nhw_clock_TASKS_##x(i);                                  \
@@ -533,7 +533,7 @@ NSI_HW_EVENT(Timer_PWRCLK, nhw_pwrclk_timer_triggered, 50);
     nhw_clock_TASKS_##TASK_N((int) param);                                          \
   }                                                                                 \
                                                                                     \
-  void nhw_clock_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
+  void nhw_CLOCK_regw_sideeffects_SUBSCRIBE_##TASK_N(uint inst)                     \
   {                                                                                 \
      struct clkpwr_status *this = &nhw_clkpwr_st[inst];                             \
                                                                                     \
