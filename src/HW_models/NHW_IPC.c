@@ -122,7 +122,7 @@ static void nhw_IPC_signal_EVENT(uint inst, uint ch) {
  * EVENT RECEIVE
  */
 static void nhw_IPC_notify_ipc_ch(uint ch) {
-  for (uint inst = 0; inst <= NHW_IPC_TOTAL_INST; inst++) {
+  for (uint inst = 0; inst < NHW_IPC_TOTAL_INST; inst++) {
     uint ch_mask = 1 << ch;
     for (int i = 0; i < nhw_ipc_st[inst].n_ch; i++) {
       if (NRF_IPC_regs[inst].RECEIVE_CNF[i] & ch_mask) {
