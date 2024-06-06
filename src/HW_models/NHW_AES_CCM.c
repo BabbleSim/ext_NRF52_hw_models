@@ -247,7 +247,14 @@ void nhw_CCM_TASK_STOP(void) {
 
 void nhw_CCM_TASK_RATEOVERRIDE(void) {
   /* We ignore the RATEOVERRIDE task */
-  bs_trace_warning_line_time("%s ignored\n", __func__);
+  static bool ever_shown;
+  if (!ever_shown) {
+    bs_trace_info_line_time(3, "%s ignored in the model."
+                               "En/Decryption will work fine anyhow."
+                               "(This note is shown only once)\n",
+                               __func__);
+    ever_shown = true;
+  }
 }
 
 NHW_SIDEEFFECTS_INTSET_si(CCM, NRF_CCM_regs., CCM_INTEN)
