@@ -244,6 +244,7 @@ static const ppi_tasks_table_t ppi_tasks_table[]={ //just the ones we may use
 
     //CCM
     { (void*)&NRF_CCM_regs.TASKS_CRYPT , nhw_CCM_TASK_CRYPT},
+    { (void*)&NRF_CCM_regs.TASKS_RATEOVERRIDE , nhw_CCM_TASK_RATEOVERRIDE},
 
     //PPI:
     { (void*)&NRF_PPI_regs.TASKS_CHG[0].EN,  nrf_ppi_TASK_CHG0_EN},
