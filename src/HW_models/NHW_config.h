@@ -481,6 +481,16 @@
 #define NHW_USE_MDK_TYPES 1 /* The HW registers layout types are taken from the MDK */
 #define NHW_CORE_NAMES {"Application", "Flipper"}
 
+#define NHW_AARCCMECB_TOTAL_INST 1
+#define NHW_AARCCMECB_00 0
+#define NHW_AARCCMECB_DPPI_MAP {0} /* Global */
+#define NHW_AARCCM_INTMAP {{0, 70}}
+                         /* AAR00_CCM00_IRQn */
+#define NHW_ECB_INTMAP {{0, 71}}
+                        /* ECB00_IRQn */
+#define NHW_AARCCMECB_CLOCK {128} /* MHz */
+#define NHW_ECB_t_ECB {1} /* In micros */ //TODO: check
+
 #define NHW_CLKPWR_TOTAL_INST 1
 #define NHW_CLKPWR_0 0
 #define NHW_CLKPWR_DPPI_MAP {0} /* Global */

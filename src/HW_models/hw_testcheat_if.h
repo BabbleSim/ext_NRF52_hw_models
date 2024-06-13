@@ -36,6 +36,18 @@ void hw_radio_testcheat_set_tx_power_gain(double power_offset);
  */
 void hw_radio_testcheat_set_rx_power_gain(double power_offset);
 
+/*
+ * Cheat interface to adjust the time in microseconds it takes
+ * for a 16byte AES ECB block to be computed
+ */
+void nhw_aes_ecb_cheat_set_t_ecb(unsigned int new_t);
+/*
+ * Cheat interface to reset the time it takes
+ * for a 16byte AES ECB block to be computed
+ * to the value specified in the infocenter spec.
+ */
+void nhw_aes_ecb_cheat_reset_t_ecb(void);
+
 #ifdef __cplusplus
 }
 #endif
