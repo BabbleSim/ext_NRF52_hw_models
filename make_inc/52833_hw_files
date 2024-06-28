@@ -14,6 +14,7 @@ src/HW_models/NHW_RADIO_timings.c
 src/HW_models/NHW_RADIO_utils.c
 src/HW_models/NHW_AES_CCM.c
 src/HW_models/NHW_AES_ECB.c
+src/HW_models/NHW_MWU.c
 src/HW_models/NHW_NVMC.c
 src/HW_models/NHW_NVM_backend.c
 src/HW_models/crc.c

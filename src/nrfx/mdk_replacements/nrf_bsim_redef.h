@@ -80,6 +80,9 @@ extern NRF_GPIO_Type NRF_GPIO_regs[];
 extern NRF_GPIOTE_Type NRF_GPIOTE_regs;
 #undef NRF_GPIOTE_BASE
 #define NRF_GPIOTE_BASE                   (&NRF_GPIOTE_regs)
+extern NRF_MWU_Type NRF_MWU_regs;
+#undef NRF_MWU_BASE
+#define NRF_MWU_BASE                      (&NRF_MWU_regs)
 extern NRF_NVMC_Type *NRF_NVMC_regs_p[];
 #undef NRF_NVMC_BASE
 #define NRF_NVMC_BASE                     (NRF_NVMC_regs_p[0])
