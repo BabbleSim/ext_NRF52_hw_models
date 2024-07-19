@@ -6,7 +6,21 @@
  */
 
 #include "nrfx.h"
-#if defined(NRF5340_XXAA_NETWORK)
+#if defined(NRF52833_XXAA)
+#include "hal/nrf_ccm.h"
+#include "hal/nrf_rtc.h"
+#include "hal/nrf_gpio.h"
+#include "hal/nrf_gpiote.h"
+#include "hal/nrf_temp.h"
+#include "hal/nrf_radio.h"
+#include "hal/nrf_egu.h"
+#include "hal/nrf_timer.h"
+#include "hal/nrf_clock.h"
+#include "hal/nrf_rng.h"
+#include "hal/nrf_aar.h"
+#include "hal/nrf_ppi.h"
+#include "hal/nrf_ecb.h"
+#elif defined(NRF5340_XXAA_NETWORK)
 #include "hal/nrf_aar.h"
 #include "hal/nrf_ccm.h"
 #include "hal/nrf_ecb.h"
@@ -59,12 +73,13 @@
 
 typedef void (*subscribe_set_f)(void *, int , uint8_t);
 typedef void (*subscribe_clear_f)(void *, int);
+typedef void (*task_trigger_f)(void *, int);
 
 /*
  * Given a peripheral task/event (task_event) value (A value of a nrf_<peri>_task_t or nrf_<peri>_event_t)
  * return true if it is a task, or false if it is an event
  */
-static bool nrf_dppi_hack_is_task(int task_event, void *p_reg) {
+static bool nrf_hack_is_task(int task_event) {
   /*
    * In the NRF peripherals:
    *  [0x000..0x080) are tasks
@@ -85,22 +100,63 @@ static bool nrf_dppi_hack_is_task(int task_event, void *p_reg) {
  * Get
  *  **p_reg: A pointer to the register base address
  *  *set_f/clear_f: pointers to the HAL subscribe set and clear functions that correspond to that peripheral
+ *  *trigger_f: pointer to the HAL task trigger function corresponding to that peripheral
  * The task/event *offset* corresponding to that subscribe register (input to most nrf HAL functions)
  */
-static void nrf_dppi_hack_get_task_from_ptr(void *task_reg,
-                                            void **p_reg,
-                                           subscribe_set_f *set_f, subscribe_clear_f *clear_f,
-                                           int *task) {
+static void nrf_hack_get_task_from_ptr(void *task_reg,
+                                       void **p_reg,
+                                       subscribe_set_f *set_f,
+                                       subscribe_clear_f *clear_f,
+                                       task_trigger_f *trigger_f,
+                                       int *task) {
 
+#if defined(DPPI_PRESENT)
 #define IF_PER(per, nbr, post, lname)                            \
   if (IS_PERIPHERAL_REG(task_reg, per, nbr, post)) {             \
     *p_reg = PERIPHERAL_REG_BASE(per, nbr, post);                \
     *task = (intptr_t)task_reg - (intptr_t)*p_reg;               \
     *set_f = (subscribe_set_f)nrf_##lname##_subscribe_set;       \
     *clear_f = (subscribe_clear_f)nrf_##lname##_subscribe_clear; \
+    *trigger_f = (task_trigger_f)nrf_##lname##_task_trigger;\
     return;
+#else
+#define IF_PER(per, nbr, post, lname)                            \
+  if (IS_PERIPHERAL_REG(task_reg, per, nbr, post)) {             \
+    *p_reg = PERIPHERAL_REG_BASE(per, nbr, post);                \
+    *task = (intptr_t)task_reg - (intptr_t)*p_reg;               \
+    *set_f = NULL;                                               \
+    *clear_f = NULL;                                             \
+    *trigger_f = (task_trigger_f)nrf_##lname##_task_trigger;\
+    return;
+#endif
 
-#if defined(NRF5340_XXAA_NETWORK)
+#if defined(NRF52833_XXAA)
+  IF_PER(CLOCK, , , clock)
+  } else IF_PER(RADIO, , , radio)
+  } else IF_PER(RNG, , , rng)
+  } else IF_PER(TIMER, 0, , timer)
+  } else IF_PER(TIMER, 1, , timer)
+  } else IF_PER(TIMER, 2, , timer)
+  } else IF_PER(TIMER, 3, , timer)
+  } else IF_PER(TIMER, 4, , timer)
+  } else IF_PER(ECB, , , ecb)
+  } else IF_PER(AAR, , , aar)
+  } else IF_PER(CCM, , , ccm)
+  } else IF_PER(PPI, , , ppi)
+  } else IF_PER(EGU, 0, , egu)
+  } else IF_PER(EGU, 1, , egu)
+  } else IF_PER(EGU, 2, , egu)
+  } else IF_PER(EGU, 3, , egu)
+  } else IF_PER(EGU, 4, , egu)
+  } else IF_PER(EGU, 5, , egu)
+  } else IF_PER(RTC, 0, , rtc)
+  } else IF_PER(RTC, 1, , rtc)
+  } else IF_PER(RTC, 2, , rtc)
+  } else {
+    bs_trace_error_time_line("Tried to look for a task register not known to these HW models\n");
+    return; /* unreachable */
+  }
+#elif defined(NRF5340_XXAA_NETWORK)
   /*IF_PER(POWER, , _NS, power)
   } else*/ IF_PER(CLOCK, , _NS, clock)
   } else IF_PER(RADIO, , _NS, radio)
@@ -255,6 +311,7 @@ static void nrf_dppi_hack_get_task_from_ptr(void *task_reg,
 #undef IF_PER
 }
 
+#if defined(DPPI_PRESENT)
 /*
  * Given a *<subscribe>* register (NOT a task register),
  * set it to be enabled and connected to <channel>, by calling the appropriate
@@ -272,11 +329,12 @@ void nrf_dppi_hack_subscribe_set(void *sub_reg, unsigned int channel)
   int task;
   subscribe_set_f set_f;
   subscribe_clear_f clear_f;
+  task_trigger_f task_trigger_f;
 
   intptr_t task_reg_pr = (intptr_t)sub_reg - NRF_SUBSCRIBE_PUBLISH_OFFSET((intptr_t)sub_reg);
 
-  nrf_dppi_hack_get_task_from_ptr((void *)task_reg_pr, &p_reg, &set_f, &clear_f, &task);
-  if (nrf_dppi_hack_is_task(task, p_reg)) {
+  nrf_hack_get_task_from_ptr((void *)task_reg_pr, &p_reg, &set_f, &clear_f, &task_trigger_f, &task);
+  if (nrf_hack_is_task(task)) {
     set_f(p_reg, task, channel);
   }
 }
@@ -298,11 +356,33 @@ void nrf_dppi_hack_subscribe_clear(void *sub_reg)
   int task;
   subscribe_set_f set_f;
   subscribe_clear_f clear_f;
+  task_trigger_f trigger_f;
 
   intptr_t task_reg_pr = (intptr_t)sub_reg - NRF_SUBSCRIBE_PUBLISH_OFFSET((intptr_t)sub_reg);
 
-  nrf_dppi_hack_get_task_from_ptr((void *)task_reg_pr, &p_reg, &set_f, &clear_f, &task);
-  if (nrf_dppi_hack_is_task(task, p_reg)) {
+  nrf_hack_get_task_from_ptr((void *)task_reg_pr, &p_reg, &set_f, &clear_f, &trigger_f, &task);
+  if (nrf_hack_is_task(task)) {
     clear_f(p_reg, task);
+  }
+}
+
+#endif /* DPPI_PRESENT */
+
+/*
+ * Given a task register address for an unspecified peripheral,
+ * trigger the corresponding task in the hardware model.
+ */
+void nrf_hack_trigger_task_address(void *task_reg)
+{
+  void *p_reg;
+  int task;
+  subscribe_set_f set_f;
+  subscribe_clear_f clear_f;
+  task_trigger_f trigger_f;
+
+  nrf_hack_get_task_from_ptr(task_reg, &p_reg, &set_f, &clear_f, &trigger_f, &task);
+
+  if (nrf_hack_is_task(task)) {
+     trigger_f(p_reg, task);
   }
 }
