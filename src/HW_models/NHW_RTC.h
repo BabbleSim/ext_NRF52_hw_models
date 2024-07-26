@@ -47,6 +47,18 @@ void nhw_rtc2_TASKS_CLEAR(void);
 void nhw_rtc2_TASKS_TRIGOVRFLW(void);
 #endif /* NHW_HAS_PPI */
 
+/**
+ * Return the time when the provided RTC would have had a COUNTER value of 0
+ *
+ * @param rtc RTC index
+ * 
+ * @returns The time in microseconds that corresponds to the time in the past
+ *          when the RTC COUNTER would have been 0.
+ *          The value can be negative (that is before time 0), as the RTC could
+ *          have been started very early with COUNTER > 0.
+ */
+int64_t nhw_rtc_start_time_get(uint rtc);
+
 #ifdef __cplusplus
 }
 #endif

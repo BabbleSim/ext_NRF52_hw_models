@@ -879,3 +879,18 @@ void nhw_rtc2_TASKS_STOP(void)       { nhw_rtc_TASKS_STOP(2);  }
 void nhw_rtc2_TASKS_CLEAR(void)      { nhw_rtc_TASKS_CLEAR(2); }
 void nhw_rtc2_TASKS_TRIGOVRFLW(void) { nhw_rtc_TASKS_TRIGOVRFLW(2); }
 #endif /* NHW_HAS_PPI */
+
+int64_t nhw_rtc_start_time_get(uint rtc) {
+  struct rtc_status *this = &nhw_rtc_st[rtc];
+
+  if (!this->running) {
+    bs_trace_error_time_line("RTC is not running. Start time unknown\n");
+    return 0;
+  }
+
+  if(this->counter_startT_sub_us > 0) {
+    return (int64_t)sub_us_time_to_us_time(this->counter_startT_sub_us);
+  } else {
+    return -(int64_t)sub_us_time_to_us_time(this->counter_startT_negative_sub_us); 
+  }
+}
