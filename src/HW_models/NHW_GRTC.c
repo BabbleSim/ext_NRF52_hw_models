@@ -183,7 +183,7 @@ static inline void nhw_GRTC_check_valid_domain_index(uint inst, uint nbr, const 
 }
 
 
-static bs_time_t nhw_GRTC_counter_to_time(uint inst, uint64_t value) {
+bs_time_t nhw_GRTC_counter_to_time(uint inst, uint64_t value) {
   (void) inst;
   return value + nhw_grtc_st.GRTC_start_time;
 }
