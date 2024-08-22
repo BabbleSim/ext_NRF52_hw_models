@@ -1,0 +1,4 @@
+tests:
+  boards.nrf54l15bsim.aes_ccm_ecb:
+    platform_allow:
+      - nrf54l15bsim/nrf54l15/cpuapp
