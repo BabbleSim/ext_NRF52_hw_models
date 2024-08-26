@@ -26,6 +26,8 @@
 #include "bs_dynargs.h"
 #include "nsi_tasks.h"
 
+static bool latest_if = true;
+
 static bool Real_encryption_enabled = false;
 static void *LibCryptoHandle = NULL;
 //Note that if this library IF is changed, this function prototypes need to be updated:
@@ -50,6 +52,31 @@ typedef int (*blecrypt_packet_decrypt_f)(
     int no_mic,
     uint8_t *decrypted_packet_payload);
 
+typedef void (*blecrypt_packet_encrypt_v3_f)(
+    uint8_t *adata,
+    int alen,
+    int mlen,
+    int maclen,
+    int noncelen,
+    const uint8_t *mdata,
+    const uint8_t *sk,
+    const uint8_t *ccm_nonce,
+    uint8_t *encrypted_packet_payload_and_mac
+    );
+
+typedef int (*blecrypt_packet_decrypt_v3_f)(
+    uint8_t *adata,
+    int alen,
+    int mlen,
+    int maclen,
+    int noncelen,
+    const uint8_t *mdata_and_mac,
+    const uint8_t *sk,
+    const uint8_t *ccm_nonce,
+    int no_mac,
+    uint8_t *decrypted_packet_payload
+    );
+
 typedef void (*blecrypt_aes_128_f)(
     // Inputs
     const uint8_t *key_be,            // Key (KEY_LEN bytes, big-endian)
@@ -58,7 +85,9 @@ typedef void (*blecrypt_aes_128_f)(
     uint8_t *encrypted_data_be);      // Plaintext data (KEY_LEN bytes, big-endian)
 
 static blecrypt_packet_encrypt_f blecrypt_packet_encrypt;
+static blecrypt_packet_encrypt_v3_f blecrypt_packet_encrypt_v3;
 static blecrypt_packet_decrypt_f blecrypt_packet_decrypt;
+static blecrypt_packet_decrypt_v3_f blecrypt_packet_decrypt_v3;
 static blecrypt_aes_128_f        blecrypt_aes_128;
 
 static bool BLECrypt_if_args_useRealAES;
@@ -115,6 +144,17 @@ static void BLECrypt_if_enable_real_encryption(void) {
     *(void **) (&blecrypt_aes_128) = dlsym(LibCryptoHandle, "blecrypt_aes_128");
     if ((error = dlerror()) != NULL) {
       bs_trace_error_line("%s\n",error);
+    }
+    *(void **) (&blecrypt_packet_encrypt_v3) = dlsym(LibCryptoHandle, "blecrypt_packet_encrypt_v3");
+    if ((error = dlerror()) != NULL) {
+      bs_trace_warning_line("%s\n",error);
+      latest_if = false;
+      bs_trace_info_line(2, "Falling back to old libCrypto IF. 802.15.4 encryption will not work properly for 54 devices. "
+                         "Please update your bsim installation\n",error);
+    }
+    *(void **) (&blecrypt_packet_decrypt_v3) = dlsym(LibCryptoHandle, "blecrypt_packet_decrypt_v3");
+    if ((error = dlerror()) != NULL) {
+      bs_trace_warning_line("%s\n",error);
     }
     Real_encryption_enabled = true;
   } else {
@@ -235,5 +275,105 @@ void BLECrypt_if_aes_128(
   } else {
     /* we just copy the data */
     memcpy(encrypted_data_be, plaintext_data_be, 16);
+  }
+}
+
+void BLECrypt_if_encrypt_packet_v3(uint8_t *adata, //Additional Authentication Data
+    int alen,     // Length of adata
+    int mlen,     // Unencrypted packet payload length (i.e. *not* including header and MAC/MIC)
+    int maclen,   //Size of the MAC/MIC in bytes
+    int noncelen, //Size of the nonce in bytes
+    const uint8_t *mdata, //Unencrypted/input packet payload
+    const uint8_t *sk,    //Session key
+    const uint8_t *ccm_nonce, //CCM Nonce (noncelen bytes)
+    uint8_t *encrypted_packet_payload_and_mac) //Pointer to a buffer where the resulting encrypted payload with MAC appended will be stored
+    //Note that a MAC will always be added
+{
+  if (Real_encryption_enabled) {
+    maclen = BS_MAX(maclen, 4);
+    //this generates always the MIC at the end, but for MIC less cases we just wont transmit it
+    if (latest_if) {
+      blecrypt_packet_encrypt_v3(
+          adata,
+          alen,
+          mlen,
+          maclen,
+          noncelen,
+          mdata,
+          sk,
+          ccm_nonce,
+          encrypted_packet_payload_and_mac);
+    } else {
+      blecrypt_packet_encrypt(
+          adata[0],
+          mlen,
+          mdata,
+          sk,
+          ccm_nonce,
+          encrypted_packet_payload_and_mac);
+    }
+  } else {
+    memcpy(encrypted_packet_payload_and_mac, mdata, BS_MAX(mlen, 0) /*payload excluding possible mic*/);
+    if (maclen > 0) {
+      encrypted_packet_payload_and_mac[mlen] = 'M';
+    }
+    if (maclen > 1) {
+      encrypted_packet_payload_and_mac[mlen+1] = 'I';
+    }
+    if (maclen > 2) {
+      encrypted_packet_payload_and_mac[mlen+2] = 'C';
+    }
+    for (int i = 3 ; i < maclen; i++) {
+      encrypted_packet_payload_and_mac[mlen+i] = 0;
+    }
+  }
+}
+
+/*
+ * Returns 1 if MIC is ok, else 0
+ */
+int BLECrypt_if_decrypt_packet_v3(uint8_t *adata, //Additional Authentication Data
+    int alen,    // Length of adata
+    int mlen,    // Unencrypted packet payload length (i.e. *not* including header and MAC/MIC)
+    int maclen,  //Size of the MAC/MIC in bytes
+    int noncelen,//Size of the nonce in bytes
+    const uint8_t *mdata_and_mac, //Pointer to the encrypted packet payload (with MAC if any) to be decrypted (packet_payload_len (+ MIC_LEN) bytes)
+    const uint8_t *sk,            //Session key (KEY_LEN bytes)
+    const uint8_t *ccm_nonce,     //CCM Nonce (noncelen bytes)
+    int no_mac,                   // Set to 1 if packet to be decrypted does not include a MAC, otherwise 0
+    uint8_t *decrypted_packet_payload) //Pointer to a buffer where the resulting decrypted payload will be stored
+{
+  if (Real_encryption_enabled) {
+    if (latest_if) {
+      return blecrypt_packet_decrypt_v3(
+              adata,
+              alen,
+              mlen,
+              maclen,
+              noncelen,
+              mdata_and_mac,
+              sk,
+              ccm_nonce,
+              no_mac,
+              decrypted_packet_payload);
+    } else {
+      if (!no_mac && (mlen < 1)) {
+        return 0;
+      }
+      if (mlen <= 0) {
+        return 1;
+      }
+      return blecrypt_packet_decrypt(
+              adata[0],
+              mlen,
+              mdata_and_mac,
+              sk,
+              ccm_nonce,
+              no_mac,
+              decrypted_packet_payload);
+    }
+  } else {
+    memcpy(decrypted_packet_payload, mdata_and_mac, BS_MAX(mlen - maclen,0));
+    return 1;
   }
 }

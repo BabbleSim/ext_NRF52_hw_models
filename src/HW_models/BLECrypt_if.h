@@ -52,6 +52,26 @@ void BLECrypt_if_aes_128(
     // Outputs (the pointers themselves are inputs and must point to large enough areas)
     uint8_t *encrypted_data_be);                    // Plaintext data (KEY_LEN bytes, big-endian)
 
+void BLECrypt_if_encrypt_packet_v3(uint8_t *adata,
+    int alen,
+    int mlen,
+    int maclen,
+    int noncelen,
+    const uint8_t *mdata,
+    const uint8_t *sk,
+    const uint8_t *ccm_nonce,
+    uint8_t *encrypted_packet_payload_and_mac);
+
+int BLECrypt_if_decrypt_packet_v3(uint8_t *adata,
+    int alen,
+    int mlen,
+    int maclen,
+    int noncelen,
+    const uint8_t *mdata_and_mac,
+    const uint8_t *sk,
+    const uint8_t *ccm_nonce,
+    int no_mac,
+    uint8_t *decrypted_packet_payload);
 #ifdef __cplusplus
 }
 #endif
