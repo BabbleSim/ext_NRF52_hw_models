@@ -35,7 +35,7 @@ void nrf_radio_task_trigger(NRF_RADIO_Type * p_reg, nrf_radio_task_t task)
     CASE_CALL_SIDEEFFECT(EDSTOP);
     CASE_CALL_SIDEEFFECT(CCASTART);
     CASE_CALL_SIDEEFFECT(CCASTOP);
-#if 0 /* defined(RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Msk) */
+#if defined(RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Msk)
     //To be enabled once NRF_RADIO_TASK_SOFTRESET is added to the HAL
     CASE_CALL_SIDEEFFECT(SOFTRESET);
 #endif
