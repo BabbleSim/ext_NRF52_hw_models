@@ -284,7 +284,7 @@ static void nhw_CLOCK_XOTimer_triggered(void) {
 
     NRF_CLOCK_regs[0]->XO.STAT = CLOCK_XO_STAT_STATE_Msk;
 
-    //nhw_CLOCK_signal_EVENTS_XOSTARTED(0);
+    nhw_CLOCK_signal_EVENTS_XOSTARTED(0);
     nhw_CLOCK_signal_EVENTS_XOTUNED(0);
 
   } else if ( nhw_clkpwr_st.XO_state == Stopping ){
