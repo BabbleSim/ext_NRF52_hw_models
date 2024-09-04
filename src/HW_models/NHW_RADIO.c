@@ -386,8 +386,12 @@ void nhw_RADIO_TASK_SOFTRESET(void) {
         "NRF_RADIO: TASK_SOFTRESET should only be used in disabled state."
         "Current state %i\n", radio_state);
   }
-  bs_trace_warning_line_time(
+  static bool warning_shown = false;
+  if (!warning_shown){
+    bs_trace_warning_line_time(
       "NRF_RADIO: SOFTRESET not yet supported. It will be ignored.\n");
+    warning_shown = true;
+  }
 }
 
 void nhw_RADIO_TASK_CCASTART(void) {
