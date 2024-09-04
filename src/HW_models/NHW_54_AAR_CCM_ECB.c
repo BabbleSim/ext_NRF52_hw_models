@@ -703,7 +703,7 @@ void nhw_aes_ecb_cheat_set_t_ecb(unsigned int new_t){
  * (For all ECB peripheral instances)
  */
 void nhw_aes_ecb_cheat_reset_t_ecb(void){
-  uint t_ECB[NHW_AARCCMECB_TOTAL_INST] = NHW_AARCCMECB_CLOCK;
+  uint t_ECB[NHW_AARCCMECB_TOTAL_INST] = NHW_ECB_t_ECB;
   for (int i = 0; i < NHW_AARCCMECB_TOTAL_INST; i++) {
     nhw_ecb_st[i].t_ECB = t_ECB[i];
   }
