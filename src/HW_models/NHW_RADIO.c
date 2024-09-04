@@ -109,7 +109,6 @@
  *         and roughly at the end of TERM1. The models generates it at that point and only in that case.
  *         (It's timing is probably a bit off compared to real HW)
  *
- * Note26: TASK_SOFTRESET (for nRF54 targets) is not yet implemented
  *
  *
  * Implementation Specification:
@@ -253,17 +252,7 @@ static void Rx_abort_eval_respond(void);
 static void CCA_abort_eval_respond(void);
 static void nhw_radio_device_address_match(uint8_t rx_buf[]);
 
-static void radio_reset(void) {
-  memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
-  radio_state = RAD_DISABLED;
-  radio_sub_state = SUB_STATE_INVALID;
-  Timer_RADIO = TIME_NEVER;
-  rssi_sampling_on = false;
-
-  TIFS_state = TIFS_DISABLE;
-  TIFS_ToTxNotRx = false;
-  Timer_TIFS = TIME_NEVER;
-
+static void radio_set_registers_defaults(void) {
   //Registers' reset values:
   NRF_RADIO_regs.FREQUENCY = 0x00000002;
   NRF_RADIO_regs.SFD = 0xA7;
@@ -287,6 +276,20 @@ static void radio_reset(void) {
   NRF_RADIO_regs.EDCTRL = 0x20000000;
   NRF_RADIO_regs.TXPOWER = 0x00000013;
 #endif
+}
+
+static void radio_reset(void) {
+  memset(&NRF_RADIO_regs, 0, sizeof(NRF_RADIO_regs));
+  radio_state = RAD_DISABLED;
+  radio_sub_state = SUB_STATE_INVALID;
+  Timer_RADIO = TIME_NEVER;
+  rssi_sampling_on = false;
+
+  TIFS_state = TIFS_DISABLE;
+  TIFS_ToTxNotRx = false;
+  Timer_TIFS = TIME_NEVER;
+
+  radio_set_registers_defaults();
 
   nhwra_signalif_reset();
 }
@@ -386,12 +389,14 @@ void nhw_RADIO_TASK_SOFTRESET(void) {
         "NRF_RADIO: TASK_SOFTRESET should only be used in disabled state."
         "Current state %i\n", radio_state);
   }
-  static bool warning_shown = false;
-  if (!warning_shown){
-    bs_trace_warning_line_time(
-      "NRF_RADIO: SOFTRESET not yet supported. It will be ignored.\n");
-    warning_shown = true;
-  }
+
+#if defined(RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Msk)
+  //Reset all registers after interrupts (first is MODE), but not the PACKETPTR.
+  //Note: DFE PACKETPTR should also not be reset(?), but is not yet implemented
+  memset((void *)&NRF_RADIO_regs.MODE, 0, offsetof(NRF_RADIO_Type, PACKETPTR) - offsetof(NRF_RADIO_Type, MODE));
+  memset((void *)&NRF_RADIO_regs.CSTONES, 0, sizeof(NRF_RADIO_Type) - offsetof(NRF_RADIO_Type, CSTONES));
+  radio_set_registers_defaults();
+#endif
 }
 
 void nhw_RADIO_TASK_CCASTART(void) {
