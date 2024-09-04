@@ -130,6 +130,10 @@ static uint nhw_AARCCMECB_dppi_map[NHW_AARCCMECB_TOTAL_INST] = NHW_AARCCMECB_DPP
 
 void nhw_aes_ecb_cheat_reset_t_ecb(void);
 static bool nhw_ECB_possible_abort(uint inst);
+static void nhw_AAR_TASK_START(uint inst);
+static void nhw_AAR_TASK_STOP(uint inst);
+static void nhw_CCM_TASK_START(uint inst);
+static void nhw_CCM_TASK_STOP(uint inst);
 
 static void nhw_AARCCMECB_init(void) {
   memset(&NRF_AARCCM_regs, 0, sizeof(NRF_AARCCM_regs));
@@ -366,11 +370,7 @@ static void nhw_AAR_resolve_logic(uint inst) {
   update_master_timer();
 }
 
-static void nhw_AAR_TASK_START(uint inst) {
-  if (NRF_AAR_regs[inst]->ENABLE != AAR_ENABLE_ENABLE_Enabled) {
-    bs_trace_warning_time_line("%s called with AAR not enabled (%i) => ignored\n", __func__, NRF_AAR_regs[inst]->ENABLE);
-    return;
-  }
+static void nhw_AAR_TASK_START_inner(uint inst) {
   if (nhw_aar_st[inst].Running) {
     bs_trace_warning_time_line("%s called while AAR was already Running enabled => ignored\n", __func__);
     //Note [AAR2]: It is unclear what the real AAR peripheral will do in this case
@@ -382,14 +382,8 @@ static void nhw_AAR_TASK_START(uint inst) {
   nhw_AAR_resolve_logic(inst);
 }
 
-static void nhw_AAR_TASK_STOP(uint inst) {
-  if (NRF_AAR_regs[inst]->ENABLE != AAR_ENABLE_ENABLE_Enabled) {
-    bs_trace_warning_time_line("%s called with AAR not enabled (%i)\n", __func__, NRF_AAR_regs[inst]->ENABLE);
-  }
-  int was_running = 0;
-  if (nhw_aar_st[inst].Running) {
-    was_running = 1;
-  }
+static void nhw_AAR_TASK_STOP_inner(uint inst) {
+  int was_running = nhw_aar_st[inst].Running;
   nhw_AAR_stop(inst);
   //Note [AAR4]
   if (was_running) {
@@ -620,21 +614,12 @@ static void nhw_CCM_logic(uint inst) {
   nhw_CCM_signal_EVENTS_END(inst);
 }
 
-static void nhw_CCM_TASK_START(uint inst) {
-  if (NRF_CCM_regs[inst]->ENABLE != CCM_ENABLE_ENABLE_Enabled) {
-    bs_trace_warning_time_line("%s called with CCM not enabled (%i) => ignored\n", __func__, NRF_CCM_regs[inst]->ENABLE);
-    return;
-  }
+static void nhw_CCM_TASK_START_inner(uint inst) {
   nhw_ECB_possible_abort(inst);
-
   nhw_CCM_logic(inst);
 }
 
-static void nhw_CCM_TASK_STOP(uint inst) {
-  if (NRF_CCM_regs[inst]->ENABLE != CCM_ENABLE_ENABLE_Enabled) {
-    bs_trace_warning_time_line("%s called with CCM not enabled (%i) => ignored\n", __func__, NRF_CCM_regs[inst]->ENABLE);
-    return;
-  }
+static void nhw_CCM_TASK_STOP_inner(uint inst) {
   /* Note [CCM1]. The encryption is always instantaneous in the model,
    * so FW should not catch it running */
 }
@@ -642,6 +627,46 @@ static void nhw_CCM_TASK_STOP(uint inst) {
 static void nhw_CCM_TASK_RATEOVERRIDE(uint inst) {
   /* Note [CCM3]. The encryption is always instantaneous in the model,
    * so we do not need to do anything here */
+}
+
+static void nhw_AARCCM_TASK_START(uint inst) {
+  if (NRF_CCM_regs[inst]->ENABLE == AAR_ENABLE_ENABLE_Enabled) {
+    nhw_AAR_TASK_START_inner(inst);
+    return;
+  } else if (NRF_CCM_regs[inst]->ENABLE == CCM_ENABLE_ENABLE_Enabled) {
+    nhw_CCM_TASK_START_inner(inst);
+  } else {
+    bs_trace_warning_time_line("%s called with neither AAR or CCM enabled (%i) => ignored\n", __func__, NRF_CCM_regs[inst]->ENABLE);
+        return;
+  }
+}
+
+static void nhw_AARCCM_TASK_STOP(uint inst) {
+  if (NRF_CCM_regs[inst]->ENABLE == AAR_ENABLE_ENABLE_Enabled) {
+    nhw_AAR_TASK_STOP_inner(inst);
+    return;
+  } else if (NRF_CCM_regs[inst]->ENABLE == CCM_ENABLE_ENABLE_Enabled) {
+    nhw_CCM_TASK_STOP_inner(inst);
+  } else {
+    bs_trace_warning_time_line("%s called with neither AAR or CCM enabled (%i) => ignored\n", __func__, NRF_CCM_regs[inst]->ENABLE);
+        return;
+  }
+}
+
+static void nhw_AAR_TASK_START(uint inst) {
+  nhw_AARCCM_TASK_START(inst);
+}
+
+static void nhw_CCM_TASK_START(uint inst) {
+  nhw_AARCCM_TASK_START(inst);
+}
+
+static void nhw_AAR_TASK_STOP(uint inst) {
+  nhw_AARCCM_TASK_STOP(inst);
+}
+
+static void nhw_CCM_TASK_STOP(uint inst) {
+  nhw_AARCCM_TASK_STOP(inst);
 }
 
 NHW_SIDEEFFECTS_TASKS(CCM, NRF_CCM_regs[inst]->, START)
@@ -769,10 +794,7 @@ static void nhw_ECB_TASK_START(uint inst) {
 }
 
 static void nhw_ECB_TASK_STOP(uint inst) {
-  int was_running = 0;
-  if (nhw_ecb_st[inst].Running) {
-    was_running = 1;
-  }
+  int was_running = nhw_ecb_st[inst].Running;
   nhw_ECB_stop(inst);
   if (was_running) {
     nhw_ECB_signal_EVENTS_ERROR(inst);
