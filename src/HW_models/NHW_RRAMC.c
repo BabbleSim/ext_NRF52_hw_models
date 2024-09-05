@@ -319,7 +319,8 @@ static void RRAMC_register_cmd_args(void){
 
   static bs_args_struct_t args_struct_toadd[] = {
     NVM_BACKEND_PARAMS(uicr, uicr[0], UICR),
-    NVM_BACKEND_PARAMS(rram, rram[0], FLASH),
+    NVM_BACKEND_PARAMS(rram, rram[0], RRAM),
+    NVM_BACKEND_PARAMS_ALIAS(flash, rram, rram[0], RRAM, "(Alias for rram_* paramaters) "),
     ARG_TABLE_ENDMARKER
   };
 
