@@ -469,16 +469,16 @@ static void nhw_CCM_logic(uint inst) {
 
   uint8_t *ccm_nonce = (uint8_t*)NRF_CCM_regs[inst]->NONCE.VALUE;
   uint8_t *key = (uint8_t*)NRF_CCM_regs[inst]->KEY.VALUE;
-  uint8_t ccm_nonce_le[13];
-  uint8_t key_le[16];
+  uint8_t ccm_nonce_swapped[13];
+  uint8_t key_be[16];
   uint8_t ADATAMASK = NRF_CCM_regs[inst]->ADATAMASK;
   uint mac_size = nhw_CCM_MAC_size(inst);
   uint encrypt_not_decrypt = (NRF_CCM_regs[inst]->MODE & CCM_MODE_MODE_Msk) == CCM_MODE_MODE_Encryption;
   uint protocol = (NRF_CCM_regs[inst]->MODE & CCM_MODE_PROTOCOL_Msk) >> CCM_MODE_PROTOCOL_Pos;
                   //CCM_MODE_PROTOCOL_Ble or CCM_MODE_PROTOCOL_Ieee802154
 
-  hwu_reverse_byte_order(key, key_le, sizeof(key_le));
-  hwu_reverse_byte_order(ccm_nonce, ccm_nonce_le, sizeof(ccm_nonce_le));
+  hwu_reverse_byte_order(key, key_be, sizeof(key_be));
+  hwu_reverse_byte_order(ccm_nonce, ccm_nonce_swapped, sizeof(ccm_nonce_swapped));
 
   EVDMA_status_t in_evdma, out_evdma;
   int ret;
@@ -556,8 +556,8 @@ static void nhw_CCM_logic(uint inst) {
           mac_size,
           13,
           mc_in,
-          key_le,
-          ccm_nonce_le,
+          key_be,
+          ccm_nonce_swapped,
           mc_out);
       l_mc += mac_size;
 
@@ -577,8 +577,8 @@ static void nhw_CCM_logic(uint inst) {
             mac_size,
             13,
             mc_in,
-            key_le,
-            ccm_nonce_le,
+            key_be,
+            ccm_nonce_swapped,
             mac_size == 0,
             mc_out);
 
