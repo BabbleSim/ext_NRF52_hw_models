@@ -255,6 +255,7 @@ ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 		build_ccm_test_case_and_run(K, N, P, i + mac_len + 8, i + mac_len, A, sizeof(A), C, i, mac_len, adata_mask, false,
 				false, DECRYPT, BLE_MODE, NULL, false);
 	}
+	//Note: Usage fault in HW. Probably need to increase stack or set arrays as static
 }
 
 ZTEST(nrf_ccm_tests, test_ccm_02_decr_ble_1)
@@ -271,6 +272,7 @@ ZTEST(nrf_ccm_tests, test_ccm_02_decr_ble_1)
 	uint8_t adata_mask = 0xE3;
 	build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false,
 			false, DECRYPT, BLE_MODE, NULL, false);
+	//Mismatch, in real HW: CCM EVENTS_ERROR is 1 but expected 0!
 }
 
 ZTEST(nrf_ccm_tests, test_ccm_03_decr_out_buf_ovf_2to0_nomac_err) {
@@ -285,6 +287,7 @@ ZTEST(nrf_ccm_tests, test_ccm_03_decr_out_buf_ovf_2to0_nomac_err) {
 	uint8_t adata_mask = 0xE3;
 	build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, 0, mac_len, adata_mask, false, false,
 				DECRYPT, BLE_MODE, NULL, true);
+	//Mismatch, in real HW: CCM EVENTS_ERROR is 1 but expected 0!
 }
 
 ZTEST(nrf_ccm_tests, test_ccm_04_decr_out_buf_ovf_2to0_mac_err) {
@@ -343,6 +346,7 @@ ZTEST(nrf_ccm_tests, test_ccm_07_decr_out_buf_1_extra)
 	uint8_t adata_mask = 0xE3;
 	build_ccm_test_case_and_run(K, N, P, sizeof(P), 5, A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false, false,
 			DECRYPT, BLE_MODE, NULL, false);
+	//Mismatch, in real HW: MACSTATUS 0 is wrong, decrypt is 1 expect_macerror is 0!
 }
 
 ZTEST(nrf_ccm_tests, test_ccm_08_decr_out_BLE_short_payload) {

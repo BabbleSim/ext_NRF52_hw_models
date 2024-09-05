@@ -26,6 +26,14 @@ static void start_ecb_and_wait(void) {
 	}
 }
 
+static inline void set_ecb_key_be(NRF_ECB_Type *p_reg, uint32_t const * p_key) {
+  uint8_t key_swapped[16];
+  for (int i = 0; i < 16; i++) {
+    key_swapped[15-i] = ((uint8_t*)p_key)[i];
+  }
+  nrf_ecb_key_set(p_reg, (const uint32_t*)key_swapped);
+}
+
 ZTEST(nrf_ecb_tests, test_ecb_1)
 {
 	//ztest_test_skip();
@@ -108,7 +116,7 @@ ZTEST(nrf_ecb_tests, test_ecb_1)
 
 	printf("Starting first job\n");
 
-	nrf_ecb_key_set(ECB, (uint32_t *)KEY_SAMPLE_1);
+	set_ecb_key_be(ECB, (uint32_t *)KEY_SAMPLE_1);
 	nrf_ecb_in_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_injob1);
 	nrf_ecb_out_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_outjob1);
 
@@ -118,7 +126,7 @@ ZTEST(nrf_ecb_tests, test_ecb_1)
 
 	printf("Starting second job\n");
 
-	nrf_ecb_key_set(ECB, (uint32_t *)KEY_SAMPLE_2);
+	set_ecb_key_be(ECB, (uint32_t *)KEY_SAMPLE_2);
 	nrf_ecb_in_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_injob2);
 	nrf_ecb_out_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_outjob2);
 
@@ -128,7 +136,7 @@ ZTEST(nrf_ecb_tests, test_ecb_1)
 
 	printf("Starting third job\n");
 
-	nrf_ecb_key_set(ECB, (uint32_t *)KEY_SAMPLE_3);
+	set_ecb_key_be(ECB, (uint32_t *)KEY_SAMPLE_3);
 
 	nrf_ecb_in_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_injob3);
 	nrf_ecb_out_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_outjob3);

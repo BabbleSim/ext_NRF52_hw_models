@@ -144,6 +144,12 @@ static void nhw_AARCCMECB_init(void) {
     NRF_AAR_regs[i] = (NRF_AAR_Type *)&NRF_AARCCM_regs[i];
     NRF_CCM_regs[i] = (NRF_CCM_Type *)&NRF_AARCCM_regs[i];
 
+    NRF_AAR_regs[i]->MAXRESOLVED = AAR_MAXRESOLVED_ResetValue;
+
+    NRF_CCM_regs[i]->MODE = CCM_MODE_ResetValue;
+    NRF_CCM_regs[i]->RATEOVERRIDE = CCM_RATEOVERRIDE_ResetValue;
+    NRF_CCM_regs[i]->ADATAMASK = CCM_ADATAMASK_ResetValue;
+
     nhw_aar_st[i].NRF_AAR_regs = NRF_AAR_regs[i];
     nhw_aar_st[i].INTEN = 0;
     nhw_aar_st[i].Timer = TIME_NEVER;
@@ -735,6 +741,7 @@ static bool nhw_ECB_possible_abort(uint inst) {
 static void nhw_ECB_logic(uint inst) {
   uint8_t input[16];
   uint8_t output[16];
+  uint8_t key_be[16];
   EVDMA_status_t in_evdma, out_evdma;
   size_t n_access;
   int ret;
@@ -757,7 +764,9 @@ static void nhw_ECB_logic(uint inst) {
     return;
   }
 
-  BLECrypt_if_aes_128((const uint8_t *)&NRF_ECB_regs[inst].KEY, input, output);
+  hwu_reverse_byte_order((const uint8_t*)&NRF_ECB_regs[inst].KEY, key_be, 16);
+
+  BLECrypt_if_aes_128(key_be, input, output);
 
   ret = nhw_EVDMA_start(&out_evdma, (void *)NRF_ECB_regs[inst].OUT.PTR);
   if (ret) {
