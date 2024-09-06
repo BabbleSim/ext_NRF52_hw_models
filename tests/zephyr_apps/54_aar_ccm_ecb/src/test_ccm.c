@@ -17,134 +17,228 @@
 enum protocol_t { BLE_MODE = CCM_MODE_PROTOCOL_Ble, IEEE_MODE = CCM_MODE_PROTOCOL_Ieee802154 };
 
 static void run_ccm(uint32_t key[], uint32_t nonce[], job_t *p_injob, job_t *p_outjob,
-		    unsigned maclen, uint8_t adatamask, bool expect_error, bool expect_macerror,
-		    bool decrypt, enum protocol_t mode_protocol)
+    unsigned maclen, uint8_t adatamask, bool expect_error, bool expect_macerror,
+    bool decrypt, enum protocol_t mode_protocol)
 {
-	nrf_ccm_enable(CCM);
+  nrf_ccm_enable(CCM);
 
-	nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_END);
-	nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_ERROR);
+  nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_END);
+  nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_ERROR);
 
-	nrf_ccm_adatamask_set(CCM, adatamask);
+  nrf_ccm_adatamask_set(CCM, adatamask);
 
-	nrf_ccm_key_set(CCM, key);
-	nrf_ccm_nonce_set(CCM, nonce);
+  nrf_ccm_key_set(CCM, key);
+  nrf_ccm_nonce_set(CCM, nonce);
 
-	nrf_ccm_in_ptr_set(CCM, (nrf_vdma_job_t const *)p_injob);
-	nrf_ccm_out_ptr_set(CCM, (nrf_vdma_job_t const *)p_outjob);
+  nrf_ccm_in_ptr_set(CCM, (nrf_vdma_job_t const *)p_injob);
+  nrf_ccm_out_ptr_set(CCM, (nrf_vdma_job_t const *)p_outjob);
 
-	unsigned mac_config_val = maclen ? ((maclen - 2) / 2) << CCM_MODE_MACLEN_Pos : 0;
+  if (ENABLE_DATA_PRINTOUT) {
+    printk("Key in registers:\n");
+    print_uint32_array(key, 4);
+    printk("Nonce in registers:\n");
+    print_uint32_array(nonce, 4);
+    printk("Input job:\n");
+    print_job(p_injob, true);
+  }
 
-	CCM->MODE = mac_config_val | (mode_protocol << CCM_MODE_PROTOCOL_Pos);
-	if (decrypt) {
-		CCM->MODE |= (CCM_MODE_MODE_Decryption << CCM_MODE_MODE_Pos);
-	} else {
-		CCM->MODE |= (CCM_MODE_MODE_Encryption << CCM_MODE_MODE_Pos);
-	}
+  unsigned mac_config_val = maclen ? ((maclen - 2) / 2) << CCM_MODE_MACLEN_Pos : 0;
 
-	nrf_ccm_task_trigger(CCM, NRF_CCM_TASK_START);
+  CCM->MODE = mac_config_val | (mode_protocol << CCM_MODE_PROTOCOL_Pos);
+  if (decrypt) {
+    CCM->MODE |= (CCM_MODE_MODE_Decryption << CCM_MODE_MODE_Pos);
+  } else {
+    CCM->MODE |= (CCM_MODE_MODE_Encryption << CCM_MODE_MODE_Pos);
+  }
 
-	while (!nrf_ccm_event_check(CCM, NRF_CCM_EVENT_END) && !nrf_ccm_event_check(CCM, NRF_CCM_EVENT_ERROR))
-	{
-		k_busy_wait(1);
-	}
+  nrf_ccm_task_trigger(CCM, NRF_CCM_TASK_START);
 
-	zassert_equal(CCM->EVENTS_ERROR, (uint32_t)expect_error, "CCM EVENTS_ERROR is %u but expected %u!",
-			CCM->EVENTS_ERROR, expect_error);
-	zassert_true(!decrypt || CCM->MACSTATUS == (uint32_t)!expect_macerror,
-			"MACSTATUS %u is wrong, decrypt is %u expect_macerror is %u!\n", CCM->MACSTATUS, decrypt,
-			expect_macerror);
+  while (!nrf_ccm_event_check(CCM, NRF_CCM_EVENT_END) && !nrf_ccm_event_check(CCM, NRF_CCM_EVENT_ERROR))
+  {
+    k_busy_wait(1);
+  }
 
-	nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_END);
-	nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_ERROR);
+  if (ENABLE_DATA_PRINTOUT) {
+    printk("Processing done\n");
+    printk("Output job:\n");
+    print_job(p_outjob, true);
+  }
 
-	nrf_ccm_disable(CCM);
+  zassert_equal(CCM->EVENTS_ERROR, (uint32_t)expect_error, "CCM EVENTS_ERROR is %u but expected %u!",
+      CCM->EVENTS_ERROR, expect_error);
+  zassert_true(!decrypt || CCM->MACSTATUS == (uint32_t)!expect_macerror,
+      "MACSTATUS %u is wrong, decrypt is %u expect_macerror is %u!\n", CCM->MACSTATUS, decrypt,
+      expect_macerror);
+
+  nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_END);
+  nrf_ccm_event_clear(CCM, NRF_CCM_EVENT_ERROR);
+
+  nrf_ccm_disable(CCM);
 }
 
 static void print_and_verify_bytearray(uint8_t *p_vals, uint8_t *p_expected_vals, unsigned size)
 {
-	if (ENABLE_DATA_PRINTOUT) {
-		printk("0x");
-	}
-	for (size_t i = 0; i < size; i++) {
-		if (ENABLE_DATA_PRINTOUT) {
-			printk("%02X", p_vals[i]);
-		}
-		zassert_equal(p_vals[i], p_expected_vals[i], "Byte %d (0x%02X) does not match the expected output (0x%02X)!",
-				i, p_vals[i], p_expected_vals[i]);
-	}
-	printk(" matches the expected output!\n");
+  if (ENABLE_DATA_PRINTOUT) {
+    printk("0x");
+  }
+  for (size_t i = 0; i < size; i++) {
+    if (ENABLE_DATA_PRINTOUT) {
+      printk("%02X", p_vals[i]);
+    }
+    zassert_equal(p_vals[i], p_expected_vals[i], "Byte %d (0x%02X) does not match the expected output (0x%02X)!",
+        i, p_vals[i], p_expected_vals[i]);
+  }
+  printk(" matches the expected output!\n");
 }
 
 static void build_ccm_test_case_and_run(uint8_t K[], uint8_t N[], uint8_t *P, uint16_t P_size, uint16_t mlen,
-		uint8_t *A, uint16_t alen, uint8_t *C, uint16_t out_data_len, unsigned mac_len,
-		uint8_t adata_mask, bool expect_error, bool expect_macerror, bool decrypt,
-		enum protocol_t mode_protocol, uint16_t *p_mlen_out, bool expect_out_data_len_mismatch)
+    uint8_t *A, uint16_t alen, uint8_t *C, uint16_t out_data_len, unsigned mac_len,
+    uint8_t adata_mask, bool expect_error, bool expect_macerror, bool decrypt,
+    enum protocol_t mode_protocol, uint16_t *p_mlen_out, bool expect_out_data_len_mismatch)
 {
-	uint8_t key_reverse[16];
-	uint8_t nonce_reverse[16];
-	reverse_bytearray(K, key_reverse, 16);
-	reverse_bytearray(N, nonce_reverse, 16);
-	uint32_t *nonce = (uint32_t *)nonce_reverse;
-	uint32_t *key = (uint32_t *)key_reverse;
+  uint8_t key_reverse[16];
+  uint8_t nonce_reverse[16];
+  reverse_bytearray(K, key_reverse, 16);
+  reverse_bytearray(N, nonce_reverse, 16);
+  uint32_t *nonce = (uint32_t *)nonce_reverse;
+  uint32_t *key = (uint32_t *)key_reverse;
 
-	job_t ccm_injob[] = {
-			{(uint8_t *)&alen, sizeof(alen), CCM_DMA_ATTR_ALEN},
-			{(uint8_t *)&mlen, sizeof(mlen), CCM_DMA_ATTR_MLEN},
-			{(uint8_t *)A, alen, CCM_DMA_ATTR_ADATA},
-			{(uint8_t *)P, P_size, CCM_DMA_ATTR_MDATA},
-			{0x0, 0x0} // Marking end of job list
-	};
+  job_t ccm_injob[] = {
+      {(uint8_t *)&alen, sizeof(alen), CCM_DMA_ATTR_ALEN},
+      {(uint8_t *)&mlen, sizeof(mlen), CCM_DMA_ATTR_MLEN},
+      {(uint8_t *)A, alen, CCM_DMA_ATTR_ADATA},
+      {(uint8_t *)P, P_size, CCM_DMA_ATTR_MDATA},
+      {0x0, 0x0} // Marking end of job list
+  };
 
-	uint16_t alen_out = 0xffff;
-	uint16_t mlen_out = 0xffff;
-	uint8_t adata_out[alen];
-	memset(adata_out, 0xff, alen);
-	const uint32_t PAINT = 0xCABACABA;
-	uint8_t out_data[out_data_len + 2 * sizeof(uint32_t)];
-	memset(out_data, 0xff, out_data_len + 2 * sizeof(uint32_t));
-	uint32_t *p_inside_paint = (uint32_t *)&out_data[0];
-	uint32_t *p_outside_paint = (uint32_t *)&out_data[sizeof(out_data) - sizeof(uint32_t)];
-	*p_inside_paint = PAINT;
-	*p_outside_paint = PAINT;
-	memset(&out_data[sizeof(uint32_t)], 0xff, out_data_len);
+  uint16_t alen_out = 0xffff;
+  uint16_t mlen_out = 0xffff;
+  uint8_t adata_out[alen];
+  memset(adata_out, 0xff, alen);
+  const uint32_t PAINT = 0xCABACABA;
+  uint8_t out_data[out_data_len + 2 * sizeof(uint32_t)];
+  memset(out_data, 0xff, out_data_len + 2 * sizeof(uint32_t));
+  uint32_t *p_inside_paint = (uint32_t *)&out_data[0];
+  uint32_t *p_outside_paint = (uint32_t *)&out_data[sizeof(out_data) - sizeof(uint32_t)];
+  *p_inside_paint = PAINT;
+  *p_outside_paint = PAINT;
+  memset(&out_data[sizeof(uint32_t)], 0xff, out_data_len);
 
-	job_t ccm_outjob[] = {
-			{(uint8_t *)&alen_out, sizeof(alen_out), CCM_DMA_ATTR_ALEN},
-			{(uint8_t *)&mlen_out, sizeof(mlen_out), CCM_DMA_ATTR_MLEN},
-			{(uint8_t *)adata_out, sizeof(adata_out), CCM_DMA_ATTR_ADATA},
-			{(uint8_t *)&out_data[sizeof(uint32_t)], out_data_len, CCM_DMA_ATTR_MDATA},
-			{0x0, 0x0} // Marking end of job list
-	};
+  job_t ccm_outjob[] = {
+      {(uint8_t *)&alen_out, sizeof(alen_out), CCM_DMA_ATTR_ALEN},
+      {(uint8_t *)&mlen_out, sizeof(mlen_out), CCM_DMA_ATTR_MLEN},
+      {(uint8_t *)adata_out, sizeof(adata_out), CCM_DMA_ATTR_ADATA},
+      {(uint8_t *)&out_data[sizeof(uint32_t)], out_data_len, CCM_DMA_ATTR_MDATA},
+      {0x0, 0x0} // Marking end of job list
+  };
 
-	run_ccm(key, nonce, ccm_injob, ccm_outjob, mac_len, adata_mask, expect_error, expect_macerror, decrypt,
-			mode_protocol);
-	zassert_equal(alen_out, sizeof(adata_out), "Header data length (0x%02X) does not match expected size (0x%02X)\n",
-			adata_out, sizeof(adata_out));
-	zassert_equal(*p_inside_paint, PAINT, "Bufer overflow\n");
-	zassert_equal(*p_outside_paint, PAINT, "Bufer overflow\n");
-	if (!expect_macerror && !expect_error) {
-		zassert_true(expect_out_data_len_mismatch || (mlen_out == out_data_len),
-				"Out data length (0x%02X) does not match expected size (0x%02X)\n", mlen_out, out_data_len);
-		if (decrypt) {
-			printk("Decrypted data: ");
-		} else {
-			printk("Encrypted data: ");
-		}
-		print_and_verify_bytearray(&out_data[sizeof(uint32_t)], C, out_data_len);
-		printk("Header (Adata): ");
-		print_and_verify_bytearray(adata_out, A, alen_out);
-	}
+  run_ccm(key, nonce, ccm_injob, ccm_outjob, mac_len, adata_mask, expect_error, expect_macerror, decrypt,
+      mode_protocol);
+  zassert_equal(alen_out, sizeof(adata_out), "Header data length (0x%02X) does not match expected size (0x%02X)\n",
+      adata_out, sizeof(adata_out));
+  zassert_equal(*p_inside_paint, PAINT, "Bufer overflow\n");
+  zassert_equal(*p_outside_paint, PAINT, "Bufer overflow\n");
+  if (!expect_macerror && !expect_error) {
+    zassert_true(expect_out_data_len_mismatch || (mlen_out == out_data_len),
+        "Out data length (0x%02X) does not match expected size (0x%02X)\n", mlen_out, out_data_len);
+    if (decrypt) {
+      printk("Decrypted data: ");
+    } else {
+      printk("Encrypted data: ");
+    }
+    print_and_verify_bytearray(&out_data[sizeof(uint32_t)], C, out_data_len);
+    printk("Header (Adata): ");
+    print_and_verify_bytearray(adata_out, A, alen_out);
+  }
 
-	if (p_mlen_out != NULL) {
-		*p_mlen_out = mlen_out;
-	}
+  if (p_mlen_out != NULL) {
+    *p_mlen_out = mlen_out;
+  }
 }
 
 static const bool DECRYPT = true;
 static const bool ENCRYPT = false;
 static const bool EXPECT_MAC_ERROR = true;
 static const bool EXPECT_ERROR = true;
+
+ZTEST(nrf_ccm_tests, test_ccm_00_ble_spec_example_packet1)
+{
+  printk("Test data from BT Core specification 6.0, Volume 6, Part C, chapter 1.2, packet \"1.START_ENC_RSP1\"\n");
+
+  //SK = 99AD1B5226A37E3E058E3B8E27C2C666
+  uint8_t K[16] = {0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66};
+  //IV = DEAFBABEBADCAB24
+  //Packet counter = 0, Direction = 1 (central -> periph)
+  uint8_t N[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x24, 0xAB, 0xDC, 0xBA, 0xBE, 0xBA, 0xAF, 0xDE};
+  uint8_t A[] = {0x0F}; //AAD = First header byte
+  uint8_t P[] = {0x06};
+  uint8_t C[] = {0x9f, 0xcd, 0xa7, 0xf4, 0x48};
+  unsigned mac_len = 4;
+  uint8_t adata_mask = 0xE3;
+  build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false,
+      false, ENCRYPT, BLE_MODE, NULL, false);
+}
+
+ZTEST(nrf_ccm_tests, test_ccm_00_ble_spec_example_packet2)
+{
+  printk("Test data from BT Core specification 6.0, Volume 6, Part C, chapter 1.2, packet \"2.START_ENC_RSP2\"\n");
+
+  //SK = 99AD1B5226A37E3E058E3B8E27C2C666
+  uint8_t K[16] = {0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66};
+  //IV = DEAFBABEBADCAB24
+  //Packet counter = 0, Direction = 0 (periph -> central)
+  uint8_t N[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x24, 0xAB, 0xDC, 0xBA, 0xBE, 0xBA, 0xAF, 0xDE};
+  uint8_t A[] = {0x07}; //AAD = First header byte
+  uint8_t P[] = {0x06};
+  uint8_t C[] = {0xA3, 0x4C, 0x13, 0xA4, 0x15};
+
+  unsigned mac_len = 4;
+  uint8_t adata_mask = 0xE3;
+  build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false,
+      false, ENCRYPT, BLE_MODE, NULL, false);
+}
+
+ZTEST(nrf_ccm_tests, test_ccm_00_ble_spec_example_packet3)
+{
+  printk("Test data from BT Core specification 6.0, Volume 6, Part C, chapter 1.2, packet \"3. Data packet1\"\n");
+
+  //SK = 99AD1B5226A37E3E058E3B8E27C2C666
+  uint8_t K[16] = {0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66};
+  //IV = DEAFBABEBADCAB24
+  //Packet counter = 1, Direction = 1 (central -> periph):
+  uint8_t N[16] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x80, 0x24, 0xAB, 0xDC, 0xBA, 0xBE, 0xBA, 0xAF, 0xDE};
+  uint8_t A[] = {0x0E}; //AAD = First header byte
+  uint8_t P[] = {0x17, 0x00, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70,
+                 0x71, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30};
+  uint8_t C[] = {0x7A, 0x70, 0xD6, 0x64, 0x15, 0x22, 0x6D, 0xF2, 0x6B, 0x17, 0x83, 0x9A, 0x06, 0x04, 0x05, 0x59,
+                 0x6B, 0xD6, 0x56, 0x4F, 0x79, 0x6B, 0x5B, 0x9C, 0xE6, 0xFF, 0x32, 0xF7, 0x5A, 0x6D, 0x33};
+
+  unsigned mac_len = 4;
+  uint8_t adata_mask = 0xE3;
+  build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false,
+      false, ENCRYPT, BLE_MODE, NULL, false);
+}
+
+ZTEST(nrf_ccm_tests, test_ccm_00_ble_spec_example_packet4)
+{
+  printk("Test data from BT Core specification 6.0, Volume 6, Part C, chapter 1.2, packet \"4. Data packet2\"\n");
+
+  //SK = 99AD1B5226A37E3E058E3B8E27C2C666
+  uint8_t K[16] = {0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66};
+  //IV = DEAFBABEBADCAB24
+  //Packet counter = 1, Direction = 0 (periph -> central)
+  uint8_t N[16] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x24, 0xAB, 0xDC, 0xBA, 0xBE, 0xBA, 0xAF, 0xDE};
+  uint8_t A[] = {0x06}; //AAD = First header byte
+  uint8_t P[] = {0x17, 0x00, 0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x30, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46,
+                 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51};
+  uint8_t C[] = {0xF3, 0x88, 0x81, 0xE7, 0xBD, 0x94, 0xC9, 0xC3, 0x69, 0xB9, 0xA6, 0x68, 0x46, 0xDD, 0x47, 0x86,
+                 0xAA, 0x8C, 0x39, 0xCE, 0x54, 0x0D, 0x0D, 0xAE, 0x3A, 0xDC, 0xDF, 0x89, 0xB9, 0x60, 0x88};
+  unsigned mac_len = 4;
+  uint8_t adata_mask = 0xE3;
+  build_ccm_test_case_and_run(K, N, P, sizeof(P), sizeof(P), A, sizeof(A), C, sizeof(C), mac_len, adata_mask, false,
+      false, ENCRYPT, BLE_MODE, NULL, false);
+}
+
 
 ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 {
@@ -154,7 +248,7 @@ ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 	uint8_t N[16] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x80, 0x24, 0xAB, 0xDC, 0xBA, 0xBE, 0xBA, 0xAF, 0xDE};
 	uint8_t A[] = {0x0E};
 	uint8_t P[255];
-	uint8_t EncryptedP[] = {
+	static uint8_t EncryptedP[] = {
 			0x6D, 0x71, 0xB7, 0x03, 0x74, 0x41, 0x0C, 0x9D, 0x0A, 0x74, 0xE2, 0xFD, 0x67, 0x67, 0x64, 0x26, 0x0A, 0xF6,
 			0x76, 0x6F, 0x59, 0x4B, 0x7B, 0xBC, 0xC6, 0xDF, 0x18, 0x5B, 0x50, 0x2D, 0x3D, 0x5E, 0xD9, 0xAF, 0xF6, 0xB8,
 			0xFE, 0x86, 0xC5, 0x23, 0x3A, 0xA8, 0x35, 0xE4, 0xE6, 0xA0, 0xB6, 0xC9, 0x48, 0xFF, 0xFF, 0xF5, 0xA0, 0xC0,
@@ -169,7 +263,7 @@ ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 			0xD5, 0x47, 0x9B, 0x7C, 0x35, 0x62, 0x7D, 0xFB, 0xCF, 0xAD, 0x78, 0x91, 0xA6, 0x0C, 0xC8, 0x5C, 0xBF, 0x05,
 			0xBF, 0x7E, 0xE4, 0x0C, 0x4A, 0x9E, 0xC9, 0xD2, 0x9F, 0x75, 0x7A, 0x58, 0x84, 0x9B, 0xD4, 0x9A, 0x2B, 0x51,
 			0xB2, 0x4A, 0x3A, 0x45, 0xEB, 0x58, 0x33, 0x86, 0x53, 0xC5, 0xBA, 0x63, 0x73, 0xB6, 0x89, 0x25, 0xD7};
-	uint8_t MAC_VALS[251][4] = {
+	static uint8_t MAC_VALS[251][4] = {
 			{0xD4, 0x6B, 0xFF, 0x83}, {0x65, 0x2C, 0xF0, 0xE7}, {0xA1, 0x46, 0xB3, 0x47}, {0x8D, 0x59, 0xCD, 0x00},
 			{0xF0, 0x30, 0xEB, 0x37}, {0x7B, 0xA5, 0x1D, 0x70}, {0x6F, 0xEC, 0x4F, 0xC1}, {0x17, 0x20, 0x0F, 0x1E},
 			{0x00, 0x35, 0x68, 0xA0}, {0x9F, 0x15, 0xFE, 0x4A}, {0xC4, 0xD9, 0x23, 0xCD}, {0xD3, 0x66, 0xB5, 0x62},
@@ -233,7 +327,7 @@ ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 			{0x51, 0x84, 0xA9, 0xEB}, {0x29, 0xFB, 0x54, 0x66}, {0x7A, 0x93, 0xEF, 0xA3}, {0x20, 0xA4, 0x11, 0x44},
 			{0xE7, 0x03, 0xB9, 0x9E}, {0x9C, 0xC2, 0x4C, 0xA5}, {0x21, 0x82, 0xBC, 0xBE}, {0x29, 0xF1, 0x3B, 0xCD},
 			{0xAA, 0x72, 0x51, 0xB0}, {0xC1, 0xEC, 0xDE, 0x28}, {0xBF, 0x03, 0x9F, 0x17}};
-	uint8_t C[] = {
+	static uint8_t C[] = {
 			0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,
 			23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,
 			46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,
@@ -255,7 +349,6 @@ ZTEST(nrf_ccm_tests, test_ccm_01_decr_1to255)
 		build_ccm_test_case_and_run(K, N, P, i + mac_len + 8, i + mac_len, A, sizeof(A), C, i, mac_len, adata_mask, false,
 				false, DECRYPT, BLE_MODE, NULL, false);
 	}
-	//Note: Usage fault in HW. Probably need to increase stack or set arrays as static
 }
 
 ZTEST(nrf_ccm_tests, test_ccm_02_decr_ble_1)

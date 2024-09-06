@@ -14,16 +14,30 @@
 
 #define ECB NRF_ECB00
 #define ECB_JOB_ATTRIB (0xB)
+#define ENABLE_DATA_PRINTOUT false
 
 static void start_ecb_and_wait(void) {
-	nrf_ecb_event_clear(ECB, NRF_ECB_EVENT_END);
-	nrf_ecb_event_clear(ECB, NRF_ECB_EVENT_ERROR);
-	nrf_ecb_task_trigger(ECB, NRF_ECB_TASK_START);
+  nrf_ecb_event_clear(ECB, NRF_ECB_EVENT_END);
+  nrf_ecb_event_clear(ECB, NRF_ECB_EVENT_ERROR);
+  nrf_ecb_task_trigger(ECB, NRF_ECB_TASK_START);
 
-	while (!nrf_ecb_event_check(ECB, NRF_ECB_EVENT_END) && !nrf_ecb_event_check(ECB, NRF_ECB_EVENT_ERROR))
-	{
-		k_busy_wait(1);
-	}
+  if (ENABLE_DATA_PRINTOUT) {
+    printk("Key in registers:\n");
+    print_uint32_array((uint32_t*)ECB->KEY.VALUE, 4);
+    printk("Input job:\n");
+    print_job((job_t*)ECB->IN.PTR, true);
+  }
+
+  while (!nrf_ecb_event_check(ECB, NRF_ECB_EVENT_END) && !nrf_ecb_event_check(ECB, NRF_ECB_EVENT_ERROR))
+  {
+    k_busy_wait(1);
+  }
+
+  if (ENABLE_DATA_PRINTOUT) {
+    printk("Processing done\n");
+    printk("Output job:\n");
+    print_job((job_t*)ECB->OUT.PTR, true);
+  }
 }
 
 static inline void set_ecb_key_be(NRF_ECB_Type *p_reg, uint32_t const * p_key) {
@@ -244,6 +258,56 @@ ZTEST(nrf_ecb_tests, test_ecb_1)
 	start_ecb_and_wait();
 
 	//zassert_true(ECB->EVENTS_ERROR, "Did not successfully trigger error in ECB encryption!\n"); //TODO: clarify, this is not an error
+}
+
+ZTEST(nrf_ecb_tests, test_ecb_ble_example)
+{
+  // Key, plain text, and encrypted data example
+  // from BT Core specification 6.0, Volume 6, Part C, chapter 1.1
+  uint8_t KEY_SAMPLE_1[] = {0x4C, 0x68, 0x38, 0x41, 0x39, 0xF5, 0x74, 0xD8,
+                            0x36, 0xBC, 0xF3, 0x4E, 0x9D, 0xFB, 0x01, 0xBF};
+  uint8_t CLRTXT_SAMPLE_1[] = {0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79,
+                               0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, 0x02, 0x13};
+  // We will split this in a different way from the other jobs to test on sequential input data
+  uint8_t CIPTXT_SAMPLE_1[] = {0x99, 0xAD, 0x1B, 0x52, 0x26, 0xA3, 0x7E, 0x3E,
+                               0x05, 0x8E, 0x3B, 0x8E, 0x27, 0xC2, 0xC6, 0x66};
+
+  uint8_t outjob1_data[16] = {0};
+
+  // Setup job lists
+  job_t encrypt_injob1[] = {
+      {(uint8_t *)&CLRTXT_SAMPLE_1[0], 16, ECB_JOB_ATTRIB},
+      {0x0, 0x0}}; // Marking end of job list
+  job_t encrypt_outjob1[] = {
+      {(uint8_t *)&outjob1_data[0], 16, ECB_JOB_ATTRIB},
+      {0x0, 0x0}};
+
+  set_ecb_key_be(ECB, (uint32_t *)KEY_SAMPLE_1);
+  nrf_ecb_in_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_injob1);
+  nrf_ecb_out_ptr_set(ECB, (nrf_vdma_job_t const *)encrypt_outjob1);
+
+  start_ecb_and_wait();
+
+  zassert_false(ECB->EVENTS_ERROR, "Error in ECB encryption process!\n");
+
+  int error = 0;
+  for (int i = 0; i < encrypt_outjob1[0].length; i++) {
+    printf("%02x", encrypt_outjob1[0].job_ptr[i]);
+  }
+  printf("\nTrue encryption of first job: ");
+  for (int i = 0; i < sizeof(CIPTXT_SAMPLE_1); i++) {
+    printf("%02x", CIPTXT_SAMPLE_1[i]);
+  }
+  for (int i = 0; i < encrypt_outjob1[0].length; i++) {
+    if (encrypt_outjob1[0].job_ptr[i] != CIPTXT_SAMPLE_1[i]) {
+      printf("\nERROR in encryption of first job!\n");
+      error = 1;
+      break;
+    }
+  }
+
+  zassert_false(error, "Error in ECB encryption process!\n");
+  printf("\nEncryption successful!\n");
 }
 
 ZTEST_SUITE(nrf_ecb_tests, NULL, NULL, NULL, NULL, NULL);
