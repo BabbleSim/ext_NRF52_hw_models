@@ -54,10 +54,6 @@ if(CONFIG_SOC_SERIES_BSIM_NRFXX)
         -DNRF5340
       )
     endif()
-
-    target_link_options(native_simulator INTERFACE
-                        "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/linker/nrf5340.ld")
-
   elseif(CONFIG_SOC_SERIES_BSIM_NRF54LX)
     file(STRINGS make_inc/54L15_hw_files HW_MODEL_SRCS)
     file(STRINGS make_inc/54L15_app_hal_files HAL_SRCS)
