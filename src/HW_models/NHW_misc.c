@@ -9,6 +9,7 @@
 #include "bs_tracing.h"
 #include "NHW_config.h"
 #include "NHW_peri_types.h"
+#include "NHW_virt_RAM.h"
 #include "nrf_bsim_redef.h"
 
 /*
@@ -25,6 +26,28 @@ const char *nhw_get_core_name(unsigned int core_n)
   } else {
     return NULL;
   }
+}
+
+/*
+ * Convert an address to the real embedded device RAM into an addresses
+ * in the models buffer which is used in place of the RAM.
+ * Note the input is a pointer to the pointer/address, which will be modified in the call.
+ *
+ * This function will only modify the address if it was inside an embedded RAM known to it.
+ * In that case it returns true.
+ * Otherwise the address is unmodified and false is returned.
+ */
+bool nhw_convert_RAM_addr(void **addr)
+{
+#if defined(NRF5340) || defined(NRF5340_XXAA_NETWORK) || defined(NRF5340_XXAA_APPLICATION)
+  if (((intptr_t)*addr >= NHW_APPCORE_RAM_ADDR) && ((intptr_t)*addr < (intptr_t)*addr + NHW_APPCORE_RAM_SIZE)) {
+     *addr = (intptr_t)*addr - NHW_APPCORE_RAM_ADDR + NHW_appcore_RAM;
+     return true;
+  }
+#else
+  bs_trace_warning_time_line("%s not supported yet in this device\n", __func__);
+#endif
+  return false;
 }
 
 /**

@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 const char *nhw_get_core_name(unsigned int core_n);
+void *nhw_convert_RAM_addr(void *ram_addr);
 
 #ifdef __cplusplus
 }
