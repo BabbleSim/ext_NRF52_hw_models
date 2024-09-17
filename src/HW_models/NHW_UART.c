@@ -924,7 +924,7 @@ void nhw_UARTE_regw_sideeffects_ENABLE(unsigned int inst) {
   }
 
   u_el->tx_status = Tx_Off;
-  u_el->tx_status = Rx_Off;
+  u_el->rx_status = Rx_Off;
 
   u_el->Rx_TO_timer = TIME_NEVER;
   u_el->Tx_byte_done_timer = TIME_NEVER;
