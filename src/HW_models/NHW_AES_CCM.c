@@ -168,7 +168,7 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
   const uint8_t* cnfptr;
   const uint8_t* sk;
   const uint8_t* iv;
-  uint64_t rx_pkt_ctr;
+  uint64_t rx_pkt_ctr = 0;
   uint8_t pkt_direction;
   const uint8_t* inptr;
   uint8_t* outptr;
@@ -185,7 +185,8 @@ static void nrf_ccm_decrypt_rx(bool crc_error) {
 
   cnfptr = (const uint8_t*)NRF_CCM_regs.CNFPTR;
   sk = cnfptr;
-  rx_pkt_ctr = *(uint64_t*)(cnfptr + 16) & 0x7FFFFFFFFFULL;
+  memcpy(&rx_pkt_ctr, cnfptr + 16, 5);
+  rx_pkt_ctr &= 0x7FFFFFFFFFULL;
   iv = &cnfptr[25];
 
   inptr = (const uint8_t*)NRF_CCM_regs.INPTR;
