@@ -4,6 +4,12 @@ You will only need to continue reading if you are curious about how these
 models are built, or if you want to use them for some other purpose than with
 [Zephyr's nrf*bsim targets](https://docs.zephyrproject.org/latest/boards/native/doc/bsim_boards_design.html).
 
+This file is a particularized version of the first sections of
+[the general HW models architecture description](https://babblesim.github.io/arch_hw_models.html)
+provided with BabbleSim. You may continue reading
+[that other page](https://babblesim.github.io/arch_hw_models.html) from the "Time and time drift"
+section after reading this file, for further information.
+
 ## Requirements
 
 The main purpose of these models is to provide a good enough HW model for BLE and 802.15.4
