@@ -13,7 +13,7 @@ and [nRF54L15](https://www.nordicsemi.com/Products/nRF54L15)
 [nRF52 series devices](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_nrf52%2Fstruct%2Fnrf52.html&cp=5)
 , so even if you are developing for another variant in that series these models may be enough for
 you.<br>
-It is the intention that models of other nordic SOCs will be included in the future.
+It is the intention that models of other Nordic SOCs will be included in the future.
 
 These models library is intended to be used as an extension to the
 [native simulator](https://github.com/BabbleSim/native_simulator/).
@@ -41,7 +41,7 @@ See the [nrfx/hal/README.md](../src/nrfx/hal/README.md) for more details.
 `NATIVE_SIM_PATH` must point to the folder where the native simulator has been cloned.
 
 These models can be used directly with
-[Zephyr's nrf5*_bsim targets](https://docs.zephyrproject.org/latest/boards/native/doc/bsim_boards_design.html).
+[Zephyr's nrf5*bsim targets](https://docs.zephyrproject.org/latest/boards/native/doc/bsim_boards_design.html).
 In that case, Zephyr's versions of the nrfx HAL and native simulator will be used by
 default.
 
@@ -53,26 +53,26 @@ Zephyr please refer to [README_HW_models.md](./README_HW_models.md)
 
 ## What these models include
 
-Not all SOCs peripherals are modelled yet, and for some of the included peripherals
-not all features or options are modelled. This is typically the case for HW functionality
+Not all SOCs peripherals are modeled yet, and for some of the included peripherals
+not all features or options are modeled. This is typically the case for HW functionality
 which is not used by the Zephyr drivers/OS.
 You can find what features of which peripherals are included so far, and with what approximations in
 [README_impl_status.md](./README_impl_status.md).
 It is certainly possible to expand these models to include the missing peripherals or functionality.
 
-### Faithfullness of these models
+### Faithfulness of these models
 
 These models are accurate enough to allow the current Zephyr to run, and
 its BLE and 15.4 stacks to function. For more details please see the notes on the source
 files for each peripheral model.
-In general, functionality is modelled only to the necessary degree as to enable the SW to run,
+In general, functionality is modeled only to the necessary degree as to enable the SW to run,
 in a manner that is comparable to the real HW.
 
 These models are based solely on
 [the public SOC specifications](https://infocenter.nordicsemi.com/topic/struct_nrf52/struct/nrf52833.html)
 
 They have been developed without any other knowledge and probably contain
-inacuracies, and defects.
+inaccuracies, and defects.
 
 ### About the ARM processor peripherals
 
@@ -82,15 +82,15 @@ risky and unnecessary.
 
 Risky in the sense that adding the equivalent register structures would
 immediately hide the compiler errors which otherwise would identify the places
-in which they are used in the embeded code; while at the same time these models
-would not be precise enough to not require, with very high likelyhood,
+in which they are used in the embedded code; while at the same time these models
+would not be precise enough to not require, with very high likelihood,
 modification of that part of the embedded code which was using them.
 
 And unnecessary in the sense that the lack of these peripherals can be hidden
 most of the time if the CMSIS-Core APIs are used instead of direct register
 accesses, and where these APIs do not provide the necessary functionality,
-changes to the embedded code would be needed with high likelyhood to trigger
-sideeffects or so.
+changes to the embedded code would be needed with high likelihood to trigger
+side-effects or so.
 
 ## Using these models without the native simulator
 

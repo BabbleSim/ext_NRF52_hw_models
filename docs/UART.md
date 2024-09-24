@@ -29,7 +29,7 @@ called whenever a byte is transmitted or received. This callback can replace the
 the UART peripheral processes it further. Check
 [the UART header file](../src/HW_models/NHW_UART.h) for more info.
 It is also possible for test code to call `nhw_UARTE_digest_Rx_byte()` to inject
-bytes into the UART peripheral like if they arrived thru the Rx line.
+bytes into the UART peripheral like if they arrived through the Rx line.
 
 ### Backends:
 
@@ -71,7 +71,7 @@ cause up to 1 extra byte to be sent to the other side, it should not cause any t
 
 If there is a miss-configuration between the devices (bit rate, parity or number of stop bits),
 the backend will print a warning for each received byte, but the ERRORSRC register in the UART
-peripheral won't be set due to fame, or parity errors, or break conditions.
+peripheral won't be set due to frame, or parity errors, or break conditions.
 
 #### Loopback
 
