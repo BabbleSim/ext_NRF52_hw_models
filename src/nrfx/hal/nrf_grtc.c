@@ -58,6 +58,24 @@ void nrf_grtc_int_disable(NRF_GRTC_Type * p_reg, uint32_t mask)
     nhw_GRTC_regw_sideeffects_INTENCLR(0, GRTC_IRQ_GROUP);
 }
 
+#define INTENGRPOFFSET (offsetof(NRF_GRTC_Type, INTENSET1) - offsetof(NRF_GRTC_Type, INTENSET0))
+
+void nrf_grtc_int_group_enable(NRF_GRTC_Type * p_reg,
+                               uint8_t         group_idx,
+                               uint32_t        mask)
+{
+  *(uint32_t*)((char*)p_reg->INTENSET0 + INTENGRPOFFSET*group_idx) = mask;
+  nhw_GRTC_regw_sideeffects_INTENSET(0, group_idx);
+}
+
+void nrf_grtc_int_group_disable(NRF_GRTC_Type * p_reg,
+                                                  uint8_t         group_idx,
+                                                  uint32_t        mask)
+{
+  *(uint32_t*)((char*)p_reg->INTENCLR0 + INTENGRPOFFSET*group_idx) = mask;
+  nhw_GRTC_regw_sideeffects_INTENCLR(0, group_idx);
+}
+
 void nrf_grtc_subscribe_set(NRF_GRTC_Type * p_reg,
                            nrf_grtc_task_t task,
                            uint8_t        channel)
@@ -133,6 +151,14 @@ bool nrf_grtc_sys_counter_overflow_check(NRF_GRTC_Type const * p_reg)
     nhw_GRTC_regr_sideeffects_SYSCOUNTERH(0, NRF_GRTC_DOMAIN_INDEX);
     return (p_reg->GRTC_SYSCOUNTER.SYSCOUNTERH &
             GRTC_SYSCOUNTER_SYSCOUNTERH_OVERFLOW_Msk) ? true : false;
+}
+
+uint64_t nrf_grtc_sys_counter_indexed_get(NRF_GRTC_Type const * p_reg,
+                                          uint8_t               index)
+{
+    nhw_GRTC_regr_sideeffects_SYSCOUNTERL(0, index);
+    nhw_GRTC_regr_sideeffects_SYSCOUNTERH(0, index);
+    return *((const uint64_t volatile *)&p_reg->SYSCOUNTER[index]);
 }
 
 void nrf_grtc_task_trigger(NRF_GRTC_Type * p_reg, nrf_grtc_task_t grtc_task)
