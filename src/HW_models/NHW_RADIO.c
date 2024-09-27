@@ -19,7 +19,14 @@
  *
  * Note5: Only little endian hosts supported (x86 is little endian)
  *
- * Note6: RSSI is always sampled at the end of the address (and RSSIEND raised there)
+ * Note6.a: A RSSISTART task will be fully instantaneous (instead of taking ~0.25 micros)
+ * Note6.b: A RSSISTART task will use the latest RSSI sample from the Phy and not request a new one.
+ *        The correct thing depends on the case (see nhw_RADIO_TASK_RSSISTART() )
+ *        But to simplify we just respond with the last rx RSSI value.
+ *        If the stack is triggering this task to do a RSSI measurement without an actual packet reception
+ *        the measurement will be wrong (this can be fixed if it becomes a problem)
+ * Note6.c: The spec says the radio must be actively receiving when receiving a RSSISTART task, but
+ *        not what happens otherwise. The model just warns and uses the last value.
  *
  * Note7: Whitening is always/never "used" (it is the phy who would use or not whitening), the radio model can assume it is always used (even that we ignore the initialization register)
  *
@@ -237,8 +244,6 @@ static uint8_t *rx_pkt_buffer_ptr = (uint8_t*)&rx_buf;
 static bool radio_POWER = false;
 #endif
 
-static bool rssi_sampling_on = false;
-
 static double cheat_rx_power_offset;
 
 static void start_Tx(void);
@@ -283,7 +288,6 @@ static void radio_reset(void) {
   radio_state = RAD_DISABLED;
   radio_sub_state = SUB_STATE_INVALID;
   Timer_RADIO = TIME_NEVER;
-  rssi_sampling_on = false;
 
   TIFS_state = TIFS_DISABLE;
   TIFS_ToTxNotRx = false;
@@ -530,11 +534,49 @@ void nhw_RADIO_TASK_DISABLE(void) {
 }
 
 void nhw_RADIO_TASK_RSSISTART(void) {
-  rssi_sampling_on = true;
+  if (radio_state != RAD_RX) {
+    bs_trace_warning_time_line("TASK_RSSISTART received while the radio was not in Rx. "
+                               "The spec does not allow this. We just use the last Rx value in the model\n");
+  }
+
+  //Thoughts: When we receive this, wrt. the Phy communication either:
+  // a) we have not started anything (radio_state != RAD_RX) (phy time is in the past in the previous transaction end)
+  // b) Phy is waiting during an abort reevaluation before address match
+  // c) we have got the addr and the phy is waiting for a response  to it (normal case, where the stack triggers RSSISTART via ADDRESS short)
+  // d) the phy is waiting for us, in the middle or an abort reevaluation after addr.
+  //   d.1) because stack triggered RSSISTART in SW after ADDRESS (time == phy time == address end time)
+  //   d.2) because stack triggered RSSISTART in SW anywhere later in packet reception (time == phy time)
+  // e) or we have finished a Phy Rx all together but the RADIO is still in Rx (we already got the CRC end from the Phy but we are still processing the packet in the RADIO, due to Rx prop. delay)
+  //
+  // Best approach:
+  // if a)
+  //      if real RADIO reports an old measured value then best is to use our latest
+  //      otherwise to do a plain RSSI measurement now
+  // if b) => do an immediate RSSI measurement during abort reeval (this case we don't yet handle well now)
+  // if c) best is to use the RSSI measurement from the addr => last Rx measurement
+  // if d.1) => same as c)
+  // if d.2) best to do is an immediate RSSI measurement during abort, but last rx measurement is going to be almost the same
+  //   For d.1) an immediate RSSI measurement would produce the same result (just a bit of Phy comm overhead)
+  // if e) => use last Rx measurement
+
+  //if (abort_fsm_state == Rx_Abort_reeval) {
+  //  Respond with an immediate RSSI request during abort, get that response and let nhw_radio_timer_abort_reeval_triggered() handle it further
+  //} else {
+  //  Use last rx_status.rx_resp.rssi.RSSI
+  //}
+
+  /* See Note6 */
+  NRF_RADIO_regs.RSSISAMPLE = nhwra_RSSI_value_to_modem_format(
+                                p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI)
+                                + cheat_rx_power_offset
+                              );
+#if !NHW_RADIO_IS_54
+  nhw_RADIO_signal_EVENTS_RSSIEND(0);
+#endif
 }
 
 void nhw_RADIO_TASK_RSSISTOP(void) {
-  rssi_sampling_on = false;
+  /* Nothing to be done */
 }
 
 #if !NHW_RADIO_IS_54
@@ -1266,18 +1308,6 @@ static void start_Rx_FEC2(void) {
 static void Rx_Addr_received(void) {
 
   bool accept_packet = !rx_status.packet_rejected;
-
-  if (rx_status.codedphy == false || rx_status.inFEC1 == true) {
-    if ( rssi_sampling_on ){
-      NRF_RADIO_regs.RSSISAMPLE = nhwra_RSSI_value_to_modem_format(
-                                    p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI)
-                                    + cheat_rx_power_offset
-                                  );
-#if !NHW_RADIO_IS_54
-      nhw_RADIO_signal_EVENTS_RSSIEND(0);
-#endif
-    }
-  }
 
   if (rx_status.codedphy == false || rx_status.inFEC1 == false) {
     NRF_RADIO_regs.RXMATCH = 0; //The only we support so far
