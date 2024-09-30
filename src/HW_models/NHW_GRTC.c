@@ -248,9 +248,11 @@ static void nhw_GRTC_eval_interrupt(uint inst)
         event_bitmask |= 1<<i;
       }
     }
+#if (GRTC_INTENSET0_SYSCOUNTERVALID_Msk)
     if (NRF_GRTC_regs.EVENTS_SYSCOUNTERVALID) {
       event_bitmask |= GRTC_INTENSET0_SYSCOUNTERVALID_Msk;
     }
+#endif
 #if (NHW_GRTC_HAS_PWM)
     if (NRF_GRTC_regs.EVENTS_PWMPERIODEND) {
       event_bitmask |= GRTC_INTENSET0_PWMPERIODEND_Msk;
@@ -275,9 +277,11 @@ static void nhw_GRTC_signal_EVENTS_COMPARE(uint inst, uint n) {
 }
 
 static void nhw_GRTC_signal_EVENTS_SYSCOUNTERVALID(uint inst) {
+#if (GRTC_INTENSET0_SYSCOUNTERVALID_Msk)
   NRF_GRTC_regs.EVENTS_SYSCOUNTERVALID = 1;
   nhw_GRTC_eval_interrupt(inst);
   /* Not connected to DPPI */
+#endif
 }
 
 #if (NHW_GRTC_HAS_PWM)

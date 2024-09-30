@@ -112,8 +112,6 @@ void nrf_grtc_subscribe_clear(NRF_GRTC_Type * p_reg,
 
 void nrf_grtc_event_clear(NRF_GRTC_Type * p_reg, nrf_grtc_event_t event)
 {
-  NRFX_ASSERT(event != NRF_GRTC_EVENT_SYSCOUNTERVALID);
-
   *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 
   nhw_GRTC_regw_sideeffects_EVENTS_all(0);
