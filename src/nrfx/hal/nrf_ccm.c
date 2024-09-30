@@ -16,7 +16,7 @@ void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg, nrf_ccm_task_t task)
 
   if ( task == NRF_CCM_TASK_KSGEN ) {
     nhw_CCM_regw_sideeffects_TASKS_KSGEN();
-  } else if ( task == NRF_CCM_TASK_CRYPT ) {
+  } else if ( task == offsetof(NRF_CCM_Type, TASKS_CRYPT) ) {
     nhw_CCM_regw_sideeffects_TASKS_CRYPT();
   } else if ( task == NRF_CCM_TASK_STOP ) {
     nhw_CCM_regw_sideeffects_TASKS_STOP();
@@ -50,7 +50,7 @@ static void nrf_ccm_subscribe_common(NRF_CCM_Type * p_reg,
 {
   if (task == NRF_CCM_TASK_KSGEN) {
       nhw_CCM_regw_sideeffects_SUBSCRIBE_KSGEN(0);
-  } else if ( task == NRF_CCM_TASK_CRYPT ) {
+  } else if ( task == offsetof(NRF_CCM_Type, TASKS_CRYPT) ) {
       nhw_CCM_regw_sideeffects_SUBSCRIBE_CRYPT(0);
   } else if ( task == NRF_CCM_TASK_STOP ) {
       nhw_CCM_regw_sideeffects_SUBSCRIBE_STOP(0);
