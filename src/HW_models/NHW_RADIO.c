@@ -20,11 +20,11 @@
  * Note5: Only little endian hosts supported (x86 is little endian)
  *
  * Note6.a: A RSSISTART task will be fully instantaneous (instead of taking ~0.25 micros)
- * Note6.b: A RSSISTART task will use the latest RSSI sample from the Phy and not request a new one.
- *        The correct thing depends on the case (see nhw_RADIO_TASK_RSSISTART() )
- *        But to simplify we just respond with the last rx RSSI value.
- *        If the stack is triggering this task to do a RSSI measurement without an actual packet reception
- *        the measurement will be wrong (this can be fixed if it becomes a problem)
+ * Note6.b: A RSSISTART task will (by now) use the latest RSSI sample from the Phy and not request a new one.
+ *          If the stack is triggering this task to do a RSSI measurement without an actual packet reception
+ *          the measurement will be wrong.
+ *          Doing an immediate measurement requires an up to date libPhyCom and Phy. To avoid forcing users to update just for this, we postpone this feature.
+ *          This feature should be enabled as soon as a Phy update is required for another reason.
  * Note6.c: The spec says the radio must be actively receiving when receiving a RSSISTART task, but
  *        not what happens otherwise. The model just warns and uses the last value.
  *
@@ -254,6 +254,9 @@ static void start_CCA_ED(bool CCA_not_ED);
 static void Rx_Addr_received(void);
 static void Tx_abort_eval_respond(void);
 static void Rx_abort_eval_respond(void);
+#if 0 //Note6.b
+static p2G4_rssi_power_t Rx_abort_imm_RSSI(void);
+#endif
 static void CCA_abort_eval_respond(void);
 static void nhw_radio_device_address_match(uint8_t rx_buf[]);
 
@@ -539,7 +542,7 @@ void nhw_RADIO_TASK_RSSISTART(void) {
                                "The spec does not allow this. We just use the last Rx value in the model\n");
   }
 
-  //Thoughts: When we receive this, wrt. the Phy communication either:
+  // When we receive this, wrt. the Phy communication either:
   // a) we have not started anything (radio_state != RAD_RX) (phy time is in the past in the previous transaction end)
   // b) Phy is waiting during an abort reevaluation before address match
   // c) we have got the addr and the phy is waiting for a response  to it (normal case, where the stack triggers RSSISTART via ADDRESS short)
@@ -559,15 +562,20 @@ void nhw_RADIO_TASK_RSSISTART(void) {
   //   For d.1) an immediate RSSI measurement would produce the same result (just a bit of Phy comm overhead)
   // if e) => use last Rx measurement
 
-  //if (abort_fsm_state == Rx_Abort_reeval) {
-  //  Respond with an immediate RSSI request during abort, get that response and let nhw_radio_timer_abort_reeval_triggered() handle it further
-  //} else {
-  //  Use last rx_status.rx_resp.rssi.RSSI
-  //}
+  p2G4_rssi_power_t RSSI_value;
+#if 0 //Note6.b
+  if (abort_fsm_state == Rx_Abort_reeval) {
+    //Respond with an immediate RSSI request during abort, get that response and let nhw_radio_timer_abort_reeval_triggered() handle it further
+    RSSI_value = Rx_abort_imm_RSSI();
+  } else
+#endif
+  {
+    RSSI_value = rx_status.rx_resp.rssi.RSSI;
+  }
 
   /* See Note6 */
   NRF_RADIO_regs.RSSISAMPLE = nhwra_RSSI_value_to_modem_format(
-                                p2G4_RSSI_value_to_dBm(rx_status.rx_resp.rssi.RSSI)
+                                p2G4_RSSI_value_to_dBm(RSSI_value)
                                 + cheat_rx_power_offset
                               );
 #if !NHW_RADIO_IS_54
@@ -1180,6 +1188,33 @@ static void handle_Rx_response(int ret){
     }
   }
 }
+
+#if 0 //Note6.b
+/*
+ * Request an immediate RSSI measurement during an Rx abort reevaluation
+ * with the same Rx parameters as the currently ongoing reception
+ * (the abort reevaluation will be left pending)
+ */
+static p2G4_rssi_power_t Rx_abort_imm_RSSI(void) {
+  p2G4_rssi_t rssi_req;
+  p2G4_rssi_done_t rssi_resp;
+  p2G4_rxv2_t *rx_req = &rx_status.rx_req;
+
+  //Right now, though as an immediate request this is actually ignored by the Phy:
+  rssi_req.meas_time = hwll_phy_time_from_dev(nsi_hws_get_time());
+  rssi_req.antenna_gain = rx_req->antenna_gain;
+  memcpy(&rssi_req.radio_params, &rx_req->radio_params, sizeof(p2G4_radioparams_t));
+
+  int ret = p2G4_dev_req_imm_RSSI_nc_b(&rssi_req, &rssi_resp);
+
+  if (ret == -1) {
+    bs_trace_raw_manual_time(3,nsi_hws_get_time(),"Communication with the phy closed during Rx abort reeval\n");
+    hwll_disconnect_phy_and_exit();
+  }
+
+  return rssi_resp.RSSI;
+}
+#endif
 
 /**
  * We have reached the time in which we wanted to reevaluate if we would abort or not
