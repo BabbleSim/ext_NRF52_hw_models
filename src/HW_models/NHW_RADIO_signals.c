@@ -265,23 +265,10 @@ NHW_SIDEEFFECTS_TASKS_si(RADIO, RXEN)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, START)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, STOP)
 NHW_SIDEEFFECTS_TASKS_si(RADIO, DISABLE)
-
-void nhw_RADIO_regw_sideeffects_TASKS_RSSISTART(void) {
-  //We don't need to model this yet
-  if ( NRF_RADIO_regs.TASKS_RSSISTART ){
-    NRF_RADIO_regs.TASKS_RSSISTART = 0;
-    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTART register is not supported by the model yet\n");
-  }
-}
+NHW_SIDEEFFECTS_TASKS_si(RADIO, RSSISTART)
 
 #if !NHW_RADIO_IS_54
-void nhw_RADIO_regw_sideeffects_TASKS_RSSISTOP(void) {
-  //We don't need to model this yet
-  if ( NRF_RADIO_regs.TASKS_RSSISTOP ){
-    NRF_RADIO_regs.TASKS_RSSISTOP = 0;
-    bs_trace_warning_line_time("RADIO: Sampling RSSI by writing to TASK_RSSISTOP register is not supported by the model yet\n");
-  }
-}
+NHW_SIDEEFFECTS_TASKS_si(RADIO, RSSISTOP)
 #endif
 
 NHW_SIDEEFFECTS_TASKS_si(RADIO, BCSTART)
