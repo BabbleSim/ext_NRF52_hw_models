@@ -13,24 +13,24 @@ default: NRF52833 NRF5340 NRF54L15
 compile: NRF52833
 
 NRF52833:
-	@$(MAKE) --no-print-directory -f 52833.mk
+	@$(MAKE) --no-print-directory -f 52833.mk install
 
 NRF5340:
-	@$(MAKE) --no-print-directory -f 5340.mk hw
-	@$(MAKE) --no-print-directory -f 5340.mk hal_net
-	@$(MAKE) --no-print-directory -f 5340.mk hal_app
+	@$(MAKE) --no-print-directory -f 5340.mk hw install
+	@$(MAKE) --no-print-directory -f 5340.mk hal_net install
+	@$(MAKE) --no-print-directory -f 5340.mk hal_app install
 
 NRF5340_hal_net:
-	@$(MAKE) --no-print-directory -f 5340.mk hw
-	@$(MAKE) --no-print-directory -f 5340.mk hal_net
+	@$(MAKE) --no-print-directory -f 5340.mk hw install
+	@$(MAKE) --no-print-directory -f 5340.mk hal_net install
 
 NRF5340_hal_app:
-	@$(MAKE) --no-print-directory -f 5340.mk hw
-	@$(MAKE) --no-print-directory -f 5340.mk hal_app
+	@$(MAKE) --no-print-directory -f 5340.mk hw install
+	@$(MAKE) --no-print-directory -f 5340.mk hal_app install
 
 NRF54L15:
-	@$(MAKE) --no-print-directory -f 54L15.mk hw
-	@$(MAKE) --no-print-directory -f 54L15.mk hal_app
+	@$(MAKE) --no-print-directory -f 54L15.mk hw install
+	@$(MAKE) --no-print-directory -f 54L15.mk hal_app install
 
 # Let's just let the 52833 build handle any other target by default
 %::
