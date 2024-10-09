@@ -28,7 +28,7 @@ endif
 VARIANT=NRF54L15${LIB_VARIANT}
 
 hw: all
-hal_net: all
+hal_flpr: all
 hal_app: all
 
 INCLUDES:=-I${NATIVE_SIM_PATH}/common/src/include/ \
