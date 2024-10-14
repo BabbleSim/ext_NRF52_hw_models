@@ -537,7 +537,7 @@ void nhw_RADIO_TASK_DISABLE(void) {
 }
 
 void nhw_RADIO_TASK_RSSISTART(void) {
-  if (radio_state != RAD_RX) {
+  if ((radio_state != RAD_RX) && (radio_state != RAD_RXIDLE)) {
     bs_trace_warning_time_line("TASK_RSSISTART received while the radio was not in Rx. "
                                "The spec does not allow this. We just use the last Rx value in the model\n");
   }
@@ -555,6 +555,7 @@ void nhw_RADIO_TASK_RSSISTART(void) {
   // if a)
   //      if real RADIO reports an old measured value then best is to use our latest
   //      otherwise to do a plain RSSI measurement now
+  //        Note: It seems it is possible to do a RSSI measurement after ramp-up with the RADIO in RXIDLE. So we'd want to do a normal RSSI measurement in this case. But then we'd need to distinguish it from c) and e)
   // if b) => do an immediate RSSI measurement during abort reeval (this case we don't yet handle well now)
   // if c) best is to use the RSSI measurement from the addr => last Rx measurement
   // if d.1) => same as c)
