@@ -18,3 +18,4 @@ src/nrfx/hal/nrf_ecb.c
 src/nrfx/hal/nrf_uart.c
 src/nrfx/hal/nrf_uarte.c
 src/nrfx/hal/nrf_hack.c
+src/nrfx/mdk_replacements/system.c
